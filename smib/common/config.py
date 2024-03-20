@@ -2,6 +2,8 @@ from urllib.parse import urlparse
 from decouple import config, Csv
 import warnings
 import os
+from pathlib import Path
+import smib
 
 from smib.common.utils import to_path
 
@@ -27,3 +29,6 @@ WEBSOCKET_URL = config('WEBSOCKET_URL',
                        default=f"{WEBSOCKET_SCHEME}://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}/{WEBSOCKET_PATH}",
                        cast=urlparse)
 WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
+
+ROOT_DIRECTORY = Path(smib.__file__).parent
+PLUGINS_DIRECTORY = ROOT_DIRECTORY / 'slack' / 'plugins'

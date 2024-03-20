@@ -12,7 +12,6 @@ class WebSocketHandler:
 
     @staticmethod
     def create_websocket_conn():
-        print(WEBSOCKET_URL.geturl())
         return create_connection(WEBSOCKET_URL.geturl())
 
     def check_and_reconnect_websocket_conn(self):
@@ -69,11 +68,6 @@ def smib_event_handler(*args, **kwargs):
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = ws_handler.receive_bolt_response()
     return to_flask_response(bolt_response)
-
-
-@app.route('/smib/status')
-def smib_status_handler():
-    return str(ws_handler.websocket_conn.__dict__)
 
 
 if __name__ == '__main__':
