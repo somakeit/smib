@@ -15,10 +15,6 @@ def create_slack_bolt_app():
               token_verification_enabled=False)
     app.error(handle_errors)
 
-    @app.event("http_get_lights")
-    def get_lights(event):
-        pprint(event)
-
     return app
 
 

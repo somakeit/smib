@@ -1,10 +1,9 @@
-import os
 import pickle
 from flask import Flask, request
 from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_SECRET_KEY, WEBSOCKET_URL
 from smib.common.utils import is_pickleable
 from slack_bolt.adapter.flask.handler import to_bolt_request, BoltRequest, to_flask_response, BoltResponse
-from websocket import create_connection, WebSocket, ABNF
+from websocket import create_connection, WebSocket
 
 
 class WebSocketHandler:
@@ -13,11 +12,12 @@ class WebSocketHandler:
 
     @staticmethod
     def create_websocket_conn():
+        print(WEBSOCKET_URL.geturl())
         return create_connection(WEBSOCKET_URL.geturl())
 
     def check_and_reconnect_websocket_conn(self):
         try:
-            self.websocket_conn.send('', ABNF.OPCODE_PING)
+            self.websocket_conn.ping()
         except Exception as e:
             print('Reconnecting websocket')
             self.websocket_conn = self.create_websocket_conn()
@@ -69,6 +69,11 @@ def smib_event_handler(*args, **kwargs):
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = ws_handler.receive_bolt_response()
     return to_flask_response(bolt_response)
+
+
+@app.route('/smib/status')
+def smib_status_handler():
+    return str(ws_handler.websocket_conn.__dict__)
 
 
 if __name__ == '__main__':
