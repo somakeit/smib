@@ -9,6 +9,8 @@ from smib.common.utils import to_path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+APPLICATION_NAME = config('APPLICATION_NAME', default='S.M.I.B.')
+
 SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')
 SLACK_BOT_TOKEN = config('SLACK_BOT_TOKEN')
 

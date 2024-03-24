@@ -1,17 +1,53 @@
-from injectable import inject, inject_multiple, injectable
-from smib.common.config import PLUGINS_DIRECTORY, ROOT_DIRECTORY
-from smib.slack.plugin_manager.loaders import AbstractPluginLoader
-from pathlib import Path
+import os
+
+from smib.slack.plugin_manager.plugin import Plugin
+
+from injectable import inject, inject_multiple, injectable, autowired, Autowired
+from slack_bolt import App
+from smib.common.utils import singleton
 
 
 @injectable(singleton=True, qualifier="PluginManager")
 class PluginManager:
-    def __init__(self, plugins_dir: str | Path = None):
+    @autowired
+    def __init__(self, app: Autowired(App)):
+        self.app = app
         self.plugins = []
-        self.plugins_dir = Path(plugins_dir) if plugins_dir else Path(PLUGINS_DIRECTORY)
-        self.plugin_loaders = inject_multiple(AbstractPluginLoader)
+        self.plugin_loaders = inject_multiple("PluginLoader")
 
     def load_all_plugins(self):
         for loader in self.plugin_loaders:
-            loader.set_plugin_manager(self)
-            loader.load_from_directory(self.plugins_dir)
+            self.plugins += loader.load_all()
+
+    def reload_all_plugins(self):
+        for loader in self.plugin_loaders:
+            loader_plugins = [plugin for plugin in self.plugins if loader.type == plugin.type]
+            for plugin in loader_plugins:
+                self.plugins.remove(plugin)
+                reloaded_plugin = loader.reload_plugin(plugin)
+                self.plugins.append(reloaded_plugin)
+
+
+    def disable_plugin(self, plugin: Plugin):
+        loader = next((x for x in self.plugin_loaders if x.type == plugin.type), None)
+        if not loader:
+            return
+
+        open(plugin.directory / '.disable', "wb")
+        self.plugins.remove(plugin)
+
+        reloaded_plugin = loader.reload_plugin(plugin)
+        self.plugins.append(reloaded_plugin)
+
+    def enable_plugin(self, plugin: Plugin):
+        loader = next((x for x in self.plugin_loaders if x.type == plugin.type), None)
+        if not loader:
+            return
+
+        if (disable_file := plugin.directory / '.disable').exists():
+            os.remove(disable_file)
+
+        self.plugins.remove(plugin)
+
+        reloaded_plugin = loader.reload_plugin(plugin)
+        self.plugins.append(reloaded_plugin)

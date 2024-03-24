@@ -26,3 +26,11 @@ def log_error(func):
             print(f'{e.__class__.__name__}: {e}')
     return wrapper
 
+
+def singleton(class_):
+    instances = {}
+    def wrapper(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return wrapper
