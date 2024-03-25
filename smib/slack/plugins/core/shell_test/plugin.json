@@ -1,0 +1,20 @@
+{
+  "name": "Shell Plugin Test",
+  "author": "Sam Cork",
+  "hooks": [
+    {
+      "event_type": "message",
+      "event_arguments": {
+        "keyword": "batch"
+      },
+      "script": "test.bat"
+    },
+    {
+      "event_type": "message",
+      "event_arguments": {
+        "keyword": "bash"
+      },
+      "script": "test.sh"
+    }
+  ]
+}

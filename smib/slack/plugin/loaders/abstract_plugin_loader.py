@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from smib.common.config import PLUGINS_DIRECTORY
 from slack_bolt import App
-from smib.slack.plugin_manager import PluginType, Plugin
+from smib.slack.plugin import PluginType, Plugin
 
 from injectable import inject
 

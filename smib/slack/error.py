@@ -17,7 +17,7 @@ def get_http_status_json_response(http_status: HTTPStatus, error: Exception, req
         "status": http_status.value,
         "instance": error.__class__.__name__
     }
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", 'x-slack-no-retry': 1}
     return {'status': http_status, 'body': json.dumps(resp), 'headers': headers}
 
 
@@ -28,12 +28,18 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
         "instance": error.__class__.__name__,
         "exception": [x.rstrip() for x in tb.format_exception_only(error)]
     }
-    headers = {"Content-Type": "application/problem+json"}
+    headers = {"Content-Type": "application/problem+json", 'x-slack-no-retry': 1}
     return {'status': http_status, 'body': json.dumps(resp), 'headers': headers}
 
 
 def handle_errors(error, context, request):
+    print(request.headers)
     if type(error) in ERRORS_TO_IGNORE:
-        return BoltResponse(**get_http_status_json_response(HTTPStatus.OK, error, request))
+        resp = BoltResponse(**get_http_status_json_response(HTTPStatus.OK, error, request))
+        context.ack()
+        return resp
 
-    return BoltResponse(**get_http_status_json_problem_response(HTTPStatus.IM_A_TEAPOT, error, request))
+    resp = BoltResponse(**get_http_status_json_problem_response(HTTPStatus.NOT_FOUND, error, request))
+    context.ack()
+    return resp
+

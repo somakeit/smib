@@ -55,23 +55,24 @@ def generate_bolt_request(flask_request):
     return bolt_request
 
 
-# Instantiate our websocket handler
-ws_handler = WebSocketHandler()
-app = Flask(__name__)
-app.secret_key = WEBSERVER_SECRET_KEY
+def main():
+    ws_handler = WebSocketHandler()
+    app = Flask(__name__)
+    app.secret_key = WEBSERVER_SECRET_KEY
 
+    @app.route('/smib/event/<string:event>')
+    def smib_event_handler(*args, **kwargs):
+        ws_handler.check_and_reconnect_websocket_conn()
+        bolt_request: BoltRequest = generate_bolt_request(request)
+        ws_handler.send_bolt_request(bolt_request)
+        bolt_response: BoltResponse = ws_handler.receive_bolt_response()
+        return to_flask_response(bolt_response)
 
-@app.route('/smib/event/<string:event>')
-def smib_event_handler(*args, **kwargs):
-    ws_handler.check_and_reconnect_websocket_conn()
-    bolt_request: BoltRequest = generate_bolt_request(request)
-    ws_handler.send_bolt_request(bolt_request)
-    bolt_response: BoltResponse = ws_handler.receive_bolt_response()
-    return to_flask_response(bolt_response)
-
-
-if __name__ == '__main__':
     try:
         app.run(host=WEBSERVER_HOST, port=WEBSERVER_PORT, debug=True)
     finally:
         ws_handler.close_conn()
+
+
+if __name__ == '__main__':
+    main()

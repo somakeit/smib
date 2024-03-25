@@ -1,6 +1,6 @@
 import os
 
-from smib.slack.plugin_manager.plugin import Plugin
+from smib.slack.plugin.plugin import Plugin
 
 from injectable import inject, inject_multiple, injectable, autowired, Autowired
 from slack_bolt import App

@@ -1,9 +1,9 @@
 import sys
-from smib.slack.plugin_manager.loaders.abstract_plugin_loader import AbstractPluginLoader
+from smib.slack.plugin.loaders.abstract_plugin_loader import AbstractPluginLoader
 from pathlib import Path
 from injectable import injectable
 import importlib
-from smib.slack.plugin_manager import PluginMeta, PluginType, Plugin
+from smib.slack.plugin import PluginMeta, PluginType, Plugin
 from smib.common.config import ROOT_DIRECTORY
 
 
@@ -17,7 +17,6 @@ class PythonPluginLoader(AbstractPluginLoader):
         try:
             module = importlib.import_module(module_path)
         except Exception as e:
-            module = None
             plugin.enabled = False
             plugin.error = f"{e.__class__.__name__}: {e}"
         else:
