@@ -13,3 +13,11 @@ plugin_manager = inject("PluginManager")
 def reload(message, say):
     say(text='testing testicle', channel=message['channel'])
     plugin_manager.reload_all_plugins()
+
+
+@app.event('http_get_reload')
+def reload(message, say):
+    print('reload')
+    plugin_manager.reload_all_plugins()
+    for plugin in plugin_manager.plugins:
+        print(plugin)

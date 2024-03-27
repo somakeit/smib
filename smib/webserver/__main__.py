@@ -1,8 +1,10 @@
 import pickle
-from flask import Flask, request
+
+from fastapi import FastAPI, Request
+from slack_bolt.request import BoltRequest
+from slack_bolt.adapter.starlette.handler import to_bolt_request, to_starlette_response
 from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_SECRET_KEY, WEBSOCKET_URL
 from smib.common.utils import is_pickleable
-from slack_bolt.adapter.flask.handler import to_bolt_request, BoltRequest, to_flask_response, BoltResponse
 from websocket import create_connection, WebSocket
 
 
@@ -21,10 +23,10 @@ class WebSocketHandler:
             print('Reconnecting websocket')
             self.websocket_conn = self.create_websocket_conn()
 
-    def send_bolt_request(self, flask_request):
-        self.websocket_conn.send_binary(pickle.dumps(flask_request))
+    def send_bolt_request(self, bolt_request):
+        self.websocket_conn.send_binary(pickle.dumps(bolt_request))
 
-    def receive_bolt_response(self):
+    async def receive_bolt_response(self):
         response_str = self.websocket_conn.recv()
         return pickle.loads(response_str)
 
@@ -32,44 +34,49 @@ class WebSocketHandler:
         self.websocket_conn.close()
 
 
-def generate_request_body(flask_request):
-    event_type = f"http_{flask_request.method.lower()}_{flask_request.view_args.get('event')}"
+async def generate_request_body(fastapi_request):
+    event_type = f"http_{fastapi_request.method.lower()}_{fastapi_request.path_params.get('event', None)}"
+    try:
+        json = await fastapi_request.json()
+    except Exception as e:
+        json = {}
     return {
         'type': 'event_callback',
         'event': {
             "type": event_type,
-            "data": flask_request.get_json(silent=True) or {},
+            "data":  json,
             "request": {
-                "method": flask_request.method,
-                "scheme": flask_request.scheme,
-                "url": flask_request.url,
-                "headers": dict(filter(lambda item: is_pickleable(item), flask_request.headers))
+                "method": fastapi_request.method,
+                "scheme": fastapi_request.url.scheme,
+                "url": str(fastapi_request.url),
+                "headers": dict(filter(lambda item: is_pickleable(item), fastapi_request.headers.items()))
             }
         }
     }
 
 
-def generate_bolt_request(flask_request):
-    bolt_request: BoltRequest = to_bolt_request(flask_request)
-    bolt_request.body = generate_request_body(flask_request)
+async def generate_bolt_request(fastapi_request: Request):
+    body = await fastapi_request.body()
+    bolt_request: BoltRequest = to_bolt_request(fastapi_request, body=body)
+    bolt_request.body = await generate_request_body(fastapi_request)
     return bolt_request
 
 
 def main():
     ws_handler = WebSocketHandler()
-    app = Flask(__name__)
-    app.secret_key = WEBSERVER_SECRET_KEY
+    app = FastAPI()
 
-    @app.route('/smib/event/<string:event>')
-    def smib_event_handler(*args, **kwargs):
+    @app.get('/smib/event/{event}', tags=['SMIB Events'])
+    async def smib_event_handler(request: Request, event: str):
         ws_handler.check_and_reconnect_websocket_conn()
-        bolt_request: BoltRequest = generate_bolt_request(request)
+        bolt_request: BoltRequest = await generate_bolt_request(request)
         ws_handler.send_bolt_request(bolt_request)
-        bolt_response: BoltResponse = ws_handler.receive_bolt_response()
-        return to_flask_response(bolt_response)
+        bolt_response = await ws_handler.receive_bolt_response()
+        return to_starlette_response(bolt_response)
 
     try:
-        app.run(host=WEBSERVER_HOST, port=WEBSERVER_PORT, debug=True)
+        import uvicorn
+        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT)
     finally:
         ws_handler.close_conn()
 

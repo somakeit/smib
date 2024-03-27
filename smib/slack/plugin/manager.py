@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from smib.slack.plugin.plugin import Plugin
 
@@ -27,7 +28,6 @@ class PluginManager:
                 reloaded_plugin = loader.reload_plugin(plugin)
                 self.plugins.append(reloaded_plugin)
 
-
     def disable_plugin(self, plugin: Plugin):
         loader = next((x for x in self.plugin_loaders if x.type == plugin.type), None)
         if not loader:
@@ -51,3 +51,7 @@ class PluginManager:
 
         reloaded_plugin = loader.reload_plugin(plugin)
         self.plugins.append(reloaded_plugin)
+
+    def get_plugin_from_file(self, file: Path) -> Plugin:
+        return next((plugin for plugin in self.plugins if file.is_relative_to(plugin.directory)), None)
+

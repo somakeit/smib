@@ -9,7 +9,7 @@ from smib.slack.middleware import ignore_retried_events
 from injectable import Autowired, load_injection_container, autowired, injectable_factory, inject
 from smib.slack.plugin.manager import PluginManager
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 @injectable_factory(App, singleton=True, qualifier="SlackApp")

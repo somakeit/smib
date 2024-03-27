@@ -10,6 +10,13 @@
       "script": "test.bat"
     },
     {
+      "event_type": "event",
+      "event_arguments": {
+        "event": "http_get_batch"
+      },
+      "script": "test.bat"
+    },
+    {
       "event_type": "message",
       "event_arguments": {
         "keyword": "bash"
