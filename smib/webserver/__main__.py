@@ -3,6 +3,8 @@ import pickle
 from fastapi import FastAPI, Request
 from slack_bolt.request import BoltRequest
 from slack_bolt.adapter.starlette.handler import to_bolt_request, to_starlette_response
+from starlette.responses import HTMLResponse
+
 from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_SECRET_KEY, WEBSOCKET_URL
 from smib.common.utils import is_pickleable
 from websocket import create_connection, WebSocket
@@ -73,6 +75,18 @@ def main():
         ws_handler.send_bolt_request(bolt_request)
         bolt_response = await ws_handler.receive_bolt_response()
         return to_starlette_response(bolt_response)
+
+    @app.get('/smib/', response_class=HTMLResponse)
+    async def smib_home(request: Request):
+        return f"""
+        <h1>Welcome to S.M.I.B.</h1>
+        <h3>The SoMakeIt BOT</h3>
+        <div>
+            Number of Plugins = {0}
+        </div>
+        """
+
+    print(app.routes)
 
     try:
         import uvicorn
