@@ -3,7 +3,7 @@ import subprocess
 import shlex
 from smib.slack.plugin.loaders.abstract_plugin_loader import AbstractPluginLoader
 from pathlib import Path
-from injectable import injectable, inject
+from injectable import injectable, inject, Autowired, autowired
 import json
 from smib.slack.plugin import PluginMeta, PluginType, Plugin
 from slack_bolt import App
@@ -14,7 +14,9 @@ from slack_sdk.web.slack_response import SlackResponse
 class ShellPluginLoader(AbstractPluginLoader):
     type: PluginType = PluginType.SHELL
     id_file: Path = Path('plugin.json')
-    app: App = inject(App)
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
     def register_plugin(self, plugin: Plugin) -> Plugin:
         try:
@@ -33,7 +35,7 @@ class ShellPluginLoader(AbstractPluginLoader):
 
             hooks = plugin_id_file_json.get("hooks", [])
             for hook in hooks:
-                method = getattr(self.app, hook.get("event_type", None))
+                method = getattr(inject(App), hook.get("event_type", None))
                 if method is not None:
                     script = plugin.directory / hook.get("script", None)
                     if script.exists():
@@ -47,13 +49,14 @@ class ShellPluginLoader(AbstractPluginLoader):
         pass
 
     def unload_plugin(self, plugin: Plugin) -> None:
+        app = inject(App)
         self.unregister_plugin(plugin)
-        listeners = self.app._listeners[::]
+        listeners = app._listeners[::]
         for listener in listeners:
             instance = getattr(listener.ack_function, '__self__', None)
             if instance and (plugin_id := getattr(instance, 'plugin_id', None)):
                 if plugin_id == plugin.id:
-                    self.app._listeners.remove(listener)
+                    app._listeners.remove(listener)
 
 
 class ShellScript:
