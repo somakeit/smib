@@ -1,5 +1,5 @@
 import logging
-
+from simple_websocket_server import WebSocketServer
 from slack_bolt.app import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME
@@ -46,8 +46,19 @@ def main():
     plugin_manager = inject(PluginManager)
     plugin_manager.load_all_plugins()
 
-    websocket_server.start_threaded_server()
-    slack_socket_mode_handler.start()
+    ws_server_thread = websocket_server.start_threaded_server()
+    ws_server = inject(WebSocketServer)
+
+    try:
+        slack_socket_mode_handler.start()
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(e)
+    finally:
+        ws_server.close()
+        ws_server_thread.join(timeout=5)
+        slack_socket_mode_handler.close()
 
 
 if __name__ == '__main__':

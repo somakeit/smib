@@ -22,6 +22,7 @@ WEBSERVER_URL = config('WEBSOCKET_URL',
                        default=f"{WEBSERVER_SCHEME}://{WEBSERVER_HOST}:{WEBSERVER_PORT}/{WEBSERVER_PATH}",
                        cast=urlparse)
 WEBSERVER_SECRET_KEY = config('WEBSERVER_SECRET_KEY', default=os.urandom(24))
+WEBSERVER_PATH_PREFIX = config('WEBSERVER_PATH_PREFIX', default='/smib')
 
 WEBSOCKET_SCHEME = config('WEBSERVER_SCHEME', default='ws')
 WEBSOCKET_HOST = config('WEBSOCKET_HOST', default='localhost')

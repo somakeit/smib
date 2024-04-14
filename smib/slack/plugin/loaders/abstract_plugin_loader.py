@@ -1,6 +1,7 @@
 import inspect
 from pathlib import Path
 from abc import ABC, abstractmethod
+from pprint import pprint
 
 from smib.common.config import PLUGINS_DIRECTORY
 from slack_bolt import App
@@ -33,7 +34,15 @@ class AbstractPluginLoader(ABC):
         plugins: list[Plugin] = []
         print(f"loading {self.type} plugins")
         for path in self.plugins_directory.glob(f'*/*/{self.id_file}'):
-            plugins.append(self.load_plugin(path.parent))
+            plugin = self.load_plugin(path.parent)
+
+            # If the plugin ID already exists, give it a new one
+            if plugin.id in [loaded_plugin.id for loaded_plugin in plugins]:
+                plugin.id = f"{plugin.id}_{id(plugin)}"
+
+            if plugin.id in [loaded_plugin.id for loaded_plugin in inject("PluginManager").plugins]:
+                plugin.id = f"{plugin.id}_{id(plugin)}"
+            plugins.append(plugin)
 
         return plugins
 
@@ -43,6 +52,7 @@ class AbstractPluginLoader(ABC):
     def create_plugin(self, plugin_path: Path) -> Plugin:
         return Plugin(
             type=self.type,
+            group=plugin_path.parent.name,
             directory=plugin_path,
             id=self.plugin_path_to_id(plugin_path),
             id_file=plugin_path / self.id_file,

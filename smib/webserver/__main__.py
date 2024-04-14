@@ -1,39 +1,16 @@
-import pickle
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from slack_bolt.request import BoltRequest
+from slack_bolt.response import BoltResponse
 from slack_bolt.adapter.starlette.handler import to_bolt_request, to_starlette_response
-from starlette.responses import HTMLResponse
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
-from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_SECRET_KEY, WEBSOCKET_URL
+from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX
 from smib.common.utils import is_pickleable
-from websocket import create_connection, WebSocket
-
-
-class WebSocketHandler:
-    def __init__(self):
-        self.websocket_conn: WebSocket = self.create_websocket_conn()
-
-    @staticmethod
-    def create_websocket_conn():
-        return create_connection(WEBSOCKET_URL.geturl())
-
-    def check_and_reconnect_websocket_conn(self):
-        try:
-            self.websocket_conn.ping()
-        except Exception as e:
-            print('Reconnecting websocket')
-            self.websocket_conn = self.create_websocket_conn()
-
-    def send_bolt_request(self, bolt_request):
-        self.websocket_conn.send_binary(pickle.dumps(bolt_request))
-
-    async def receive_bolt_response(self):
-        response_str = self.websocket_conn.recv()
-        return pickle.loads(response_str)
-
-    def close_conn(self):
-        self.websocket_conn.close()
+from smib.webserver.websocket_handler import WebSocketHandler
 
 
 async def generate_request_body(fastapi_request):
@@ -46,7 +23,7 @@ async def generate_request_body(fastapi_request):
         'type': 'event_callback',
         'event': {
             "type": event_type,
-            "data":  json,
+            "data": json,
             "request": {
                 "method": fastapi_request.method,
                 "scheme": fastapi_request.url.scheme,
@@ -64,30 +41,37 @@ async def generate_bolt_request(fastapi_request: Request):
     return bolt_request
 
 
-def main():
-    ws_handler = WebSocketHandler()
-    app = FastAPI()
+ws_handler = WebSocketHandler()
+app = FastAPI()
+router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
+router.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-    @app.get('/smib/event/{event}', tags=['SMIB Events'])
-    async def smib_event_handler(request: Request, event: str):
-        ws_handler.check_and_reconnect_websocket_conn()
-        bolt_request: BoltRequest = await generate_bolt_request(request)
-        ws_handler.send_bolt_request(bolt_request)
-        bolt_response = await ws_handler.receive_bolt_response()
-        return to_starlette_response(bolt_response)
+templates = Jinja2Templates(directory=f"{Path(__file__).parent / 'templates'}")
 
-    @app.get('/smib/', response_class=HTMLResponse)
-    async def smib_home(request: Request):
-        return f"""
-        <h1>Welcome to S.M.I.B.</h1>
-        <h3>The SoMakeIt BOT</h3>
-        <div>
-            Number of Plugins = {0}
-        </div>
-        """
 
-    print(app.routes)
+@router.get('/event/{event}', tags=['SMIB Events'])
+@router.post('/event/{event}', tags=['SMIB Events'])
+async def smib_event_handler(request: Request, event: str):
+    ws_handler.check_and_reconnect_websocket_conn()
+    bolt_request: BoltRequest = await generate_bolt_request(request)
+    ws_handler.send_bolt_request(bolt_request)
+    bolt_response: BoltResponse = await ws_handler.receive_bolt_response()
+    return to_starlette_response(bolt_response)
 
+
+@router.get('/', response_class=HTMLResponse)
+async def smib_home(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.exception_handler(404)
+async def custom_404_handler(request, __):
+    return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+app.include_router(router)
+
+
+def main(app: FastAPI, ws_handler: WebSocketHandler):
     try:
         import uvicorn
         uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT)
@@ -96,4 +80,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(app, ws_handler)

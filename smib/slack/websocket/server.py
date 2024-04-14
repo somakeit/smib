@@ -58,6 +58,7 @@ def start_server(server: Autowired(WebSocketServer)):
 def start_threaded_server():
     server_thread = Thread(target=start_server)
     server_thread.start()
+    return server_thread
 
 
 if __name__ == '__main__':

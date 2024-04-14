@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
+from typing import Iterator
 
 from smib.slack.plugin.plugin import Plugin
 
 from injectable import inject, inject_multiple, injectable, autowired, Autowired
 from slack_bolt import App
-from smib.common.utils import singleton
 
 
 @injectable(singleton=True, qualifier="PluginManager")
@@ -14,7 +14,7 @@ class PluginManager:
     def __init__(self, app: Autowired(App)):
         self.app = app
         self.plugins = []
-        self.plugin_loaders = inject_multiple("PluginLoader")
+        self.plugin_loaders = inject_multiple("PluginLoader", lazy=True)
 
     def load_all_plugins(self):
         for loader in self.plugin_loaders:
@@ -54,4 +54,7 @@ class PluginManager:
 
     def get_plugin_from_file(self, file: Path) -> Plugin:
         return next((plugin for plugin in self.plugins if file.is_relative_to(plugin.directory)), None)
+
+    def __iter__(self) -> Iterator[Plugin]:
+        yield from self.plugins
 

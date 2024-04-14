@@ -1,3 +1,4 @@
+import inspect
 import subprocess
 import shlex
 from smib.slack.plugin.loaders.abstract_plugin_loader import AbstractPluginLoader
@@ -36,7 +37,7 @@ class ShellPluginLoader(AbstractPluginLoader):
                 if method is not None:
                     script = plugin.directory / hook.get("script", None)
                     if script.exists():
-                        script_callable = ShellScript(script)
+                        script_callable = ShellScript(script, plugin.id)
                         method(**hook.get("event_arguments", {}))(script_callable.run)
 
         return plugin
@@ -45,10 +46,20 @@ class ShellPluginLoader(AbstractPluginLoader):
         # Do nothing for shell - already handled by the base unload_plugin method
         pass
 
+    def unload_plugin(self, plugin: Plugin) -> None:
+        self.unregister_plugin(plugin)
+        listeners = self.app._listeners[::]
+        for listener in listeners:
+            instance = getattr(listener.ack_function, '__self__', None)
+            if instance and (plugin_id := getattr(instance, 'plugin_id', None)):
+                if plugin_id == plugin.id:
+                    self.app._listeners.remove(listener)
+
 
 class ShellScript:
-    def __init__(self, script: Path) -> None:
+    def __init__(self, script: Path, plugin_id: str) -> None:
         self.script = script
+        self.plugin_id = plugin_id
 
     def run(self, event, client, *args, **kwargs):
         parameters = [

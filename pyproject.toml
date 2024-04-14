@@ -19,6 +19,7 @@ injectable = "^3.4.7"
 apscheduler = "^3.10.4"
 fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
+dataclasses-json = "^0.6.4"
 
 
 [build-system]
