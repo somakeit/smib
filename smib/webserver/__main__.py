@@ -17,7 +17,7 @@ async def generate_request_body(fastapi_request):
     event_type = f"http_{fastapi_request.method.lower()}_{fastapi_request.path_params.get('event', None)}"
     try:
         json = await fastapi_request.json()
-    except Exception as e:
+    except Exception as _:
         json = {}
     return {
         'type': 'event_callback',
@@ -27,7 +27,9 @@ async def generate_request_body(fastapi_request):
             "request": {
                 "method": fastapi_request.method,
                 "scheme": fastapi_request.url.scheme,
+                "base_url": str(fastapi_request.base_url).rstrip('/') + str(fastapi_request.url.path),
                 "url": str(fastapi_request.url),
+                "parameters": dict(fastapi_request.query_params),
                 "headers": dict(filter(lambda item: is_pickleable(item), fastapi_request.headers.items()))
             }
         }
@@ -40,13 +42,14 @@ async def generate_bolt_request(fastapi_request: Request):
     bolt_request.body = await generate_request_body(fastapi_request)
     return bolt_request
 
+current_directory = Path(__file__).parent
 
 ws_handler = WebSocketHandler()
 app = FastAPI()
 router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
-router.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+router.mount("/static", StaticFiles(directory=current_directory / "static"), name="static")
 
-templates = Jinja2Templates(directory=f"{Path(__file__).parent / 'templates'}")
+templates = Jinja2Templates(directory=f"{current_directory / 'templates'}")
 
 
 @router.get('/event/{event}', tags=['SMIB Events'])

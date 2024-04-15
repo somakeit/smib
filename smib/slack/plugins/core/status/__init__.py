@@ -6,13 +6,14 @@ from pprint import pprint
 from urllib.request import Request
 
 from injectable import inject
-from slack_bolt import App
+from smib.slack.custom_app import CustomApp as App
 
 from smib.common.utils import http_bolt_response
 from smib.slack.custom_app import CustomApp
 
-app: CustomApp = inject(App)
+app: CustomApp = inject("SlackApp")
 plugin_manager = inject("PluginManager")
+scheduler = inject("Scheduler")
 
 
 @app.event('http_get_status')
@@ -21,17 +22,16 @@ def status(request: Request):
     data = {
         "plugin_count": len(plugin_manager.plugins),
         "plugins": [plugin.to_json_dict() for plugin in plugin_manager],
-        "test": False
+        "scheduled_jobs": [job.id for job in scheduler.get_jobs()]
     }
     return data
 
 
-@app.schedule('interval', '123', seconds=5)
+@app.schedule('interval', '123', seconds=500)
 def scheduled_task(say):
-    print('scheduled')
     say("Scheduled Testing Testicle", channel="random")
 
-@app.schedule('interval', '123', seconds=10)
+
+@app.schedule('interval', '123', seconds=501)
 def scheduled_task(say):
-    print('scheduled')
     say("Scheduled Testing Testicle 2", channel="random")

@@ -5,13 +5,13 @@ from typing import Iterator
 from smib.slack.plugin.plugin import Plugin
 
 from injectable import inject, inject_multiple, injectable, autowired, Autowired
-from slack_bolt import App
+from smib.slack.custom_app import CustomApp as App
 
 
 @injectable(singleton=True, qualifier="PluginManager")
 class PluginManager:
     @autowired
-    def __init__(self, app: Autowired(App)):
+    def __init__(self, app: Autowired("SlackApp")):
         self.app = app
         self.plugins = []
         self.plugin_loaders = inject_multiple("PluginLoader", lazy=True)

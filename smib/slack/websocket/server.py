@@ -3,7 +3,7 @@ from smib.common.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED
 from smib.common.utils import log_error
 from injectable import injectable_factory, Autowired, load_injection_container, autowired, inject
 from slack_bolt.adapter.flask.handler import BoltRequest, BoltResponse
-from slack_bolt import App
+from smib.slack.custom_app import CustomApp as App
 from threading import Thread
 import pickle
 
@@ -19,7 +19,7 @@ class SlackExternalWebsocketHandler(WebSocket):
     def handle(self):
         assert isinstance(self.data, bytes) or isinstance(self.data, bytearray), 'Not bytes'
         assert isinstance(bolt_request := pickle.loads(self.data), BoltRequest), 'Not a BoltRequest'
-        assert isinstance(slack_app := inject(App), App), 'No slack app'
+        assert isinstance(slack_app := inject("SlackApp"), App), 'No slack app'
 
         bolt_request: BoltRequest
         slack_app: App
