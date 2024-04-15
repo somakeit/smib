@@ -16,6 +16,13 @@ plugin_manager = inject("PluginManager")
 scheduler = inject("Scheduler")
 
 
+@app.middleware
+def context_injector(context, next):
+    context['plugin_manager'] = plugin_manager
+    context['scheduler'] = scheduler
+
+    next()
+
 @app.event('http_get_status')
 @http_bolt_response
 def status(request: Request):
@@ -35,3 +42,4 @@ def scheduled_task(say):
 @app.schedule('interval', '123', seconds=501)
 def scheduled_task(say):
     say("Scheduled Testing Testicle 2", channel="random")
+

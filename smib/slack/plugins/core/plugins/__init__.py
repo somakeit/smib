@@ -16,6 +16,13 @@ app: App = inject("SlackApp")
 plugin_manager = inject("PluginManager")
 scheduler: BackgroundScheduler = inject("Scheduler")
 
+@app.middleware
+def context_injector_test(context, next):
+    context['plugin_manager'] = plugin_manager
+    context['scheduler'] = scheduler
+
+    next()
+
 
 @app.message('reload')
 @app.event('http_get_reload_plugins')
@@ -25,6 +32,11 @@ def reload(message, say, event):
     plugin_manager.reload_all_plugins()
 
     return 200
+
+
+@app.schedule('interval', seconds=5, id='Test', name='Test')
+def test(context):
+    print(context)
 
 
 @app.schedule('interval', seconds=60*15, id='reload_plugins_trigger', name='Trigger Schedule for Reloading Plugins')

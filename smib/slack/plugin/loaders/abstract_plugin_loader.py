@@ -81,6 +81,7 @@ class AbstractPluginLoader(ABC):
         self.unregister_plugin(plugin)
         self._remove_scheduled_jobs(plugin)
         self._remove_listeners(plugin)
+        self._remove_middlewares(plugin)
 
     def _remove_listeners(self, plugin: Plugin) -> None:
         listeners = self.app._listeners[::]
@@ -106,6 +107,17 @@ class AbstractPluginLoader(ABC):
             filter(
                 lambda job: job.kwargs.get("_plugin_function", None) == plugin_function, self.scheduler.get_jobs()
             )), None)
+
+    def _remove_middlewares(self, plugin: Plugin) -> None:
+        middlewares = self.app._middleware_list[::]
+        for middleware in middlewares:
+            func = getattr(middleware, 'func', None)
+            if not func:
+                continue
+
+            middleware_path = inspect.getfile(inspect.unwrap(func))
+            if Path(middleware_path).is_relative_to(plugin.directory):
+                self.app._middleware_list.remove(middleware)
 
     def reload_plugin(self, plugin: Plugin) -> Plugin:
         # print(plugin)
