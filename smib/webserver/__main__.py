@@ -8,7 +8,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from smib.common.config import WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX
+from smib.common.config import (
+    WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY
+)
 from smib.common.utils import is_pickleable
 from smib.webserver.websocket_handler import WebSocketHandler
 
@@ -42,14 +44,23 @@ async def generate_bolt_request(fastapi_request: Request):
     bolt_request.body = await generate_request_body(fastapi_request)
     return bolt_request
 
-current_directory = Path(__file__).parent
+
+def create_directories():
+    if not WEBSERVER_TEMPLATES_DIRECTORY.exists():
+        WEBSERVER_TEMPLATES_DIRECTORY.mkdir()
+
+    if not WEBSERVER_STATIC_DIRECTORY.exists():
+        WEBSERVER_STATIC_DIRECTORY.mkdir()
+
 
 ws_handler = WebSocketHandler()
 app = FastAPI()
 router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
-router.mount("/static", StaticFiles(directory=current_directory / "static"), name="static")
 
-templates = Jinja2Templates(directory=f"{current_directory / 'templates'}")
+create_directories()
+
+router.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
+templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 
 
 @router.get('/event/{event}', tags=['SMIB Events'])
@@ -70,6 +81,7 @@ async def smib_home(request: Request):
 @app.exception_handler(404)
 async def custom_404_handler(request, __):
     return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
 
 app.include_router(router)
 

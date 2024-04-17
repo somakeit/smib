@@ -120,7 +120,7 @@ class AbstractPluginLoader(ABC):
                 self.app._middleware_list.remove(middleware)
 
     def reload_plugin(self, plugin: Plugin) -> Plugin:
-        # print(plugin)
+        print(f"Reloading: {plugin}")
         self.unload_plugin(plugin)
         # print(self.scheduler.get_jobs())
         reloaded_plugin = self.load_plugin(plugin.directory)

@@ -9,6 +9,8 @@ from smib.common.utils import to_path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+ROOT_DIRECTORY = Path(smib.__file__).parent
+
 APPLICATION_NAME = config('APPLICATION_NAME', default='S.M.I.B.')
 
 SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')
@@ -23,6 +25,8 @@ WEBSERVER_URL = config('WEBSOCKET_URL',
                        cast=urlparse)
 WEBSERVER_SECRET_KEY = config('WEBSERVER_SECRET_KEY', default=os.urandom(24))
 WEBSERVER_PATH_PREFIX = config('WEBSERVER_PATH_PREFIX', default='/smib')
+WEBSERVER_TEMPLATES_DIRECTORY = config('WEBSERVER_TEMPLATES_DIRECTORY', default=ROOT_DIRECTORY / 'webserver' / 'templates', cast=Path)
+WEBSERVER_STATIC_DIRECTORY = config('WEBSERVER_STATIC_DIRECTORY', default=ROOT_DIRECTORY / 'webserver' / 'static', cast=Path)
 
 WEBSOCKET_SCHEME = config('WEBSERVER_SCHEME', default='ws')
 WEBSOCKET_HOST = config('WEBSOCKET_HOST', default='localhost')
@@ -33,5 +37,4 @@ WEBSOCKET_URL = config('WEBSOCKET_URL',
                        cast=urlparse)
 WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
 
-ROOT_DIRECTORY = Path(smib.__file__).parent
-PLUGINS_DIRECTORY = ROOT_DIRECTORY / 'slack' / 'plugins'
+PLUGINS_DIRECTORY = config('PLUGINS_DIRECTORY', default=ROOT_DIRECTORY / 'slack' / 'plugins', cast=Path)

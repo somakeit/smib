@@ -1,6 +1,6 @@
 import threading
 from smib.common.config import WEBSOCKET_HOST, WEBSOCKET_PORT
-from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+from simple_websocket_server import SimpleWebSocketServer, WebSocket
 
 
 class SimpleServer(WebSocket):
