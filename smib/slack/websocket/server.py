@@ -6,6 +6,9 @@ from slack_bolt.adapter.flask.handler import BoltRequest, BoltResponse
 from smib.slack.custom_app import CustomApp as App
 from threading import Thread
 import pickle
+import logging
+
+logger = logging.getLogger(__name__)
 
 from http import HTTPStatus
 
@@ -25,13 +28,13 @@ class SlackExternalWebsocketHandler(WebSocket):
         slack_app: App
 
         event_type: str = bolt_request.body.get('event').get('type')
-        print(f"Received event: {event_type}")
+        logger.debug(f"Received event: {event_type}")
 
         bolt_response: BoltResponse = slack_app.dispatch(bolt_request)
         self.send_message(pickle.dumps(bolt_response))
 
         http_status: HTTPStatus = HTTPStatus(bolt_response.status)
-        print(f"Sent status: {bolt_response.status} - {http_status.name}: {http_status.description}")
+        logger.debug(f"Sent status: {bolt_response.status} - {http_status.name}: {http_status.description}")
 
     def connected(self):
         print(self.address, 'connected')
@@ -52,6 +55,7 @@ def get_server():
 
 @autowired
 def start_server(server: Autowired(WebSocketServer)):
+    logger.info(f"Starting WebSocketServer")
     server.serve_forever()
 
 

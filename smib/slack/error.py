@@ -8,6 +8,9 @@ import traceback as tb
 import json
 from smib.common.config import ROOT_DIRECTORY
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 ERRORS_TO_IGNORE = [
     BoltUnhandledRequestError
@@ -47,6 +50,7 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
 
 
 def handle_errors(error, context, request, body):
+    print(context)
     if type(error) in ERRORS_TO_IGNORE:
         resp = BoltResponse(**get_http_status_json_response(HTTPStatus.OK, error, request))
         context.ack()

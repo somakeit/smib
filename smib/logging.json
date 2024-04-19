@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "simple": {
+      "format": "[%(levelname)s] [%(asctime)s] %(module)s"
+    },
+    "detailed": {
+      "format": "[%(levelname)s] [%(asctime)s] %(module_name)s(%(funcName)s:L%(lineno)d) -> %(name)s: %(message)s",
+      "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+    }
+  },
+  "filters": {
+    "ModuleNameInjector": {
+      "()": "smib.common.logging_.filters.ModuleNameInjector"
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "detailed",
+      "filters": ["ModuleNameInjector"],
+      "stream": "ext://sys.stdout"
+    },
+    "file_handler": {
+      "class": "logging.handlers.TimedRotatingFileHandler",
+      "formatter": "detailed",
+      "filename": "logs/smib.log",
+      "when": "midnight",
+      "interval": 1,
+      "backupCount": 7
+    }
+  },
+  "loggers": {
+    "": {
+      "level": "INFO",
+      "handlers": ["console", "file_handler"]
+    },
+    "smib": {
+      "level": "DEBUG"
+    },
+    "uvicorn.error": {
+      "handlers": [],
+      "propagate": false
+    },
+    "uvicorn.access": {
+      "handlers": ["console"],
+      "propagate": true
+    },
+    "uvicorn.asgi": {
+      "handlers": [],
+      "propagate": true
+    },
+    "apscheduler": {
+      "level": "WARNING",
+      "propagate": false
+    },
+    "slack_bolt": {
+      "level": "WARNING",
+      "propagate": false
+    },
+    "slack_sdk": {
+      "level": "WARNING",
+      "propagate": false
+    }
+  }
+}

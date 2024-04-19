@@ -2,3 +2,4 @@ syntax: glob
 .idea/
 *.pyc
 **/__pycache__/
+smib/log/

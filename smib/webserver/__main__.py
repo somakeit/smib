@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
@@ -13,7 +14,11 @@ from smib.common.config import (
 )
 from smib.common.utils import is_pickleable
 from smib.webserver.websocket_handler import WebSocketHandler
+from smib.common.config import setup_logging
 
+setup_logging()
+
+logger = logging.getLogger(__name__)
 
 async def generate_request_body(fastapi_request):
     event_type = f"http_{fastapi_request.method.lower()}_{fastapi_request.path_params.get('event', None)}"
@@ -68,6 +73,7 @@ templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 async def smib_event_handler(request: Request, event: str):
     ws_handler.check_and_reconnect_websocket_conn()
     bolt_request: BoltRequest = await generate_bolt_request(request)
+    logger.debug(f"Request: {request} -> Bolt Request: {bolt_request}")
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = await ws_handler.receive_bolt_response()
     return to_starlette_response(bolt_response)
@@ -89,6 +95,7 @@ app.include_router(router)
 def main(app: FastAPI, ws_handler: WebSocketHandler):
     try:
         import uvicorn
+        logger.info(f"Starting WebsServer")
         uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT)
     finally:
         ws_handler.close_conn()
