@@ -3,4 +3,4 @@
 
 This device run on a Raspberry Pi Pico W and provides physical input and output to humans for the SMIB project; Buttons, LEDs, that sort of thing.
 
-Further documentation can be found [in the smibhid folder](smibhid/README.md).
+Further documentation can be found [in the smibhid folder](smibhid/).
