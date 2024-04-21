@@ -42,14 +42,18 @@ def get_app_home():
 def app_home_opened(client: WebClient, event: dict):
     client.views_publish(user_id=event['user'], view=get_app_home())
 
+
 @app.action('space_open')
-def space_open(say):
-    print("Space Open")
+def space_open(say, context, ack):
+    ack()
+    context['logger'].debug("Space Open!")
     say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
+
 @app.action('space_closed')
-def space_closed(say):
-    print('Space Closed')
+def space_closed(say, context, ack):
+    ack()
+    context['logger'].debug("Space Closed!")
     say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
 

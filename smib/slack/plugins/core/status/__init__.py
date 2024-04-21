@@ -18,7 +18,6 @@ app: CustomApp = inject("SlackApp")
 def context_injector(context, next):
     plugin_manager = inject("PluginManager")
     scheduler = inject("Scheduler")
-    print('Context injector')
     context['plugin_manager'] = plugin_manager
     context['scheduler'] = scheduler
 
@@ -28,7 +27,6 @@ def context_injector(context, next):
 @app.event('http_get_status')
 @http_bolt_response
 def status(request: Request):
-    print('Get Status')
     plugin_manager = inject("PluginManager")
     scheduler = inject("Scheduler")
     data = {

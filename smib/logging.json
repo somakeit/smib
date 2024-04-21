@@ -6,13 +6,8 @@
       "format": "[%(levelname)s] [%(asctime)s] %(module)s"
     },
     "detailed": {
-      "format": "[%(levelname)s] [%(asctime)s] %(module_name)s(%(funcName)s:L%(lineno)d) -> %(name)s: %(message)s",
+      "format": "[%(levelname)s] [%(asctime)s] %(name)s(%(funcName)s:L%(lineno)d): %(message)s",
       "datefmt": "%Y-%m-%dT%H:%M:%S%z"
-    }
-  },
-  "filters": {
-    "ModuleNameInjector": {
-      "()": "smib.common.logging_.filters.ModuleNameInjector"
     }
   },
   "handlers": {
@@ -39,18 +34,6 @@
     "smib": {
       "level": "DEBUG"
     },
-    "uvicorn.error": {
-      "handlers": [],
-      "propagate": false
-    },
-    "uvicorn.access": {
-      "handlers": ["console"],
-      "propagate": true
-    },
-    "uvicorn.asgi": {
-      "handlers": [],
-      "propagate": true
-    },
     "apscheduler": {
       "level": "WARNING",
       "propagate": false
@@ -60,7 +43,7 @@
       "propagate": false
     },
     "slack_sdk": {
-      "level": "WARNING",
+      "level": "DEBUG",
       "propagate": false
     }
   }

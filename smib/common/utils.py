@@ -1,9 +1,11 @@
+import logging
 import pickle
 from pathlib import Path
 
 import functools
 import json
 
+from injectable import inject
 from slack_bolt.response import BoltResponse
 
 
@@ -23,10 +25,11 @@ def to_path(x):
 def log_error(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        logger: logging.Logger = inject("logger")
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            print(f'{e.__class__.__name__}: {e}')
+            logger.exception(f'{e.__class__.__name__}: {e}')
 
     return wrapper
 

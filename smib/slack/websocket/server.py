@@ -8,8 +8,6 @@ from threading import Thread
 import pickle
 import logging
 
-logger = logging.getLogger(__name__)
-
 from http import HTTPStatus
 
 
@@ -20,6 +18,7 @@ class SlackExternalWebsocketHandler(WebSocket):
 
     @log_error
     def handle(self):
+        logger: logging.Logger = inject("logger")
         assert isinstance(self.data, bytes) or isinstance(self.data, bytearray), 'Not bytes'
         assert isinstance(bolt_request := pickle.loads(self.data), BoltRequest), 'Not a BoltRequest'
         assert isinstance(slack_app := inject("SlackApp"), App), 'No slack app'
@@ -37,26 +36,37 @@ class SlackExternalWebsocketHandler(WebSocket):
         logger.debug(f"Sent status: {bolt_response.status} - {http_status.name}: {http_status.description}")
 
     def connected(self):
-        print(self.address, 'connected')
+        logger: logging.Logger = inject("logger")
+        logger.info(f"{self.address} connected")
         if self.address[0] in WEBSOCKET_ALLOWED_HOSTS:
             return
 
-        print(NOT_AUTHORIZED)
+        logger.warning(f"Connection from {self.address} is {NOT_AUTHORIZED}")
         self.close(reason=NOT_AUTHORIZED)
 
     def handle_close(self):
-        print(self.address, 'closed')
+        logger: logging.Logger = inject("logger")
+        logger.info(f"{self.address} closed")
 
 
 @injectable_factory(WebSocketServer, singleton=True)
 def get_server():
-    return WebSocketServer(WEBSOCKET_HOST, WEBSOCKET_PORT, SlackExternalWebsocketHandler)
+    logger: logging.Logger = inject("logger")
+    try:
+        return WebSocketServer(WEBSOCKET_HOST, WEBSOCKET_PORT, SlackExternalWebsocketHandler)
+    except Exception as e:
+        logger.exception(e)
+    return None
 
 
 @autowired
 def start_server(server: Autowired(WebSocketServer)):
-    logger.info(f"Starting WebSocketServer")
-    server.serve_forever()
+    logger: logging.Logger = inject("logger")
+    if server is not None:
+        logger.info(f"Starting WebSocketServer")
+        server.serve_forever()
+    else:
+        logger.warning('Unable to start WebSocketServer')
 
 
 def start_threaded_server():

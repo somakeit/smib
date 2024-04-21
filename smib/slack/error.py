@@ -50,12 +50,13 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
 
 
 def handle_errors(error, context, request, body):
-    print(context)
     if type(error) in ERRORS_TO_IGNORE:
+        logger.debug(f'Ignored error {error.__class__.__name__}: {error} for request {body}')
         resp = BoltResponse(**get_http_status_json_response(HTTPStatus.OK, error, request))
         context.ack()
         return resp
 
+    logger.exception(f'Unexpected error {error.__class__.__name__}: {error}', exc_info=error)
     resp = BoltResponse(**get_http_status_json_problem_response(HTTPStatus.IM_A_TEAPOT, error, request))
     context.ack()
     return resp

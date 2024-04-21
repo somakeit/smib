@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
+from injectable import load_injection_container, inject
 from slack_bolt.request import BoltRequest
 from slack_bolt.response import BoltResponse
 from slack_bolt.adapter.starlette.handler import to_bolt_request, to_starlette_response
@@ -10,15 +11,18 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 from smib.common.config import (
-    WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY
+    WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY,
+    ROOT_DIRECTORY
 )
 from smib.common.utils import is_pickleable
 from smib.webserver.websocket_handler import WebSocketHandler
-from smib.common.config import setup_logging
+
+from smib.common.logging_.setup import setup_logging, read_logging_json
 
 setup_logging()
 
-logger = logging.getLogger(__name__)
+load_injection_container(ROOT_DIRECTORY)
+
 
 async def generate_request_body(fastapi_request):
     event_type = f"http_{fastapi_request.method.lower()}_{fastapi_request.path_params.get('event', None)}"
@@ -71,6 +75,8 @@ templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 @router.get('/event/{event}', tags=['SMIB Events'])
 @router.post('/event/{event}', tags=['SMIB Events'])
 async def smib_event_handler(request: Request, event: str):
+    logger = inject("logger")
+    logger.debug(f"Received event {event}")
     ws_handler.check_and_reconnect_websocket_conn()
     bolt_request: BoltRequest = await generate_bolt_request(request)
     logger.debug(f"Request: {request} -> Bolt Request: {bolt_request}")
@@ -93,10 +99,11 @@ app.include_router(router)
 
 
 def main(app: FastAPI, ws_handler: WebSocketHandler):
+    logger = inject("logger")
     try:
         import uvicorn
-        logger.info(f"Starting WebsServer")
-        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT)
+        logger.info(f"Starting WebServer")
+        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json())
     finally:
         ws_handler.close_conn()
 

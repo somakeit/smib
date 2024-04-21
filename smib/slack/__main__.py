@@ -3,22 +3,23 @@ from pathlib import Path
 
 from simple_websocket_server import WebSocketServer
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+from slack.logging_injector import inject_logger_to_slack_context
 from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
 from smib.slack.websocket import server as websocket_server
 from smib.slack.error import handle_errors
 from injectable import Autowired, load_injection_container, autowired, injectable_factory, inject
 from smib.slack.plugin.manager import PluginManager
 from smib.slack.custom_app import CustomApp
-from smib.common.config import setup_logging
+
+from smib.common.logging_.setup import setup_logging
 
 setup_logging()
 
 
-logger = logging.getLogger(__name__)
-
-
 @injectable_factory(CustomApp, singleton=True, qualifier="SlackApp")
 def create_slack_bolt_app():
+    logger: logging.Logger = inject("logger")
     app: CustomApp = CustomApp(token=SLACK_BOT_TOKEN,
                                raise_error_for_unhandled_request=True,
                                request_verification_enabled=False,
@@ -30,12 +31,14 @@ def create_slack_bolt_app():
                                )
     logger.info(f"Created SlackApp: {APPLICATION_NAME}")
     app.error(handle_errors)
+    app.middleware(inject_logger_to_slack_context)
     logger.info(f"Registered SlackApp error handler: {handle_errors}")
     return app
 
 
 @autowired
 def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
+    logger: logging.Logger = inject("logger")
     handler = SocketModeHandler(app,
                              app_token=SLACK_APP_TOKEN,
                              trace_enabled=True,
@@ -48,8 +51,9 @@ def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
 
 
 def main():
-    load_injection_container()
+    load_injection_container(ROOT_DIRECTORY)
 
+    logger: logging.Logger = inject("logger")
     slack_socket_mode_handler = create_slack_socket_mode_handler()
 
     plugin_manager = inject(PluginManager)

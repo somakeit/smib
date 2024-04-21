@@ -42,11 +42,3 @@ WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,1
 PLUGINS_DIRECTORY = config('PLUGINS_DIRECTORY', default=ROOT_DIRECTORY / 'slack' / 'plugins', cast=Path)
 
 SPACE_OPEN_ANNOUNCE_CHANNEL_ID = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='C06UDPLQRP1')
-
-
-def setup_logging(path=ROOT_DIRECTORY / 'logging.json'):
-    from smib.common.logging_.filters import ModuleNameInjector
-    with open(path, 'rt') as file:
-        config_file = json.load(file)
-        logging.config.dictConfig(config_file)
-        logger = logging.getLogger(__name__)
