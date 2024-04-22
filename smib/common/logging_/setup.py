@@ -13,7 +13,6 @@ def read_logging_json(path=ROOT_DIRECTORY / 'logging.json'):
 
 
 def setup_logging(path=ROOT_DIRECTORY / 'logging.json'):
-    from smib.common.logging_.filters import ModuleNameInjector
     logging.config.dictConfig(read_logging_json(path))
 
 

@@ -14,11 +14,10 @@
     "console": {
       "class": "logging.StreamHandler",
       "formatter": "detailed",
-      "filters": ["ModuleNameInjector"],
       "stream": "ext://sys.stdout"
     },
     "file_handler": {
-      "class": "logging.handlers.TimedRotatingFileHandler",
+      "class": "smib.common.logging_.handlers.EnsureDirectoryTimedRotatingFileHandler",
       "formatter": "detailed",
       "filename": "logs/smib.log",
       "when": "midnight",
@@ -28,7 +27,7 @@
   },
   "loggers": {
     "": {
-      "level": "INFO",
+      "level": "DEBUG",
       "handlers": ["console", "file_handler"]
     },
     "smib": {
@@ -43,7 +42,11 @@
       "propagate": false
     },
     "slack_sdk": {
-      "level": "DEBUG",
+      "level": "WARNING",
+      "propagate": false
+    },
+    "tzlocal": {
+      "level": "WARNING",
       "propagate": false
     }
   }
