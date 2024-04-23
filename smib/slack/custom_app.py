@@ -1,6 +1,6 @@
 import json
 
-from slack_bolt import App
+from slack_bolt import App, CustomListenerMatcher
 from injectable import inject, injectable_factory
 from apscheduler.util import undefined
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -61,3 +61,15 @@ class CustomApp(App):
             return func
 
         return decorator_schedule
+
+    def hello(self):
+        def __call__(*args, **kwargs):
+
+            def match_hello(request):
+                return request.body.get('type') == 'hello'
+
+            functions = self._to_listener_functions(kwargs) if kwargs else list(args)
+            primary_matcher = CustomListenerMatcher(app_name='', func=match_hello)
+            return self._register_listener(list(functions), primary_matcher=primary_matcher, matchers=None, middleware=None, auto_acknowledgement=True)
+
+        return __call__
