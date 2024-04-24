@@ -4,7 +4,7 @@ services:
     container_name: smib-slack
     build:
       context: .
-      dockerfile: smib.slack.Dockerfile
+      dockerfile: smib.Dockerfile
     ports:
       - "4123:4123"
     environment:
@@ -12,12 +12,13 @@ services:
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
     networks:
       - smib-bridge-network
+    command: "python -m smib.slack"
 
   smib-webserver:
     container_name: smib-webserver
     build:
       context: .
-      dockerfile: smib.webserver.Dockerfile
+      dockerfile: smib.Dockerfile
     ports:
       - "80:80"
     depends_on:
@@ -26,6 +27,7 @@ services:
       - WEBSOCKET_HOST=smib-slack
     networks:
       - smib-bridge-network
+    command: "python -m smib.webserver"
 
 networks:
   smib-bridge-network:

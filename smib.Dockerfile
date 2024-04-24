@@ -7,14 +7,7 @@ WORKDIR /smib
 # Copy the entire smib package into the container at /smib
 COPY . .
 
-RUN rm -rf /smib/smib/webserver
 RUN rm -rf /smib/tests
 
-# Install Poetry
-RUN pip install poetry
-
-# Use Poetry to install package dependencies
+# Use pyproject.toml to install package dependencies
 RUN pip install -e .
-
-# Run smib.slack when the container launches
-CMD ["python", "-m", "smib.slack"]
