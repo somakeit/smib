@@ -12,9 +12,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-ERRORS_TO_IGNORE = [
-    BoltUnhandledRequestError
-]
+ERROR_STATUSES = {
+    BoltUnhandledRequestError: HTTPStatus.NOT_FOUND
+}
 
 
 def get_http_status_json_response(http_status: HTTPStatus, error: Exception, request: BoltRequest) -> dict:
@@ -50,9 +50,9 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
 
 
 def handle_errors(error, context, request, body):
-    if type(error) in ERRORS_TO_IGNORE:
-        logger.debug(f'Ignored error {error.__class__.__name__}: {error} for request {body}')
-        resp = BoltResponse(**get_http_status_json_response(HTTPStatus.OK, error, request))
+    if status := ERROR_STATUSES.get(error.__class__, None):
+        logger.debug(f'Pre-defined status code for error {error.__class__.__name__}: {error} for request {body}')
+        resp = BoltResponse(**get_http_status_json_response(status, error, request))
         context.ack()
         return resp
 
