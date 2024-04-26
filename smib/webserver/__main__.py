@@ -74,6 +74,7 @@ templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 
 @router.get('/event/{event}', tags=['SMIB Events'])
 @router.post('/event/{event}', tags=['SMIB Events'])
+@router.put('/event/{event}', tags=['SMIB Events'])
 async def smib_event_handler(request: Request, event: str):
     logger = inject("logger")
     logger.debug(f"Received event {event}")

@@ -44,6 +44,7 @@ def app_home_opened(client: WebClient, event: dict):
 
 
 @app.action('space_open')
+@app.event('http_put_space_open')
 def space_open(say, context, ack):
     ack()
     context['logger'].debug("Space Open!")
@@ -51,6 +52,7 @@ def space_open(say, context, ack):
 
 
 @app.action('space_closed')
+@app.event('http_put_space_closed')
 def space_closed(say, context, ack):
     ack()
     context['logger'].debug("Space Closed!")

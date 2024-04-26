@@ -1,0 +1,34 @@
+services:
+  smib-slack:
+    container_name: smib-slack
+    build:
+      context: .
+      dockerfile: smib-fast.Dockerfile
+    ports:
+      - "4123:4123"
+    environment:
+      - WEBSERVER_HOST=smib-webserver
+      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+    networks:
+      - smib-bridge-network
+    command: "python -m smib.slack"
+
+  smib-webserver:
+    container_name: smib-webserver
+    build:
+      context: .
+      dockerfile: smib-fast.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - smib-slack
+    environment:
+      - WEBSOCKET_HOST=smib-slack
+    networks:
+      - smib-bridge-network
+    command: "python -m smib.webserver"
+
+networks:
+  smib-bridge-network:
+    name: smib-bridge-network
+    driver: bridge
