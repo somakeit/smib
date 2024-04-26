@@ -5,7 +5,7 @@
 - Set the slack tokens as environment variables as follows:
   - Linux
     - `export SLACK_APP_TOKEN=<app-token>`
-    - `SLACK_APP_TOKEN=<app-token>`
+    - `export SLACK_BOT_TOKEN=<bot-token>`
   - .env File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
 - Issue command `docker compose up -d --build`
