@@ -22,6 +22,8 @@ def create_scheduler():
 
 
 class CustomApp(App):
+    num_connections: int = 0
+
     def schedule(self, trigger, id, name,
                  misfire_grace_time=undefined, coalesce=undefined, max_instances=undefined,
                  next_run_time=undefined, jobstore='default', executor='default',
@@ -61,15 +63,3 @@ class CustomApp(App):
             return func
 
         return decorator_schedule
-
-    def hello(self):
-        def __call__(*args, **kwargs):
-
-            def match_hello(request):
-                return request.body.get('type') == 'hello'
-
-            functions = self._to_listener_functions(kwargs) if kwargs else list(args)
-            primary_matcher = CustomListenerMatcher(app_name='', func=match_hello)
-            return self._register_listener(list(functions), primary_matcher=primary_matcher, matchers=None, middleware=None, auto_acknowledgement=True)
-
-        return __call__

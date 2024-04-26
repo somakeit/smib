@@ -53,10 +53,10 @@ def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
     @handler.client.on_message_listeners.append
     def _listener(raw_message):
         json_message: dict = json.loads(raw_message)
-        req: BoltRequest = BoltRequest(body=json.dumps(json_message))
-        app.dispatch(req)
+        if json_message.get('type') == "hello":
+            app.num_connections = json_message["num_connections"]
+            logger.info(f"{app.num_connections = }")
 
-    # handler.client.on_message_listeners.append(_listener)
     logger.info(f"Created SocketModeHandler")
     return handler
 
