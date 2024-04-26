@@ -9,6 +9,10 @@ services:
     environment:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+
+      # Passed in from HOST
+      - SLACK_APP_TOKEN
+      - SLACK_BOT_TOKEN
     networks:
       - smib-bridge-network
     command: "python -m smib.slack"
@@ -24,6 +28,10 @@ services:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
+
+      # Passed in from HOST
+      - SLACK_APP_TOKEN
+      - SLACK_BOT_TOKEN
     networks:
       - smib-bridge-network
     command: "python -m smib.webserver"

@@ -6,3 +6,4 @@ smib/log/
 .vscode/
 .micropico
 *.pyi
+.env
