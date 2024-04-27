@@ -3,7 +3,7 @@ from typing import Type, TypeVar
 
 from pymongo import MongoClient
 from pymongo.client_session import ClientSession
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field, fields, asdict
 
 from pymongo.collection import Collection
@@ -97,7 +97,7 @@ class Trigger(StrEnum):
 @dataclass
 class SpaceState(Database):
     open: bool = False
-    last_updated: datetime = datetime.now()
+    last_updated: datetime = datetime.now(tz=timezone.utc)
     motion: bool = False
     open_closed_last_trigger: str = None
 
@@ -116,7 +116,7 @@ class SpaceState(Database):
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
         if name != "last_updated":
-            self.last_updated = datetime.now()
+            self.last_updated = datetime.now(tz=timezone.utc)
 
 
 if __name__ == '__main__':
