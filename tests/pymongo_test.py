@@ -4,79 +4,52 @@ from pymongo import MongoClient
 from dataclasses import dataclass, field, fields
 import datetime
 
+import time
+
 # MongoDB initialization
 client = MongoClient('mongodb://root:example@localhost:27017/')
+
 db = client['smib']
 
-
-def database(collection_name):
-    collection = db[collection_name]
-
-    def decorator(cls):
-        cls = dataclass(cls)
-
-        class Wrapper:
-            def __init__(self, *args, **kwargs):
-                document = collection.find_one() or {}
-
-                default_instance = cls(*args, **kwargs)
-
-                for f in fields(cls):
-                    value = document.get(f.name, getattr(default_instance, f.name))
-                    setattr(self, f.name, value)
-
-                self.wrapped = default_instance
-
-                def save(self):
-                    # get a dictionary of all instance variables excluding 'wrapped'
-                    obj_dict = {k: v for k, v in self.__dict__.items() if k != 'wrapped'}
-                    collection.update_one({}, {'$set': obj_dict}, upsert=True)
-
-            def __getattr__(self, name):
-                # Get the latest document from the database
-                document = collection.find_one() or {}
-                self.__dict__ = document
-                # if document has updated value of name, return it. Otherwise return the value from dataclass instance
-                return document.get(name, getattr(self.wrapped, name))
-
-            def __setattr__(self, field, value):
-                if field != 'wrapped':
-                    collection.update_one({}, {'$set': {field: value, "_updated_at": datetime.datetime.now()}}, upsert=True)
-                super().__setattr__(field, value)
-
-            def reset(self):
-                obj = cls.__new__(cls)  # Create new instance without calling __init__
-                cls.__init__(obj)  # Call __init__ to initialize the new instance
-                collection.update_one({}, {'$set': obj.__dict__}, upsert=True)
+collection = db['state-test']
 
 
-    # Copying class name and docstring
-            __repr__ = cls.__repr__
-            __name__ = cls.__name__
-            __doc__ = cls.__doc__
-            __qualname__ = cls.__qualname__
+@dataclass
+class BaseDocument:
+    _id: any = None
 
-        return Wrapper
+    def __post_init__(self):
+        document = collection.find_one()
+        if document:
+            self.__dict__.update({k:v for k, v in document.items() if k != '_id'})
 
-    return decorator
+    def refresh(self):
+        self.__post_init__()
+
+    def save(self):
+        collection.update_one({}, {'$set': {k:v for k, v in self.__dict__.items() if k != '_id'}}, upsert=True)
 
 
-@database('SpaceStateCollection')
-class SpaceState:
-    open: bool = False
-    motion: bool = True
-    _updated_at: datetime.datetime = field(default_factory=datetime.datetime.now)
+class SpaceState(BaseDocument):
+    open: bool | None = None
+    last_updated: datetime.datetime | None = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc))
 
 
 state = SpaceState()
-state.open = True
-
-print(state.open)
+print(state)
 
 state.open = False
-state.motion = False
+state.last_updated = datetime.datetime.now()
+state.save()
 
 print(state)
 
-
-print(state)
+# document = SpaceState(**collection.find_one() or {})
+#
+# document.open = True
+#
+# collection.update_one({}, {'$set': {**document.__dict__}}, upsert=True)
+#
+# document = SpaceState(**collection.find_one({}) or {})
+#
+# print(document)
