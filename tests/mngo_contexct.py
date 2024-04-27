@@ -35,7 +35,7 @@ class SingletonMongoDB:
         global_cache = asdict(self)
         document = self.collection.find_one()
         if document is None:
-            document = self.collection.update_one({}, {"$set": asdict(self)}, upsert=True)
+            _ = self.collection.update_one({}, {"$set": asdict(self)}, upsert=True)
             document = self.collection.find_one()
 
         global_cache.update({k: v for k, v in document.items() if k in global_cache})
@@ -121,6 +121,7 @@ class SpaceState(Database):
 
 if __name__ == '__main__':
     with SpaceState() as space:
+        print(space)
         space.toggle_open()
         print(space)
 
