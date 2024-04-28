@@ -16,7 +16,7 @@ global_cache = {}
 _sync = True
 
 
-class SingletonMongoDB:
+class SingleMongoDocument:
 
     collection: Collection
     client: MongoClient
@@ -86,7 +86,7 @@ class SingletonMongoDB:
         self.session.commit_transaction()
 
 
-Database = SingletonMongoDB.set_collection('space_openclose')
+Database = SingleMongoDocument.set_collection('space_openclose')
 
 
 class Trigger(StrEnum):
