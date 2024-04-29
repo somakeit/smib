@@ -622,6 +622,21 @@ docs = ["alabaster (==0.7.16)", "autodocsumm (==0.2.12)", "sphinx (==7.2.6)", "s
 tests = ["pytest", "pytz", "simplejson"]
 
 [[package]]
+name = "mogo"
+version = "0.6.0"
+description = "Simple PyMongo \"schema-less\" object wrapper"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mogo-0.6.0-py3-none-any.whl", hash = "sha256:3ca31c1a15cc1add3b1407cefe50c335f72ea166b974758230f5121927216dea"},
+    {file = "mogo-0.6.0.tar.gz", hash = "sha256:ec53fdb19637168f7eef92555ebd4292e2030d15266885286e3696ebc375e550"},
+]
+
+[package.dependencies]
+pymongo = ">=4.1"
+
+[[package]]
 name = "mongogettersetter"
 version = "1.5.0"
 description = "A clean way to handle MongoDB documents in Pythonic way"
@@ -1433,4 +1448,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1fd09434902599f6855c9324eb7bc6506b5c2b2e17988c8d5edc48d9928e1d79"
+content-hash = "fd0744dbb91c9f89e9b402fcc4118d86aa9d0bb37c2eeeda99deca8f8a583a05"

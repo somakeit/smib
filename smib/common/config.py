@@ -39,6 +39,19 @@ WEBSOCKET_URL = config('WEBSOCKET_URL',
                        cast=urlparse)
 WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
 
+MONGO_DB_HOST = config('MONGO_DB_HOST', default='localhost')
+MONGO_DB_PORT = config('MONGO_DB_PORT', default=27017, cast=int)
+
+MONGO_DB_URL = f"mongodb://{MONGO_DB_HOST}:{MONGO_DB_PORT}/"
+
+MONGO_DB_PLUGINS_USER = config('MONGO_DB_PLUGINS_USER', default='plugins')
+MONGO_DB_PLUGINS_PASSWORD = config('MONGO_DB_PLUGINS_PASSWORD', default='plug1n5')
+
+MONGO_DB_PLUGINS_NAME = config('MONGO_DB_PLUGINS_NAME', default='smib_plugins')
+
+MONGO_DB_ADMIN_USER = config('MONGO_DB_ADMIN_USER')
+MONGO_DB_ADMIN_PASSWORD = config('MONGO_DB_ADMIN_PASSWORD')
+
 PLUGINS_DIRECTORY = config('PLUGINS_DIRECTORY', default=ROOT_DIRECTORY / 'slack' / 'plugins', cast=Path)
 
 SPACE_OPEN_ANNOUNCE_CHANNEL_ID = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='C06UDPLQRP1')

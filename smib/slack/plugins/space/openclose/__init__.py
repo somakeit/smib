@@ -46,16 +46,22 @@ def app_home_opened(client: WebClient, event: dict):
 @app.action('space_open')
 @app.event('http_put_space_open')
 def space_open(say, context, ack):
+    from .models import Space
+
     ack()
     context['logger'].debug("Space Open!")
     say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+
+    Space.single().set_open()
 
 
 @app.action('space_closed')
 @app.event('http_put_space_closed')
 def space_closed(say, context, ack):
+    from .models import Space
+
     ack()
     context['logger'].debug("Space Closed!")
     say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
-
+    Space.single().set_closed()

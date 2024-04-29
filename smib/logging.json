@@ -48,6 +48,9 @@
     "tzlocal": {
       "level": "WARNING",
       "propagate": false
+    },
+    "pymongo": {
+      "level": "WARNING"
     }
   }
 }
