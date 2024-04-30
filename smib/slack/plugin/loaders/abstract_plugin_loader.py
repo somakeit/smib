@@ -1,4 +1,5 @@
 import inspect
+import logging
 from pathlib import Path
 from abc import ABC, abstractmethod
 from pprint import pprint
@@ -38,8 +39,9 @@ class AbstractPluginLoader(ABC):
         return inject("Scheduler")
 
     def load_all(self) -> list[Plugin]:
+        logger: logging.Logger = inject("logger")
         plugins: list[Plugin] = []
-        print(f"loading {self.type} plugins")
+        logger.info(f"Loading {self.type} plugins")
         for path in self.plugins_directory.glob(f'*/*/{self.id_file}'):
             plugin = self.load_plugin(path.parent)
 
@@ -69,11 +71,15 @@ class AbstractPluginLoader(ABC):
         )
 
     def load_plugin(self, plugin_path: Path) -> Plugin:
+        logger: logging.Logger = inject("logger")
         plugin = self.create_plugin(plugin_path)
         returned_plugin = self.register_plugin(plugin)
 
         if not plugin.enabled:
             self.unload_plugin(plugin)
+
+        if plugin.error:
+            logger.error(plugin.error)
 
         return returned_plugin
 
@@ -120,9 +126,9 @@ class AbstractPluginLoader(ABC):
                 self.app._middleware_list.remove(middleware)
 
     def reload_plugin(self, plugin: Plugin) -> Plugin:
-        print(f"Reloading: {plugin}")
+        logger: logging.Logger = inject("logger")
+        logger.debug(f"Reloading: {plugin}")
         self.unload_plugin(plugin)
-        # print(self.scheduler.get_jobs())
         reloaded_plugin = self.load_plugin(plugin.directory)
         return reloaded_plugin
 

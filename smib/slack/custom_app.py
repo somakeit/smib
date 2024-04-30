@@ -5,16 +5,19 @@ from injectable import inject, injectable_factory
 from apscheduler.util import undefined
 from apscheduler.schedulers.background import BackgroundScheduler
 from slack_bolt.request import BoltRequest
-
+import logging
 from smib.common.utils import log_error
 
 _id_func = id
+
+logger = logging.getLogger(__name__)
 
 
 @injectable_factory(BackgroundScheduler, qualifier="Scheduler", singleton=True)
 def create_scheduler():
     bs = BackgroundScheduler()
     bs.start()
+    logger.info("Scheduler started")
     return bs
 
 
