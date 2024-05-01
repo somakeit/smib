@@ -1,27 +1,39 @@
-import logging
-from functools import partial
-from logging import Logger
+import functools
+import inspect
+from pathlib import Path
 
-import pymongo.errors
-from injectable import injectable_factory, inject, load_injection_container
+from injectable import inject
 from mogo import Model, Field, connect
-from pymongo import MongoClient
 
-from slack.plugin import PluginManager
-from smib.common.utils import _get_module_name, _get_module_file
-from smib.common.config import MONGO_DB_URL, MONGO_DB_ADMIN_PASSWORD, MONGO_DB_ADMIN_USER
-
-
-def connect_to_plugin_database(plugin_id: str):
-    return connect(plugin_id, uri=MONGO_DB_URL)
+from smib.slack.plugin import PluginManager
+from smib.common.utils import get_module_file
+from smib.common.config import MONGO_DB_URL, MONGO_DB_CONNECT_TIMEOUT_SECONDS
 
 
-def get_plugin_database():
+def get_current_plugin_id() -> str:
     plugin_manager: PluginManager = inject("PluginManager")
-    plugin_name = plugin_manager.get_plugin_from_file(_get_module_file(2)).id
-    return connect_to_plugin_database(plugin_name)
+    plugin_name = plugin_manager.get_plugin_from_file(get_module_file(2)).id
+    return plugin_name
 
 
-@injectable_factory(Logger, qualifier="logger")
-def logger_factory():
-    return logging.getLogger(__name__)
+def database(database_name: str = None):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            db_name = database_name
+
+            # If no database_name parameter name passed in, get current plugin id and use that
+            if db_name is None:
+                plugin_file = Path(inspect.getfile(func))
+                plugin_manager: PluginManager = inject("PluginManager")
+                db_name = plugin_manager.get_plugin_from_file(plugin_file).id
+
+            inject("logger").debug(f"Database name: {db_name}")
+
+            # Connect to DB and close it afterward
+            with connect(db_name, uri=MONGO_DB_URL, timeoutMs=1000*MONGO_DB_CONNECT_TIMEOUT_SECONDS):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

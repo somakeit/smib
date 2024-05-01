@@ -68,14 +68,16 @@ def http_bolt_response(func):
     return wrapper
 
 
-def _get_module_name(stack_num: int = 4):
-    frame = inspect.stack()[stack_num]
+def get_module_name(stack_num: int = 4):
+    stack = inspect.stack()
+    frame = stack[stack_num]
     module = inspect.getmodule(frame[0])
     module_name = module.__name__
     return module_name
 
 
-def _get_module_file(stack_num: int = 4) -> Path:
-    frame = inspect.stack()[stack_num]
+def get_module_file(stack_num: int = 4) -> Path:
+    stack = inspect.stack()
+    frame = stack[stack_num]
     file = inspect.getfile(frame[0])
     return Path(file)

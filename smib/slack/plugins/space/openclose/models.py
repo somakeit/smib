@@ -1,7 +1,4 @@
-from smib.slack.db import Model, Field, get_plugin_database
-from injectable import inject
-
-client = get_plugin_database()
+from smib.slack.db import Model, Field
 
 
 class Space(Model):

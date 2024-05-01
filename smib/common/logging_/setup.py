@@ -3,7 +3,7 @@ import json
 import logging
 
 from smib.common.config import ROOT_DIRECTORY
-from smib.common.utils import _get_module_name
+from smib.common.utils import get_module_name
 from injectable import injectable_factory, load_injection_container, inject
 
 
@@ -19,7 +19,12 @@ def setup_logging(path=ROOT_DIRECTORY / 'logging.json'):
 
 @injectable_factory(logging.Logger, qualifier="plugin_logger")
 def plugin_logger_factory():
-    return logging.getLogger(_get_module_name(2))
+    return logging.getLogger(get_module_name(2))
+
+
+@injectable_factory(logging.Logger, qualifier="logger")
+def logger_factory():
+    return logging.getLogger(get_module_name(4))
 
 
 if __name__ == '__main__':
