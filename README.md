@@ -2,7 +2,7 @@
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
-- Set the slack tokens as environment variables as follows:
+- Set the slack tokens as environment variables using either method below:
   - Linux
     - `export SLACK_APP_TOKEN=<app-token>`
     - `export SLACK_BOT_TOKEN=<bot-token>`
