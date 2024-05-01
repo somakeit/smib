@@ -3,3 +3,6 @@ syntax: glob
 *.pyc
 **/__pycache__/
 smib/log/
+.vscode/
+.micropico
+*.pyi

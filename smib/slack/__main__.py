@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 from pprint import pprint, pp, pformat
@@ -7,7 +6,7 @@ from simple_websocket_server import WebSocketServer
 from slack_bolt import BoltRequest
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slack.logging_injector import inject_logger_to_slack_context
+from smib.slack.logging_injector import inject_logger_to_slack_context
 from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
 from smib.slack.websocket import server as websocket_server
 from smib.slack.error import handle_errors
@@ -65,6 +64,7 @@ def main():
     load_injection_container(ROOT_DIRECTORY)
 
     logger: logging.Logger = inject("logger")
+    slack_socket_mode_handler = create_slack_socket_mode_handler()
 
     plugin_manager = inject(PluginManager)
     plugin_manager.load_all_plugins()
@@ -78,12 +78,14 @@ def main():
         logger.info(f"Starting SocketModeHandler")
         slack_socket_mode_handler.start()
     except KeyboardInterrupt:
-        logger.info(f"Stopping SocketModeHandler")
+        logger.info(f"Stopping {APPLICATION_NAME}")
     except Exception as e:
         logger.exception(e)
     finally:
+        logger.info(f"Stopping WebSocketServer")
         ws_server.close()
         ws_server_thread.join(timeout=5)
+        logger.info(f"Stopping SocketModeHandler")
         slack_socket_mode_handler.close()
 
 
