@@ -50,13 +50,14 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
 
 
 def handle_errors(error, context, request, body):
-    if status := ERROR_STATUSES.get(error.__class__, None):
-        logger.debug(f'Pre-defined status code for error {error.__class__.__name__}: {error} for request {body}')
-        resp = BoltResponse(**get_http_status_json_response(status, error, request))
+    error_type = type(error)
+    if error_type in ERROR_STATUSES:
+        logger.debug(f'Pre-defined status code for error {error_type.__name__}: {error} for request {body}')
+        resp = BoltResponse(**get_http_status_json_response(ERROR_STATUSES.get(error_type), error, request))
         context.ack()
         return resp
 
-    logger.exception(f'Unexpected error {error.__class__.__name__}: {error}', exc_info=error)
+    logger.exception(f'Unexpected error {error_type.__name__}: {error}', exc_info=error)
     resp = BoltResponse(**get_http_status_json_problem_response(HTTPStatus.IM_A_TEAPOT, error, request))
     context.ack()
     return resp
