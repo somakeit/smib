@@ -1,6 +1,6 @@
 import json
 
-from slack_bolt import App
+from slack_bolt import App, CustomListenerMatcher
 from injectable import inject, injectable_factory
 from apscheduler.util import undefined
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -22,6 +22,8 @@ def create_scheduler():
 
 
 class CustomApp(App):
+    num_connections: int = 0
+
     def schedule(self, trigger, id, name,
                  misfire_grace_time=undefined, coalesce=undefined, max_instances=undefined,
                  next_run_time=undefined, jobstore='default', executor='default',
