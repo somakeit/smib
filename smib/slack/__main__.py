@@ -4,7 +4,7 @@ from pathlib import Path
 from simple_websocket_server import WebSocketServer
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slack.logging_injector import inject_logger_to_slack_context
+from smib.slack.logging_injector import inject_logger_to_slack_context
 from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
 from smib.slack.websocket import server as websocket_server
 from smib.slack.error import handle_errors
