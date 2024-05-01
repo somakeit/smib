@@ -40,12 +40,12 @@ def create_slack_bolt_app():
 def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
     logger: logging.Logger = inject("logger")
     handler = SocketModeHandler(app,
-                             app_token=SLACK_APP_TOKEN,
-                             trace_enabled=True,
-                             all_message_trace_enabled=True,
-                             ping_pong_trace_enabled=True,
-                             ping_interval=30
-                             )
+                                app_token=SLACK_APP_TOKEN,
+                                trace_enabled=True,
+                                all_message_trace_enabled=True,
+                                ping_pong_trace_enabled=True,
+                                ping_interval=30
+                                )
     logger.info(f"Created SocketModeHandler")
     return handler
 
@@ -60,18 +60,20 @@ def main():
     plugin_manager.load_all_plugins()
 
     ws_server_thread = websocket_server.start_threaded_server()
-    ws_server = inject(WebSocketServer)
+    ws_server = inject("WebSocketServer")
 
     try:
         logger.info(f"Starting SocketModeHandler")
         slack_socket_mode_handler.start()
     except KeyboardInterrupt:
-        logger.info(f"Stopping SocketModeHandler")
+        logger.info(f"Stopping {APPLICATION_NAME}")
     except Exception as e:
         logger.exception(e)
     finally:
+        logger.info(f"Stopping WebSocketServer")
         ws_server.close()
         ws_server_thread.join(timeout=5)
+        logger.info(f"Stopping SocketModeHandler")
         slack_socket_mode_handler.close()
 
 

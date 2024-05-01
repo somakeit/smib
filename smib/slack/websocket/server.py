@@ -1,3 +1,5 @@
+import socket
+
 from simple_websocket_server import WebSocketServer, WebSocket
 from smib.common.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED_HOSTS
 from smib.common.utils import log_error
@@ -38,7 +40,23 @@ class SlackExternalWebsocketHandler(WebSocket):
     def connected(self):
         logger: logging.Logger = inject("logger")
         logger.info(f"{self.address} connected")
-        if self.address[0] in WEBSOCKET_ALLOWED_HOSTS:
+
+        hostname = None
+        hostname_ip = None
+        address = self.address[0]
+
+        try:
+            raw_hostname = socket.gethostbyaddr(address)
+            logger.debug(f"{raw_hostname}")
+
+            hostname = raw_hostname[0]
+            hostname_ip = socket.gethostbyname(hostname)
+        except socket.error:
+            logger.debug(f'Unable to resolve address {address} to ip address')
+        else:
+            logger.debug(f'Address {address} resolved to hostname {hostname}')
+
+        if {address, hostname, hostname_ip}.intersection(set(WEBSOCKET_ALLOWED_HOSTS)):
             return
 
         logger.warning(f"Connection from {self.address} is {NOT_AUTHORIZED}")
@@ -49,18 +67,19 @@ class SlackExternalWebsocketHandler(WebSocket):
         logger.info(f"{self.address} closed")
 
 
-@injectable_factory(WebSocketServer, singleton=True)
+@injectable_factory(WebSocketServer, singleton=True, qualifier="WebSocketServer")
 def get_server():
     logger: logging.Logger = inject("logger")
     try:
-        return WebSocketServer(WEBSOCKET_HOST, WEBSOCKET_PORT, SlackExternalWebsocketHandler)
+        logger.info(f"Binding Websocket Server: 0.0.0.0:{WEBSOCKET_PORT}")
+        logger.info(f"Access Websocket Server: {WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
+        return WebSocketServer("0.0.0.0", WEBSOCKET_PORT, SlackExternalWebsocketHandler)
     except Exception as e:
         logger.exception(e)
     return None
 
 
-@autowired
-def start_server(server: Autowired(WebSocketServer)):
+def start_server(server: WebSocketServer):
     logger: logging.Logger = inject("logger")
     if server is not None:
         logger.info(f"Starting WebSocketServer")
@@ -70,11 +89,12 @@ def start_server(server: Autowired(WebSocketServer)):
 
 
 def start_threaded_server():
-    server_thread = Thread(target=start_server)
+    server_thread = Thread(target=start_server, args=(inject(WebSocketServer),))
+    server_thread.daemon = True
     server_thread.start()
     return server_thread
 
 
 if __name__ == '__main__':
     load_injection_container()
-    start_server()
+    start_server(inject(WebSocketServer))
