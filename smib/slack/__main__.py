@@ -1,6 +1,12 @@
+import json
 import logging
+from pathlib import Path
+from pprint import pprint, pp, pformat
 
+from simple_websocket_server import WebSocketServer
+from slack_bolt import BoltRequest
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
 from smib.slack.logging_injector import inject_logger_to_slack_context
 from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
 from smib.slack.websocket import server as websocket_server
@@ -43,6 +49,14 @@ def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
                                 ping_pong_trace_enabled=True,
                                 ping_interval=30
                                 )
+
+    @handler.client.on_message_listeners.append
+    def _listener(raw_message):
+        json_message: dict = json.loads(raw_message)
+        if json_message.get('type') == "hello":
+            app.num_connections = json_message["num_connections"]
+            logger.info(f"{app.num_connections = }")
+
     logger.info(f"Created SocketModeHandler")
     return handler
 
@@ -56,8 +70,10 @@ def main():
     plugin_manager = inject(PluginManager)
     plugin_manager.load_all_plugins()
 
+    slack_socket_mode_handler = create_slack_socket_mode_handler()
+
     ws_server_thread = websocket_server.start_threaded_server()
-    ws_server = inject("WebSocketServer")
+    ws_server = inject(WebSocketServer)
 
     try:
         logger.info(f"Starting SocketModeHandler")
