@@ -17,6 +17,13 @@ def is_pickleable(obj):
     except (pickle.PicklingError, AttributeError, TypeError):
         return False
 
+def is_json_encodable(value):
+    try:
+        json.dumps(value)
+        return True
+    except TypeError:
+        return False
+
 
 def to_path(x):
     path = Path(f"/{x.lstrip('/')}").as_posix().lstrip('/')

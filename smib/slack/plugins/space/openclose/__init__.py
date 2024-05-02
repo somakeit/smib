@@ -4,7 +4,7 @@ __author__ = "Sam Cork"
 
 from injectable import inject
 
-from smib.common.utils import http_bolt_response
+from smib.common.utils import http_bolt_response, is_json_encodable
 from smib.slack.custom_app import CustomApp
 from slack_sdk import WebClient
 from slack_sdk.models.views import View
@@ -80,6 +80,4 @@ def space_closed(say, context, ack):
 @database()
 def get_space_state():
     space = Space.single()
-    return {
-        "open": space.open
-    }
+    return {k: v for k, v in space.copy().items() if is_json_encodable(v)}
