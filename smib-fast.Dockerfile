@@ -4,13 +4,13 @@ FROM python:3.11-buster as builder
 RUN pip install poetry==1.4.2
 
 # Install tzdata, curl, and jq.
-RUN apt-get update && apt-get install -y tzdata curl jq
+# RUN apt-get update && apt-get install -y tzdata curl jq
 
 # Fetch the timezone using the API, set the TZ environment variable to the fetched timezone.
-RUN TIMEZONE=$(curl -s http://worldtimeapi.org/api/ip | jq -r .timezone) && \
-    ln -fs /usr/share/zoneinfo/$TIMEZONE /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata && \
-    echo "TZ=$TIMEZONE" >> /etc/environment
+#RUN TIMEZONE=$(curl -s http://worldtimeapi.org/api/ip | jq -r .timezone) && \
+ #   ln -fs /usr/share/zoneinfo/$TIMEZONE /etc/localtime && \
+  #  dpkg-reconfigure -f noninteractive tzdata && \
+   # echo "TZ=$TIMEZONE" >> /etc/environment
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \

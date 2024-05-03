@@ -11,6 +11,7 @@ services:
     environment:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+      - MONGO_DB_HOST=smib-db
 
       # Passed in from HOST
       - SLACK_APP_TOKEN
@@ -39,11 +40,15 @@ services:
     command: "python -m smib.webserver"
 
   smib-db:
-    image: mongo
+
+    # Specific version - latest that works on a pi
+    image: mongo:4.4.18
     container_name: smib-db
     restart: always
     ports:
       - 27017:27017
+    networks:
+      - smib-bridge-network
 
   smib-db-ui:
     image: mongo-express
@@ -56,6 +61,9 @@ services:
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
       ME_CONFIG_BASICAUTH: true
+
+    networks:
+      - smib-bridge-network
 
 networks:
   smib-bridge-network:
