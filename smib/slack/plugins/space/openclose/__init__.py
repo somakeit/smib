@@ -3,12 +3,17 @@ __description__ = "Space Open Close Button"
 __author__ = "Sam Cork"
 
 from injectable import inject
+
+from smib.common.utils import http_bolt_response, is_json_encodable
 from smib.slack.custom_app import CustomApp
 from slack_sdk import WebClient
 from slack_sdk.models.views import View
 from slack_sdk.models.blocks import ActionsBlock, PlainTextObject, HeaderBlock, ButtonElement
 
+from .models import Space
+
 from smib.common.config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
+from smib.slack.db import database
 
 app: CustomApp = inject("SlackApp")
 
@@ -45,17 +50,34 @@ def app_home_opened(client: WebClient, event: dict):
 
 @app.action('space_open')
 @app.event('http_put_space_open')
+@database()
 def space_open(say, context, ack):
+
     ack()
     context['logger'].debug("Space Open!")
     say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
+    space: Space = Space.single()
+    space.set_open()
+
 
 @app.action('space_closed')
 @app.event('http_put_space_closed')
+@database()
 def space_closed(say, context, ack):
+
     ack()
     context['logger'].debug("Space Closed!")
+
     say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
+    space: Space = Space.single()
+    space.set_closed()
 
+
+@app.event("http_get_space_state")
+@http_bolt_response
+@database()
+def get_space_state():
+    space = Space.single()
+    return {k: v for k, v in space.copy().items() if is_json_encodable(v)}

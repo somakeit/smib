@@ -21,6 +21,8 @@ fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
 dataclasses-json = "^0.6.4"
 aiohttp = "^3.9.5"
+pymongo = "^4.7.0"
+mogo = "^0.6.0"
 
 
 [build-system]

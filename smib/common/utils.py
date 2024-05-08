@@ -1,3 +1,4 @@
+import inspect
 import logging
 import pickle
 from pathlib import Path
@@ -14,6 +15,13 @@ def is_pickleable(obj):
         pickle.dumps(obj)
         return True
     except (pickle.PicklingError, AttributeError, TypeError):
+        return False
+
+def is_json_encodable(value):
+    try:
+        json.dumps(value)
+        return True
+    except TypeError:
         return False
 
 
@@ -65,3 +73,18 @@ def http_bolt_response(func):
                 return BoltResponse(status=response[0], body=json.dumps(response[1]))
 
     return wrapper
+
+
+def get_module_name(stack_num: int = 4):
+    stack = inspect.stack()
+    frame = stack[stack_num]
+    module = inspect.getmodule(frame[0])
+    module_name = module.__name__
+    return module_name
+
+
+def get_module_file(stack_num: int = 4) -> Path:
+    stack = inspect.stack()
+    frame = stack[stack_num]
+    file = inspect.getfile(frame[0])
+    return Path(file)

@@ -79,7 +79,7 @@ class AbstractPluginLoader(ABC):
             self.unload_plugin(plugin)
 
         if plugin.error:
-            logger.error(plugin.error)
+            logger.error(f"Plugin {plugin.id} failed to load: {plugin.error}")
 
         return returned_plugin
 
