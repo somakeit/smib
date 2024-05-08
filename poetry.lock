@@ -637,21 +637,6 @@ files = [
 pymongo = ">=4.1"
 
 [[package]]
-name = "mongogettersetter"
-version = "1.5.0"
-description = "A clean way to handle MongoDB documents in Pythonic way"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mongogettersetter-1.5.0-py3-none-any.whl", hash = "sha256:e6bc4e8d024fdf76ec99a6618f18a63b39319d4252e4681e853559dc1933dda9"},
-    {file = "mongogettersetter-1.5.0.tar.gz", hash = "sha256:f2100c43b145587b679b2eabeabae0a7f96c487169d06be519f3a13d787a24ea"},
-]
-
-[package.dependencies]
-pymongo = "*"
-
-[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -1448,4 +1433,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fd0744dbb91c9f89e9b402fcc4118d86aa9d0bb37c2eeeda99deca8f8a583a05"
+content-hash = "31953d972f1d3f3be17cd9c22fe467080cc69144cb751d54c434599fd904ef5b"
