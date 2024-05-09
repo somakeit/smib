@@ -83,7 +83,10 @@ def start_server(server: WebSocketServer):
     logger: logging.Logger = inject("logger")
     if server is not None:
         logger.info(f"Starting WebSocketServer")
-        server.serve_forever()
+        try:
+            server.serve_forever()
+        except Exception as e:
+            logger.exception(e, exc_info=False)
     else:
         logger.warning('Unable to start WebSocketServer')
 
