@@ -24,7 +24,7 @@ def database(database_name: str = None):
 
             # If no database_name parameter name passed in, get current plugin id and use that
             if db_name is None:
-                plugin_file = Path(inspect.getfile(func))
+                plugin_file = Path(inspect.getfile(inspect.unwrap(func)))
                 plugin_manager: PluginManager = inject("PluginManager")
                 db_name = plugin_manager.get_plugin_from_file(plugin_file).id
 
