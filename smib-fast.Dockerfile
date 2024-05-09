@@ -21,7 +21,9 @@ ENV POETRY_NO_INTERACTION=1 \
 WORKDIR /app
 
 # Copy the entire smib package into the container at /smib
+ARG exclude_dir
 COPY smib ./smib
+RUN rm -rd ./smib/${exclude_dir}
 COPY pyproject.toml poetry.lock README.md ./
 
 RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
@@ -40,4 +42,6 @@ COPY --from=builder /etc/localtime /etc/localtime
 
 WORKDIR /app
 
+ARG exclude_dir
 COPY smib ./smib
+RUN rm -rd ./smib/${exclude_dir}

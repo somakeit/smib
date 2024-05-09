@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from .plugin_type import PluginType
-from smib.common.config import ROOT_DIRECTORY
+from smib.slack.config import ROOT_DIRECTORY
 
 
 @dataclass

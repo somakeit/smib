@@ -12,7 +12,7 @@ from slack_sdk.models.blocks import ActionsBlock, PlainTextObject, HeaderBlock, 
 
 from .models import Space
 
-from smib.common.config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
+from smib.slack.config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
 from smib.slack.db import database
 
 app: CustomApp = inject("SlackApp")

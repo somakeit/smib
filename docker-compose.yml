@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
+      args:
+        exclude_dir: webserver
     ports:
       - "4123:4123"
     depends_on:
@@ -25,6 +27,8 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
+      args:
+        exclude_dir: slack
     ports:
       - "80:80"
     depends_on:
@@ -32,9 +36,6 @@ services:
     environment:
       - WEBSOCKET_HOST=smib-slack
 
-      # Passed in from HOST
-      - SLACK_APP_TOKEN
-      - SLACK_BOT_TOKEN
     networks:
       - smib-bridge-network
     command: "python -m smib.webserver"

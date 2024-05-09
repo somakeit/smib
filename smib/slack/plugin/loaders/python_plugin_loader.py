@@ -4,7 +4,7 @@ from pathlib import Path
 from injectable import injectable
 import importlib
 from smib.slack.plugin import PluginMeta, PluginType, Plugin
-from smib.common.config import ROOT_DIRECTORY
+from smib.slack.config import ROOT_DIRECTORY
 
 
 @injectable(primary=True, qualifier="PluginLoader")

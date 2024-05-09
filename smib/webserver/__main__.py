@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from smib.common.config import (
+from smib.webserver.config import (
     WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY,
     ROOT_DIRECTORY
 )

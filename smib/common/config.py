@@ -15,19 +15,6 @@ ROOT_DIRECTORY = Path(smib.__file__).parent
 
 APPLICATION_NAME = config('APPLICATION_NAME', default='S.M.I.B.')
 
-SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')
-SLACK_BOT_TOKEN = config('SLACK_BOT_TOKEN')
-
-WEBSERVER_SCHEME = config('WEBSERVER_SCHEME', default='http')
-WEBSERVER_HOST = config('WEBSERVER_HOST', default='0.0.0.0')
-WEBSERVER_PORT = config('WEBSERVER_PORT', default=80, cast=int)
-WEBSERVER_PATH = config('WEBSERVER_PATH', default='', cast=to_path)
-WEBSERVER_URL = urlparse(f"{WEBSERVER_SCHEME}://{WEBSERVER_HOST}:{WEBSERVER_PORT}/{WEBSERVER_PATH}")
-WEBSERVER_SECRET_KEY = config('WEBSERVER_SECRET_KEY', default=os.urandom(24))
-WEBSERVER_PATH_PREFIX = config('WEBSERVER_PATH_PREFIX', default='/smib')
-WEBSERVER_TEMPLATES_DIRECTORY = config('WEBSERVER_TEMPLATES_DIRECTORY', default=ROOT_DIRECTORY / 'webserver' / 'templates', cast=Path)
-WEBSERVER_STATIC_DIRECTORY = config('WEBSERVER_STATIC_DIRECTORY', default=ROOT_DIRECTORY / 'webserver' / 'static', cast=Path)
-
 WEBSOCKET_SCHEME = config('WEBSERVER_SCHEME', default='ws')
 WEBSOCKET_HOST = config('WEBSOCKET_HOST', default='localhost')
 WEBSOCKET_PORT = config('WEBSOCKET_PORT', default=4123, cast=int)
@@ -35,14 +22,3 @@ WEBSOCKET_PATH = config('WEBSOCKET_PATH', default='ws', cast=to_path)
 WEBSOCKET_URL = urlparse(f"{WEBSOCKET_SCHEME}://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}/{WEBSOCKET_PATH}")
 WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
 
-MONGO_DB_HOST = config('MONGO_DB_HOST', default='localhost')
-MONGO_DB_PORT = config('MONGO_DB_PORT', default=27017, cast=int)
-
-MONGO_DB_DEFAULT_DB = config("MONGO_DB_DEFAULT_DB", default="smib_default")
-MONGO_DB_CONNECT_TIMEOUT_SECONDS = config("MONGO_DB_CONNECT_TIMEOUT_SECONDS", default=5, cast=int)
-
-MONGO_DB_URL = f"mongodb://{MONGO_DB_HOST}:{MONGO_DB_PORT}/"
-
-PLUGINS_DIRECTORY = config('PLUGINS_DIRECTORY', default=ROOT_DIRECTORY / 'slack' / 'plugins', cast=Path)
-
-SPACE_OPEN_ANNOUNCE_CHANNEL_ID = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='C06UDPLQRP1')
