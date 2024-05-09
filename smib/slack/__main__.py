@@ -62,7 +62,8 @@ def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
 
 
 def main():
-    load_injection_container(ROOT_DIRECTORY)
+    load_injection_container(ROOT_DIRECTORY / "common")
+    load_injection_container(ROOT_DIRECTORY / "slack")
 
     logger: logging.Logger = inject("logger")
     slack_socket_mode_handler = create_slack_socket_mode_handler()

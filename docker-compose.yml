@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
-      args:
-        exclude_dir: webserver
     ports:
       - "4123:4123"
     depends_on:
@@ -27,8 +25,6 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
-      args:
-        exclude_dir: slack
     ports:
       - "80:80"
     depends_on:

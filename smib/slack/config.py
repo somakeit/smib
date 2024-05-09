@@ -3,6 +3,8 @@ from smib.common.config import *
 SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')
 SLACK_BOT_TOKEN = config('SLACK_BOT_TOKEN')
 
+WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
+
 MONGO_DB_HOST = config('MONGO_DB_HOST', default='localhost')
 MONGO_DB_PORT = config('MONGO_DB_PORT', default=27017, cast=int)
 

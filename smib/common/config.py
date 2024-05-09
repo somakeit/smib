@@ -20,5 +20,3 @@ WEBSOCKET_HOST = config('WEBSOCKET_HOST', default='localhost')
 WEBSOCKET_PORT = config('WEBSOCKET_PORT', default=4123, cast=int)
 WEBSOCKET_PATH = config('WEBSOCKET_PATH', default='ws', cast=to_path)
 WEBSOCKET_URL = urlparse(f"{WEBSOCKET_SCHEME}://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}/{WEBSOCKET_PATH}")
-WEBSOCKET_ALLOWED_HOSTS = config('WEBSOCKET_ALLOWED_HOSTS', default='localhost,127.0.0.1,::1', cast=Csv())
-

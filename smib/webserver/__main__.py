@@ -21,7 +21,8 @@ from smib.common.logging_.setup import setup_logging, read_logging_json
 
 setup_logging()
 
-load_injection_container(ROOT_DIRECTORY)
+load_injection_container(ROOT_DIRECTORY / "common")
+load_injection_container(ROOT_DIRECTORY / "webserver")
 
 
 async def generate_request_body(fastapi_request):
