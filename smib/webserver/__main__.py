@@ -12,9 +12,9 @@ from fastapi.staticfiles import StaticFiles
 
 from smib.common.config import (
     WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY,
-    ROOT_DIRECTORY
+    ROOT_DIRECTORY, APPLICATION_NAME
 )
-from smib.common.utils import is_pickleable
+from smib.common.utils import is_pickleable, get_version
 from smib.webserver.websocket_handler import WebSocketHandler
 
 from smib.common.logging_.setup import setup_logging, read_logging_json
@@ -63,7 +63,14 @@ def create_directories():
 
 
 ws_handler = WebSocketHandler()
-app = FastAPI()
+
+description = None
+description_path = Path(__file__).parent / "readme.md"
+if description_path.exists() and description_path.is_file():
+    with open(description_path) as readme:
+        description = readme.read()
+
+app = FastAPI(title=f"{APPLICATION_NAME} Docs", version=get_version(), description=description, redoc_url=None)
 router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
 
 create_directories()
@@ -84,11 +91,6 @@ async def smib_event_handler(request: Request, event: str):
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = await ws_handler.receive_bolt_response()
     return to_starlette_response(bolt_response)
-
-
-@router.get('/', response_class=HTMLResponse)
-async def smib_home(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @app.exception_handler(404)
