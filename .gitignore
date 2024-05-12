@@ -7,3 +7,5 @@ smib/log/
 .micropico
 *.pyi
 .env
+/package-lock.json
+/node_modules/
