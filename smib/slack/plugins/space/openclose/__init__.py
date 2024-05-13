@@ -15,7 +15,6 @@ from .models import Space
 
 from smib.common.config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
 from smib.slack.db import database
-from inspect import unwrap
 
 app: CustomApp = inject("SlackApp")
 
@@ -25,8 +24,6 @@ def get_app_home():
     blocks = []
 
     space = Space.single()
-    #
-    # func = unwrap(get_space_state)
 
     # Header
     header_text = PlainTextObject(text="Welcome to S.M.I.B.", emoji=True)
@@ -43,14 +40,14 @@ def get_app_home():
 
     # Buttons
     open_button = ButtonElement(
-        text=PlainTextObject(text="Space Open", emoji=True),
+        text=PlainTextObject(text=":large_green_circle: Space Open", emoji=True),
         value="open",
         action_id="space_open",
         style="primary" if space.open is None or not space.open else None
     )
 
     closed_button = ButtonElement(
-        text=PlainTextObject(text="Space Closed", emoji=True),
+        text=PlainTextObject(text=":red_circle: Space Closed", emoji=True),
         value="closed",
         action_id="space_closed",
         style="danger" if space.open is None or space.open else None
