@@ -10,6 +10,14 @@
 			}
 		},
 		{
+			"type": "section",
+			"text": {
+				"type": "plain_text",
+				"text": "So Make It is currently {state}",
+				"emoji": true
+			}
+		},
+		{
 			"type": "actions",
 			"elements": [
 				{
@@ -20,7 +28,8 @@
 						"emoji": true
 					},
 					"value": "open",
-					"action_id": "space_open"
+					"action_id": "space_open",
+					"style": "primary"
 				},
 				{
 					"type": "button",
@@ -30,7 +39,8 @@
 						"emoji": true
 					},
 					"value": "closed",
-					"action_id": "space_closed"
+					"action_id": "space_closed",
+					"style": "danger"
 				}
 			]
 		}
