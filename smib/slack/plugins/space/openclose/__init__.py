@@ -2,14 +2,14 @@ __plugin_name__ = "Space Open/Close"
 __description__ = "Space Open Close Button"
 __author__ = "Sam Cork"
 
+import re
+
 from injectable import inject
 
 from smib.common.utils import http_bolt_response, is_json_encodable
 from smib.slack.custom_app import CustomApp
 from slack_sdk import WebClient
-from slack_sdk.models.views import View
-from slack_sdk.models.blocks import ActionsBlock, PlainTextObject, HeaderBlock, ButtonElement, SectionBlock, \
-    MarkdownTextObject
+from .app_home import get_app_home
 
 from .models import Space
 
@@ -19,52 +19,13 @@ from smib.slack.db import database
 app: CustomApp = inject("SlackApp")
 
 
-@database()
-def get_app_home():
-    blocks = []
-
-    space = Space.single()
-
-    # Header
-    header_text = PlainTextObject(text="Welcome to S.M.I.B.", emoji=True)
-    header_block = HeaderBlock(text=header_text)
-    blocks.append(header_block)
-
-    # State Text
-    state_text = MarkdownTextObject(
-        text=":warning: Unable to determine if So Make It is open or closed! :warning:" if space.open is None else
-             f"So Make It is currently *{'open' if space.open else 'closed'}*!",
-                                    )
-    state_text_block = SectionBlock(text=state_text)
-    blocks.append(state_text_block)
-
-    # Buttons
-    open_button = ButtonElement(
-        text=PlainTextObject(text=":large_green_circle: Space Open", emoji=True),
-        value="open",
-        action_id="space_open",
-        style="primary" if space.open is None or not space.open else None
-    )
-
-    closed_button = ButtonElement(
-        text=PlainTextObject(text=":red_circle: Space Closed", emoji=True),
-        value="closed",
-        action_id="space_closed",
-        style="danger" if space.open is None or space.open else None
-    )
-
-    # Action block with buttons
-    action_block = ActionsBlock(elements=[open_button, closed_button])
-    blocks.append(action_block)
-
-    result = View(type="home", blocks=blocks)
-
-    return result
-
-
 @app.event('app_home_opened')
 def app_home_opened(client: WebClient, event: dict):
     client.views_publish(user_id=event['user'], view=get_app_home())
+
+
+# Still need to acknowledge url button presses
+app.action(re.compile('app_home_url_.*'))(lambda ack: ack())
 
 
 @app.action('space_open')
