@@ -1,2 +1,11 @@
 syntax: glob
 .idea/
+*.pyc
+**/__pycache__/
+smib/log/
+.vscode/
+.micropico
+*.pyi
+.env
+/package-lock.json
+/node_modules/

@@ -1,9 +1,12 @@
+import inspect
+import logging
 import pickle
 from pathlib import Path
 
 import functools
 import json
 
+from injectable import inject
 from slack_bolt.response import BoltResponse
 
 
@@ -12,6 +15,13 @@ def is_pickleable(obj):
         pickle.dumps(obj)
         return True
     except (pickle.PicklingError, AttributeError, TypeError):
+        return False
+
+def is_json_encodable(value):
+    try:
+        json.dumps(value)
+        return True
+    except TypeError:
         return False
 
 
@@ -23,10 +33,11 @@ def to_path(x):
 def log_error(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        logger: logging.Logger = inject("logger")
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            print(f'{e.__class__.__name__}: {e}')
+            logger.exception(f'{e.__class__.__name__}: {e}')
 
     return wrapper
 
@@ -62,3 +73,18 @@ def http_bolt_response(func):
                 return BoltResponse(status=response[0], body=json.dumps(response[1]))
 
     return wrapper
+
+
+def get_module_name(stack_num: int = 4):
+    stack = inspect.stack()
+    frame = stack[stack_num]
+    module = inspect.getmodule(frame[0])
+    module_name = module.__name__
+    return module_name
+
+
+def get_module_file(stack_num: int = 4) -> Path:
+    stack = inspect.stack()
+    frame = stack[stack_num]
+    file = inspect.getfile(frame[0])
+    return Path(file)

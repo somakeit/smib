@@ -1,0 +1,71 @@
+services:
+  smib-slack:
+    container_name: smib-slack
+    build:
+      context: https://github.com/somakeit/S.M.I.B..git#develop
+      dockerfile: smib-fast.Dockerfile
+    ports:
+      - "4123:4123"
+    depends_on:
+      - smib-db
+    environment:
+      - WEBSERVER_HOST=smib-webserver
+      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+      - MONGO_DB_HOST=smib-db
+
+      # Passed in from HOST
+      - SLACK_APP_TOKEN
+      - SLACK_BOT_TOKEN
+    networks:
+      - smib-bridge-network
+    command: "python -m smib.slack"
+
+  smib-webserver:
+    container_name: smib-webserver
+    build:
+      context: https://github.com/somakeit/S.M.I.B..git#develop
+      dockerfile: smib-fast.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - smib-slack
+    environment:
+      - WEBSOCKET_HOST=smib-slack
+
+      # Passed in from HOST
+      - SLACK_APP_TOKEN
+      - SLACK_BOT_TOKEN
+    networks:
+      - smib-bridge-network
+    command: "python -m smib.webserver"
+
+  smib-db:
+
+    # Specific version - latest that works on a pi
+    image: mongo:4.4.18
+    container_name: smib-db
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - smib-bridge-network
+
+  smib-db-ui:
+    image: mongo-express
+    container_name: smib-db-ui
+    depends_on:
+      - smib-db
+    restart: always
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
+      ME_CONFIG_BASICAUTH: true
+
+    networks:
+      - smib-bridge-network
+
+networks:
+  smib-bridge-network:
+    name: smib-bridge-network
+    driver: bridge

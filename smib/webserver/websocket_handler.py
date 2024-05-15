@@ -1,21 +1,35 @@
+import logging
+
+from injectable import inject
 from websocket import create_connection, WebSocket
-from smib.common.config import WEBSOCKET_URL
+from smib.webserver.config import WEBSOCKET_URL
 import pickle
 
 
 class WebSocketHandler:
+
     def __init__(self):
         self.websocket_conn: WebSocket = self.create_websocket_conn()
 
     @staticmethod
     def create_websocket_conn():
-        return create_connection(WEBSOCKET_URL.geturl())
+        logger: logging.Logger = inject("logger")
+        try:
+            url = WEBSOCKET_URL.geturl()
+            logger.info(f'Creating websocket connection: {url}')
+            return create_connection(url, timeout=5)
+        except Exception as e:
+            logger.exception(e)
+
+        return None
+
 
     def check_and_reconnect_websocket_conn(self):
+        logger: logging.Logger = inject("logger")
         try:
             self.websocket_conn.ping()
         except Exception as e:
-            print('Reconnecting websocket')
+            logger.info('Reconnecting websocket')
             self.websocket_conn = self.create_websocket_conn()
 
     def send_bolt_request(self, bolt_request):

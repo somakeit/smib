@@ -1,0 +1,99 @@
+{
+	"type": "home",
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "Welcome to S.M.I.B.",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "plain_text",
+				"text": "So Make It is currently {state}",
+				"emoji": true
+			}
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Space Open",
+						"emoji": true
+					},
+					"value": "open",
+					"action_id": "space_open",
+					"style": "primary"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Space Closed",
+						"emoji": true
+					},
+					"value": "closed",
+					"action_id": "space_closed",
+					"style": "danger"
+				}
+			]
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "For more information see the GitHub repository"
+			},
+			"accessory": {
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": "GitHub Repo",
+					"emoji": true
+				},
+				"url": "https://github.com/somakeit/S.M.I.B"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "To raise a bug or enhancement idea, visit our issue tracker"
+			},
+			"accessory": {
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": "Issue Tracker",
+					"emoji": true
+				},
+				"url": "https://github.com/somakeit/S.M.I.B./issues"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "How to contribute patches to code or documentation?"
+			},
+			"accessory": {
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": "Contributing",
+					"emoji": true
+				},
+				"url": "https://github.com/somakeit/S.M.I.B./blob/develop/CONTRIBUTING.md"
+			}
+		}
+	]
+}

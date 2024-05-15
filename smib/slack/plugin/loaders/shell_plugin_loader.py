@@ -1,4 +1,5 @@
 import inspect
+import logging
 import subprocess
 import shlex
 from smib.slack.plugin.loaders.abstract_plugin_loader import AbstractPluginLoader
@@ -65,6 +66,7 @@ class ShellScript:
         self.plugin_id = plugin_id
 
     def run(self, event, client, *args, **kwargs):
+        logger: logging.Logger = inject("logger")
         parameters = [
             event.get("user", None),
             event.get("channel", None),
@@ -73,6 +75,6 @@ class ShellScript:
         ]
         command = f"{self.script} {shlex.join(parameters)}"
         completed_process = subprocess.run(command, capture_output=True, text=True, shell=True)
-        print(completed_process.stdout)
+        logger.debug(completed_process.stdout)
         if completed_process.stderr:
-            print(f"Errors: {completed_process.stderr}")
+            logger.error(f"{completed_process.stderr}")
