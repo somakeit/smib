@@ -39,8 +39,8 @@ def _get_space_state_blocks() -> list[Block]:
     state_text_block = SectionBlock(text=state_text)
     space_state_blocks.append(state_text_block)
 
-    space_open_button_highlight = space.open is None or space.open
-    space_closed_button_highlight = space.open is None or not space.open
+    space_open_button_highlight = space.open is None or not space.open
+    space_closed_button_highlight = space.open is None or space.open
 
     # Buttons
     open_button = ButtonElement(
