@@ -2,10 +2,12 @@
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
-- Set the slack tokens as environment variables using either method below:
+- Set the slack tokens and DB Web UI Credentials as environment variables using either method below:
   - Linux
     - `export SLACK_APP_TOKEN=<app-token>`
     - `export SLACK_BOT_TOKEN=<bot-token>`
+    - `export ME_CONFIG_BASICAUTH_USERNAME=<mongo-express-basicauth-username>`
+    - `export ME_CONFIG_BASICAUTH_PASSWORD=<mongo-express-basicauth-password>`
   - .env File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
 - Issue one of the following commands:
