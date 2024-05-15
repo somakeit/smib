@@ -61,6 +61,10 @@ services:
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
       ME_CONFIG_BASICAUTH: true
+      ME_CONFIG_OPTIONS_READONLY: true
+
+      ME_CONFIG_BASICAUTH_USERNAME:
+      ME_CONFIG_BASICAUTH_PASSWORD:
 
     networks:
       - smib-bridge-network
