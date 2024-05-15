@@ -41,14 +41,14 @@ def _get_space_state_blocks() -> list[Block]:
 
     # Buttons
     open_button = ButtonElement(
-        text=PlainTextObject(text=":large_green_circle: Space Open", emoji=True),
+        text=PlainTextObject(text=f"{':large_green_circle: ' if space.open else ''}Space Open", emoji=True),
         value="open",
         action_id="space_open",
         style="primary" if space.open is None or not space.open else None
     )
 
     closed_button = ButtonElement(
-        text=PlainTextObject(text=":red_circle: Space Closed", emoji=True),
+        text=PlainTextObject(text=f"{':red_circle: ' if not space.open else ''} Space Closed", emoji=True),
         value="closed",
         action_id="space_closed",
         style="danger" if space.open is None or space.open else None
@@ -93,7 +93,7 @@ def _get_info_blocks() -> list[Block]:
         text="How to contribute patches to code or documentation?",
         accessory=ButtonElement(
             text="Contributing",
-            url="https://github.com/somakeit/S.M.I.B./blob/master/CONTRIBUTING.md",
+            url="https://github.com/somakeit/S.M.I.B./blob/develop/CONTRIBUTING.md",
             action_id="app_home_url_contributing"
         )
     )
