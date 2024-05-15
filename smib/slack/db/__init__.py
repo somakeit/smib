@@ -31,7 +31,7 @@ def database(database_name: str = None):
             inject("logger").debug(f"Database name: {db_name}")
 
             # Connect to DB and close it afterward
-            with connect(db_name, uri=MONGO_DB_URL, timeoutMs=1000*MONGO_DB_CONNECT_TIMEOUT_SECONDS):
+            with connect(db_name, uri=MONGO_DB_URL, timeoutMs=1000*MONGO_DB_CONNECT_TIMEOUT_SECONDS, connect=True, directConnection=True):
                 return func(*args, **kwargs)
 
         return wrapper
