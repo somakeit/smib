@@ -39,19 +39,22 @@ def _get_space_state_blocks() -> list[Block]:
     state_text_block = SectionBlock(text=state_text)
     space_state_blocks.append(state_text_block)
 
+    space_open_button_highlight = space.open is None or space.open
+    space_closed_button_highlight = space.open is None or not space.open
+
     # Buttons
     open_button = ButtonElement(
-        text=PlainTextObject(text=f"{':large_green_circle: ' if space.open else ''}Space Open", emoji=True),
+        text=PlainTextObject(text=f"{':large_green_circle: ' if space_open_button_highlight else ''}Space Open", emoji=True),
         value="open",
         action_id="space_open",
-        style="primary" if space.open is None or not space.open else None
+        style="primary" if space_open_button_highlight else None
     )
 
     closed_button = ButtonElement(
-        text=PlainTextObject(text=f"{':red_circle: ' if not space.open else ''} Space Closed", emoji=True),
+        text=PlainTextObject(text=f"{':red_circle: ' if space_closed_button_highlight else ''} Space Closed", emoji=True),
         value="closed",
         action_id="space_closed",
-        style="danger" if space.open is None or space.open else None
+        style="danger" if space_closed_button_highlight else None
     )
 
     # Action block with buttons
