@@ -6,7 +6,7 @@ from slack_bolt.request import BoltRequest
 from http import HTTPStatus
 import traceback as tb
 import json
-from smib.common.config import ROOT_DIRECTORY
+from smib.slack.config import ROOT_DIRECTORY
 from pathlib import Path
 import logging
 

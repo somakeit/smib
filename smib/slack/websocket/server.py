@@ -1,7 +1,7 @@
 import socket
 
 from simple_websocket_server import WebSocketServer, WebSocket
-from smib.common.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED_HOSTS
+from smib.slack.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED_HOSTS
 from smib.common.utils import log_error
 from injectable import injectable_factory, Autowired, load_injection_container, autowired, inject
 from slack_bolt.adapter.flask.handler import BoltRequest, BoltResponse

@@ -32,9 +32,6 @@ services:
     environment:
       - WEBSOCKET_HOST=smib-slack
 
-      # Passed in from HOST
-      - SLACK_APP_TOKEN
-      - SLACK_BOT_TOKEN
     networks:
       - smib-bridge-network
     command: "python -m smib.webserver"

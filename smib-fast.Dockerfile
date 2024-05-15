@@ -39,5 +39,4 @@ COPY --from=builder /etc/environment /etc/environment
 COPY --from=builder /etc/localtime /etc/localtime
 
 WORKDIR /app
-
 COPY smib ./smib

@@ -7,7 +7,7 @@ from mogo import Model, Field, connect
 
 from smib.slack.plugin import PluginManager
 from smib.common.utils import get_module_file
-from smib.common.config import MONGO_DB_URL, MONGO_DB_CONNECT_TIMEOUT_SECONDS
+from smib.slack.config import MONGO_DB_URL, MONGO_DB_CONNECT_TIMEOUT_SECONDS
 
 
 def get_current_plugin_id() -> str:
