@@ -40,3 +40,6 @@ COPY --from=builder /etc/localtime /etc/localtime
 
 WORKDIR /app
 COPY smib ./smib
+
+RUN rm ./smib/logging.json
+COPY smib/logging.json /app/config/logging.json

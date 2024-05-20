@@ -19,7 +19,7 @@
     "file_handler": {
       "class": "smib.common.logging_.handlers.EnsureDirectoryTimedRotatingFileHandler",
       "formatter": "detailed",
-      "filename": "logs/smib.log",
+      "filename": "/app/logs/smib.log",
       "when": "midnight",
       "interval": 1,
       "backupCount": 7
