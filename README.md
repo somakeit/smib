@@ -37,4 +37,5 @@ I think some form of backwards compatibility or similar functionality would be g
 
 An [issue](https://github.com/somakeit/S.M.I.B./issues/83) has been created to track the progress and gather ideas.
 
-
+## Version
+When bumping the poetry version (in pyproject.toml), the HID class version attribute also needs updating as part of this.
