@@ -39,3 +39,6 @@ An [issue](https://github.com/somakeit/S.M.I.B./issues/83) has been created to t
 
 ## Version
 When bumping the poetry version (in pyproject.toml), the `HID` class (part of SMIBHID) `version` attribute also needs manually updating.
+
+> [!IMPORTANT]
+> This version needs to match the release when it goes into the `master` branch. 
