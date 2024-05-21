@@ -24,7 +24,7 @@ Currently, the only external config file is the logging.json file.
 
 This is mapped to /app/config in the container
 
-You can make this location accessible by Mapping the internal directiry to a volume or bind mount in the docker compose file.
+You can make this location accessible by Mapping the internal directory to a volume or bind mount in the docker compose file.
 
 Linux:
 ```yaml
