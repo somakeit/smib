@@ -17,6 +17,8 @@
 
 
 ### Configuration
+
+#### Network Ports
 The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
 
 #### External Config Files
