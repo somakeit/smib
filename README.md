@@ -1,3 +1,6 @@
+## Python Version
+Python 3.12.3
+
 ## Docker deployment
 ### Installation
 - Clone the repository to your target server host
