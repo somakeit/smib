@@ -51,6 +51,12 @@
     },
     "pymongo": {
       "level": "WARNING"
+    },
+    "uvicorn": {
+      "level": "WARNING"
+    },
+    "asyncio": {
+      "level": "WARNING"
     }
   }
 }

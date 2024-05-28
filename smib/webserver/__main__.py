@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
@@ -56,20 +57,37 @@ async def generate_bolt_request(fastapi_request: Request):
 
 
 def create_directories():
+    logger = inject("logger")
+    logger.debug(f"Resolved Webserver Template Directory to: {WEBSERVER_TEMPLATES_DIRECTORY}")
     if not WEBSERVER_TEMPLATES_DIRECTORY.exists():
+        logger.info(f"Creating webserver templates directory: {WEBSERVER_TEMPLATES_DIRECTORY}")
         WEBSERVER_TEMPLATES_DIRECTORY.mkdir()
 
+    logger.debug(f"Resolved Webserver Static Directory to: {WEBSERVER_STATIC_DIRECTORY}")
     if not WEBSERVER_STATIC_DIRECTORY.exists():
+        logger.info(f"Creating webserver static directory: {WEBSERVER_STATIC_DIRECTORY}")
         WEBSERVER_STATIC_DIRECTORY.mkdir()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    logger = inject("logger")
+    logger.info(f"Webserver started")
+
+    yield
+
+    # Clean up the ML models and release the resources
+    logger.info(f"Webserver Stopping")
+
+
 ws_handler = WebSocketHandler()
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
 
 create_directories()
 
-router.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
+app.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
 templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 
 
@@ -78,7 +96,7 @@ templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 @router.put('/event/{event}', tags=['SMIB Events'])
 async def smib_event_handler(request: Request, event: str):
     logger = inject("logger")
-    logger.debug(f"Received event {event}")
+    logger.info(f"Received event {event}")
     ws_handler.check_and_reconnect_websocket_conn()
     bolt_request: BoltRequest = await generate_bolt_request(request)
     logger.debug(f"Request: {request} -> Bolt Request: {bolt_request}")
@@ -106,8 +124,13 @@ def main(app: FastAPI, ws_handler: WebSocketHandler):
         import uvicorn
         logger.info(f"Starting WebServer")
         uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json())
+    except KeyboardInterrupt:
+        ...
     finally:
+        logger.info(f"Stopping WebsocketHandler")
         ws_handler.close_conn()
+
+        logger.info(f"Webserver Stopped")
 
 
 if __name__ == '__main__':
