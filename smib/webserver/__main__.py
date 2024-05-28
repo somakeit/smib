@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
@@ -62,26 +63,49 @@ def create_directories():
         WEBSERVER_STATIC_DIRECTORY.mkdir()
 
 
+def get_readme() -> str:
+    description = None
+    description_path = Path(__file__).parent / "README.md"
+    if description_path.exists() and description_path.is_file():
+        with open(description_path) as readme:
+            description = readme.read()
+
+    return description
+
+
+def get_readme_without_title() -> str:
+    description = get_readme()
+    description = re.sub(r"#.*\n", "", description, 1)
+    return description
+
+
+def get_title() -> str:
+    title = None
+    description = get_readme()
+
+    return re.findall(r"#(.*)", description)[0]
+
+
+event_responses = {
+    404: {"description": "Not Processed"},
+    418: {"description": "Unhandled Exception"}
+}
+
 ws_handler = WebSocketHandler()
 
-description = None
-description_path = Path(__file__).parent / "readme.md"
-if description_path.exists() and description_path.is_file():
-    with open(description_path) as readme:
-        description = readme.read()
-
-app = FastAPI(title=f"{APPLICATION_NAME} Docs", version=get_version(), description=description, redoc_url=None)
-router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
+app = FastAPI(title=get_title(), version=get_version(), description=get_readme_without_title(), redoc_url=None)
+smib_router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
+event_router = APIRouter(prefix='/event', tags=['S.M.I.B. Events'], responses=event_responses)
 
 create_directories()
 
-router.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
+smib_router.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
 templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 
 
-@router.get('/event/{event}', tags=['SMIB Events'])
-@router.post('/event/{event}', tags=['SMIB Events'])
-@router.put('/event/{event}', tags=['SMIB Events'])
+@event_router.get('/{event}', name="S.M.I.B. GET Event")
+@event_router.post('/{event}', name="S.M.I.B. POST Event")
+@event_router.put('/{event}', name="S.M.I.B. PUT Event")
 async def smib_event_handler(request: Request, event: str):
     logger = inject("logger")
     logger.debug(f"Received event {event}")
@@ -98,15 +122,16 @@ async def custom_404_handler(request, __):
     return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
 
 
-app.include_router(router)
+smib_router.include_router(event_router)
+app.include_router(smib_router)
 
 
 def main(app: FastAPI, ws_handler: WebSocketHandler):
     logger = inject("logger")
     try:
         import uvicorn
-        logger.info(f"Starting WebServer")
-        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json())
+        logger.info(f"Starting WebServer v{get_version()}")
+        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json(), headers=[("server", APPLICATION_NAME)])
     finally:
         ws_handler.close_conn()
 
