@@ -5,6 +5,7 @@ __author__ = "Sam Cork"
 import re
 
 from injectable import inject
+from slack_sdk.errors import SlackApiError
 
 from smib.common.utils import http_bolt_response, is_json_encodable
 from smib.slack.custom_app import CustomApp
@@ -34,7 +35,12 @@ app.action(re.compile('app_home_url_.*'))(lambda ack: ack())
 def space_open(say, context, ack, client):
     ack()
     context['logger'].debug("Space Open!")
-    say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+
+    try:
+        say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    except SlackApiError as e:
+        context['logger'].debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
+        context['logger'].warning(e)
 
     space: Space = Space.single()
     space.set_open()
@@ -51,8 +57,11 @@ def space_open(say, context, ack, client):
 def space_closed(say, context, ack, client):
     ack()
     context['logger'].debug("Space Closed!")
-
-    say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    try:
+        say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    except SlackApiError as e:
+        context['logger'].debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
+        context['logger'].warning(e)
 
     space: Space = Space.single()
     space.set_closed()

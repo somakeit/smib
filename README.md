@@ -1,3 +1,6 @@
+## Python Version
+Python 3.12.3
+
 ## Docker deployment
 ### Installation
 - Clone the repository to your target server host
@@ -76,4 +79,8 @@ I think some form of backwards compatibility or similar functionality would be g
 
 An [issue](https://github.com/somakeit/S.M.I.B./issues/83) has been created to track the progress and gather ideas.
 
+## Version
+When bumping the poetry version (in pyproject.toml), the `HID` class (part of SMIBHID) `version` attribute also needs manually updating.
 
+> [!IMPORTANT]
+> This version needs to match the release when it goes into the `master` branch. 
