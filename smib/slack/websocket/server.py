@@ -1,7 +1,7 @@
 import socket
 
 from simple_websocket_server import WebSocketServer, WebSocket
-from smib.common.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED_HOSTS
+from smib.slack.config import WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_ALLOWED_HOSTS
 from smib.common.utils import log_error
 from injectable import injectable_factory, Autowired, load_injection_container, autowired, inject
 from slack_bolt.adapter.flask.handler import BoltRequest, BoltResponse
@@ -83,7 +83,10 @@ def start_server(server: WebSocketServer):
     logger: logging.Logger = inject("logger")
     if server is not None:
         logger.info(f"Starting WebSocketServer")
-        server.serve_forever()
+        try:
+            server.serve_forever()
+        except Exception as e:
+            logger.exception(e, exc_info=False)
     else:
         logger.warning('Unable to start WebSocketServer')
 

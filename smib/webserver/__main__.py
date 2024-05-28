@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from smib.common.config import (
+from smib.webserver.config import (
     WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY,
     ROOT_DIRECTORY, APPLICATION_NAME
 )
@@ -22,7 +22,8 @@ from smib.common.logging_.setup import setup_logging, read_logging_json
 
 setup_logging()
 
-load_injection_container(ROOT_DIRECTORY)
+load_injection_container(ROOT_DIRECTORY / "common")
+load_injection_container(ROOT_DIRECTORY / "webserver")
 
 
 async def generate_request_body(fastapi_request):

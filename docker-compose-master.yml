@@ -2,7 +2,7 @@ services:
   smib-slack:
     container_name: smib-slack
     build:
-      context: .
+      context: https://github.com/somakeit/S.M.I.B..git#master
       dockerfile: smib-fast.Dockerfile
     ports:
       - "4123:4123"
@@ -23,7 +23,7 @@ services:
   smib-webserver:
     container_name: smib-webserver
     build:
-      context: .
+      context: https://github.com/somakeit/S.M.I.B..git#master
       dockerfile: smib-fast.Dockerfile
     ports:
       - "80:80"

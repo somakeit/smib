@@ -2,7 +2,7 @@ import logging
 
 from injectable import inject
 from websocket import create_connection, WebSocket
-from smib.common.config import WEBSOCKET_URL
+from smib.webserver.config import WEBSOCKET_URL
 import pickle
 
 

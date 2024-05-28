@@ -3,12 +3,15 @@ import logging
 from pathlib import Path
 from pprint import pprint, pp, pformat
 
+import signal
+from smib.slack.signal_handlers import sigterm_handler
+
 from simple_websocket_server import WebSocketServer
 from slack_bolt import BoltRequest
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from smib.slack.logging_injector import inject_logger_to_slack_context
-from smib.common.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
+from smib.slack.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN, APPLICATION_NAME, ROOT_DIRECTORY
 from smib.slack.websocket import server as websocket_server
 from smib.slack.error import handle_errors
 from injectable import Autowired, load_injection_container, autowired, injectable_factory, inject
@@ -62,10 +65,12 @@ def create_slack_socket_mode_handler(app: Autowired("SlackApp")):
 
 
 def main():
-    load_injection_container(ROOT_DIRECTORY)
+    load_injection_container(ROOT_DIRECTORY / "common")
+    load_injection_container(ROOT_DIRECTORY / "slack")
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     logger: logging.Logger = inject("logger")
-    slack_socket_mode_handler = create_slack_socket_mode_handler()
 
     plugin_manager = inject(PluginManager)
     plugin_manager.load_all_plugins()
@@ -78,7 +83,7 @@ def main():
     try:
         logger.info(f"Starting SocketModeHandler")
         slack_socket_mode_handler.start()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         logger.info(f"Stopping {APPLICATION_NAME}")
     except Exception as e:
         logger.exception(e)
@@ -86,8 +91,11 @@ def main():
         logger.info(f"Stopping WebSocketServer")
         ws_server.close()
         ws_server_thread.join(timeout=5)
+        logger.info(f"Stopping SocketModeHandler Client")
+        slack_socket_mode_handler.client.close()
         logger.info(f"Stopping SocketModeHandler")
         slack_socket_mode_handler.close()
+        logger.info("Goodbye!")
 
 
 if __name__ == '__main__':

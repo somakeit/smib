@@ -7,7 +7,7 @@ from typing import List, Any
 
 from apscheduler.job import Job
 
-from smib.common.config import PLUGINS_DIRECTORY
+from smib.slack.config import PLUGINS_DIRECTORY
 from smib.slack.custom_app import CustomApp as App
 from smib.slack.plugin import PluginType, Plugin
 
