@@ -19,6 +19,7 @@ services:
     networks:
       - smib-bridge-network
     command: "python -m smib.slack"
+    restart: unless-stopped
 
   smib-webserver:
     container_name: smib-webserver
@@ -35,6 +36,7 @@ services:
     networks:
       - smib-bridge-network
     command: "python -m smib.webserver"
+    restart: unless-stopped
 
   smib-db:
 
@@ -46,13 +48,14 @@ services:
       - 27017:27017
     networks:
       - smib-bridge-network
+    restart: unless-stopped
 
   smib-db-ui:
     image: mongo-express
     container_name: smib-db-ui
     depends_on:
       - smib-db
-    restart: always
+    restart: unless-stopped
     ports:
       - 8082:8081
     environment:
