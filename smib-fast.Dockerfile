@@ -24,7 +24,7 @@ WORKDIR /app
 COPY smib ./smib
 COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
+RUN poetry install --without dev && rm -rf $POETRY_CACHE_DIR
 
 # The runtime image, used to just run the code provided its virtual environment
 FROM python:3.12.3-slim-bullseye as runtime
@@ -40,3 +40,9 @@ COPY --from=builder /etc/localtime /etc/localtime
 
 WORKDIR /app
 COPY smib ./smib
+
+# Remove logging.json from container
+RUN rm ./smib/logging.json
+
+# Copy logging.json into correct container location
+COPY smib/logging.json /app/config/logging.json
