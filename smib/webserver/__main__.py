@@ -1,4 +1,6 @@
 import logging
+import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
@@ -132,11 +134,6 @@ async def smib_event_handler(request: Request, event: str):
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = await ws_handler.receive_bolt_response()
     return to_starlette_response(bolt_response)
-
-
-@router.get('/', response_class=HTMLResponse)
-async def smib_home(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @app.exception_handler(404)
