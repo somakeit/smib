@@ -50,9 +50,15 @@ class AbstractPluginLoader(ABC):
 
             # If the plugin ID already exists, give it a new one
             if plugin.id in loaded_plugin_ids:
+                logger.debug(f"Plugin {plugin.id} already exists, giving it new id")
                 plugin.id = f"{plugin.id}_{id(plugin)}"
+                logger.debug(f"New plugin id: {plugin.id}")
 
             plugins.append(plugin)
+
+            logger.debug(f"Plugin {plugin.id} loaded. Enabled: {plugin.enabled}")
+
+        logger.info(f"Loaded {len(plugins)} {self.type} plugins")
 
         return plugins
 
@@ -76,6 +82,7 @@ class AbstractPluginLoader(ABC):
         returned_plugin = self.register_plugin(plugin)
 
         if not plugin.enabled:
+            logger.debug(f"Plugin {plugin.id} is not enabled... Unloading...")
             self.unload_plugin(plugin)
 
         if plugin.error:
@@ -90,13 +97,18 @@ class AbstractPluginLoader(ABC):
         self._remove_middlewares(plugin)
 
     def _remove_listeners(self, plugin: Plugin) -> None:
+        logger = inject('logger')
+        logger.info(f"Removing listeners for plugin {plugin.id}")
         listeners = self.app._listeners[::]
         for listener in listeners:
             listener_path = inspect.getfile(inspect.unwrap(listener.ack_function))
             if Path(listener_path).is_relative_to(plugin.directory):
+                logger.debug(f"Listener {listener.__name__} from {Path(listener_path).relative_to(plugin.directory).as_posix()} removed")
                 self.app._listeners.remove(listener)
 
     def _remove_scheduled_jobs(self, plugin: Plugin) -> None:
+        logger = inject('logger')
+        logger.info(f"Removing scheduled jobs for plugin {plugin.id}")
         listeners = self.app._listeners[::]
         for listener in listeners:
             raw_listener_ack = inspect.unwrap(listener.ack_function)
@@ -106,6 +118,7 @@ class AbstractPluginLoader(ABC):
                 continue
 
             if job := self._find_job_from_plugin_function(raw_listener_ack):
+                logger.debug(f"Scheduled job {job.id} from {Path(listener_path).relative_to(plugin.directory).as_posix()} removed")
                 self.scheduler.remove_job(job.id)
 
     def _find_job_from_plugin_function(self, plugin_function: callable) -> Job:
@@ -115,6 +128,8 @@ class AbstractPluginLoader(ABC):
             )), None)
 
     def _remove_middlewares(self, plugin: Plugin) -> None:
+        logger = inject('logger')
+        logger.info(f"Removing middlewares for plugin {plugin.id}")
         middlewares = self.app._middleware_list[::]
         for middleware in middlewares:
             func = getattr(middleware, 'func', None)
@@ -123,11 +138,12 @@ class AbstractPluginLoader(ABC):
 
             middleware_path = inspect.getfile(inspect.unwrap(func))
             if Path(middleware_path).is_relative_to(plugin.directory):
+                logger.debug(f"Middleware {middleware.__name__} from {Path(middleware_path).relative_to(plugin.directory).as_posix()} removed")
                 self.app._middleware_list.remove(middleware)
 
     def reload_plugin(self, plugin: Plugin) -> Plugin:
         logger: logging.Logger = inject("logger")
-        logger.debug(f"Reloading: {plugin}")
+        logger.debug(f"Reloading plugin {plugin.id}")
         self.unload_plugin(plugin)
         reloaded_plugin = self.load_plugin(plugin.directory)
         return reloaded_plugin

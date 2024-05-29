@@ -29,17 +29,17 @@ class SlackExternalWebsocketHandler(WebSocket):
         slack_app: App
 
         event_type: str = bolt_request.body.get('event').get('type')
-        logger.debug(f"Received event: {event_type}")
+        logger.info(f"Received http event: {event_type}")
 
         bolt_response: BoltResponse = slack_app.dispatch(bolt_request)
         self.send_message(pickle.dumps(bolt_response))
 
         http_status: HTTPStatus = HTTPStatus(bolt_response.status)
-        logger.debug(f"Sent status: {bolt_response.status} - {http_status.name}: {http_status.description}")
+        logger.debug(f"Sent response status: {bolt_response.status} - {http_status.name}: {http_status.description}")
 
     def connected(self):
         logger: logging.Logger = inject("logger")
-        logger.info(f"{self.address} connected")
+        logger.info(f"New websocket connection from {self.address}")
 
         hostname = None
         hostname_ip = None
@@ -56,10 +56,12 @@ class SlackExternalWebsocketHandler(WebSocket):
         else:
             logger.debug(f'Address {address} resolved to hostname {hostname}')
 
+        logger.info(f"{hostname} connected")
+
         if {address, hostname, hostname_ip}.intersection(set(WEBSOCKET_ALLOWED_HOSTS)):
             return
 
-        logger.warning(f"Connection from {self.address} is {NOT_AUTHORIZED}")
+        logger.warning(f"Connection from {self.address} is {NOT_AUTHORIZED}. Closing connection.")
         self.close(reason=NOT_AUTHORIZED)
 
     def handle_close(self):

@@ -38,7 +38,7 @@ def create_slack_bolt_app():
     logger.info(f"Created SlackApp: {APPLICATION_NAME}")
     app.error(handle_errors)
     app.middleware(inject_logger_to_slack_context)
-    logger.info(f"Registered SlackApp error handler: {handle_errors}")
+    logger.debug(f"Registered SlackApp error handler: {handle_errors}")
     return app
 
 
