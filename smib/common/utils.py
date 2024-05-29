@@ -1,3 +1,4 @@
+import importlib
 import inspect
 import logging
 import pickle
@@ -8,7 +9,7 @@ import json
 
 from injectable import inject
 from slack_bolt.response import BoltResponse
-
+from importlib.metadata import version
 
 def is_pickleable(obj):
     try:
@@ -88,3 +89,19 @@ def get_module_file(stack_num: int = 4) -> Path:
     frame = stack[stack_num]
     file = inspect.getfile(frame[0])
     return Path(file)
+
+
+def get_version() -> str:
+    from smib.common.config import ROOT_DIRECTORY
+
+    try:
+        package_name = __package__.split('.')[0]
+    except AttributeError:
+        package_name = ROOT_DIRECTORY.parts[-1]
+
+    return version(package_name)
+
+
+if __name__ == '__main__':
+    print(f"{get_version() = }")
+
