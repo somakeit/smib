@@ -40,3 +40,9 @@ COPY --from=builder /etc/localtime /etc/localtime
 
 WORKDIR /app
 COPY smib ./smib
+
+# Remove logging.json from container
+RUN rm ./smib/logging.json
+
+# Copy logging.json into correct container location
+COPY smib/logging.json /app/config/logging.json

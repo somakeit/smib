@@ -20,7 +20,46 @@ Python 3.12.3
 
 
 ### Configuration
+
+#### Network Ports
 The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
+
+#### External Config Files
+Currently, the only external config file is the logging.json file.
+
+This is mapped to /app/config in the container
+
+You can make this location accessible by Mapping the internal directory to a volume or bind mount in the docker compose file.
+
+Linux:
+```yaml
+volumes:
+  - /var/smib/config:/app/config/
+```
+
+Windows:
+```yaml
+volumes:
+  - C:/smib/config:/app/config/
+```
+
+Local Development:
+- Set the `_EXTERNAL_CONFIG_LOCATION` environment variable to the directory containing the External Config Files
+
+#### Logging
+Map the internal /app/logs directory to a volume or bind mount in the docker compose to store the logs outside the containers
+
+Linux:
+```yaml
+volumes:
+  - /var/smib/slack/logs:/app/logs/
+```
+
+Windows:
+```yaml
+volumes:
+  - C:/smib/slack/logs:/app/logs/
+```
 
 ## SMIBHID
 [SMIBHID](smibhid/README.md) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
