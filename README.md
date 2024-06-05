@@ -5,8 +5,8 @@ Python 3.12.3
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
-- Set the environment variables (minimum of the slack tokens) using either method below. See [template.env](template.env) for all possible environment variables
-  > [!NOTE] `docker-compose` environment variables take precedence over .env environment variables
+- Set the environment variables (minimum of the slack tokens) using either method below. See [template.env](template.env) for all possible environment variables 
+  > `docker-compose` environment variables take precedence over .env environment variables
   - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
   - `docker-compose` File
