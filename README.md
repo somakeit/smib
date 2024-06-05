@@ -21,17 +21,20 @@ The host ports mapped for the slack server and webserver should be configured in
 
 #### External Config Files
 Current files:
-- logging.json
-- .env
+- `logging.json` (located at [smib/logging.json](smib/logging.json) in the repo)
+- `.env`
 
-This is mapped to /app/config in the container
+This is mapped to `/app/config` in the container
+
+> [!IMPORTANT]
+> If you map `/app/config` to a host directory, then you *MUST* add the 2 external files to this location.
 
 You can make this location accessible by Mapping the internal directory to a volume or bind mount in the docker compose file.
 
 Linux:
 ```yaml
 volumes:
-  - /var/smib/config:/app/config/
+  - /etc/smib/:/app/config/
 ```
 
 Windows:
@@ -49,7 +52,7 @@ Map the internal /app/logs directory to a volume or bind mount in the docker com
 Linux:
 ```yaml
 volumes:
-  - /var/smib/slack/logs:/app/logs/
+  - /var/log/smib/slack/:/app/logs/
 ```
 
 Windows:
