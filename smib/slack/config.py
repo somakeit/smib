@@ -1,3 +1,5 @@
+from decouple import Csv
+
 from smib.common.config import *
 
 SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')

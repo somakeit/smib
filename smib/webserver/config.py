@@ -1,3 +1,5 @@
+import os
+
 from smib.common.config import *
 
 WEBSERVER_SCHEME = config('WEBSERVER_SCHEME', default='http')

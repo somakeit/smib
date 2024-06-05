@@ -46,3 +46,6 @@ RUN rm ./smib/logging.json
 
 # Copy logging.json into correct container location
 COPY smib/logging.json /app/config/logging.json
+
+# Copy .env if it exists
+COPY .env* /app/config/
