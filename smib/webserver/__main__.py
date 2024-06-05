@@ -106,8 +106,8 @@ def get_title() -> str:
 
 
 event_responses = {
-    404: {"description": "Not Processed"},
-    418: {"description": "Unhandled Exception"}
+    404: {"description": "Not Processed", "content": {"application/json": {}}},
+    418: {"description": "Unhandled Exception", "content": {"application/problem+json": {}}}
 }
 
 ws_handler = WebSocketHandler()

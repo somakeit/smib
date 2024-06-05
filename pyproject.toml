@@ -23,6 +23,8 @@ aiohttp = "^3.9.5"
 pymongo = "^4.7.0"
 mogo = "^0.6.0"
 fastapi = "^0.111.0"
+pillow = "^10.3.0"
+matplotlib = "^3.9.0"
 
 
 [build-system]
