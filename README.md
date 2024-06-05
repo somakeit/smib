@@ -6,11 +6,6 @@ Python 3.12.3
 - Clone the repository to your target server host
 - Install docker if not already present
 - Set the slack tokens and DB Web UI Credentials as environment variables using either method below:
-  - Linux
-    - `export SLACK_APP_TOKEN=<app-token>`
-    - `export SLACK_BOT_TOKEN=<bot-token>`
-    - `export ME_CONFIG_BASICAUTH_USERNAME=<mongo-express-basicauth-username>`
-    - `export ME_CONFIG_BASICAUTH_PASSWORD=<mongo-express-basicauth-password>`
   - .env File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
 - Issue one of the following commands:
@@ -25,7 +20,9 @@ Python 3.12.3
 The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
 
 #### External Config Files
-Currently, the only external config file is the logging.json file.
+Current files:
+- logging.json
+- .env
 
 This is mapped to /app/config in the container
 

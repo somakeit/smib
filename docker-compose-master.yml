@@ -13,9 +13,6 @@ services:
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
 
-      # Passed in from HOST
-      - SLACK_APP_TOKEN
-      - SLACK_BOT_TOKEN
     networks:
       - smib-bridge-network
     command: "python -m smib.slack"
@@ -61,9 +58,6 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
       ME_CONFIG_BASICAUTH: true
       ME_CONFIG_OPTIONS_READONLY: true
-
-      ME_CONFIG_BASICAUTH_USERNAME:
-      ME_CONFIG_BASICAUTH_PASSWORD:
 
     networks:
       - smib-bridge-network

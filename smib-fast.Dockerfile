@@ -48,4 +48,4 @@ RUN rm ./smib/logging.json
 COPY smib/logging.json /app/config/logging.json
 
 # Copy .env if it exists
-COPY smib/.env* /app/config/
+COPY .env* /app/config/
