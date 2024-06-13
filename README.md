@@ -5,13 +5,10 @@ Python 3.12.3
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
-- Set the slack tokens and DB Web UI Credentials as environment variables using either method below:
-  - Linux
-    - `export SLACK_APP_TOKEN=<app-token>`
-    - `export SLACK_BOT_TOKEN=<bot-token>`
-    - `export ME_CONFIG_BASICAUTH_USERNAME=<mongo-express-basicauth-username>`
-    - `export ME_CONFIG_BASICAUTH_PASSWORD=<mongo-express-basicauth-password>`
-  - .env File
+- Set the environment variables (minimum of the slack tokens) using either method below. See [template.env](template.env) for all possible environment variables.
+  - `docker-compose` File - **Highest Precedence**
+    - Set the variables in your docker-compose file
+  - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
 - Issue one of the following commands:
   - Local Build: `docker compose up -d --build`
@@ -25,16 +22,21 @@ Python 3.12.3
 The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
 
 #### External Config Files
-Currently, the only external config file is the logging.json file.
+Current files:
+- `logging.json` (located at [smib/logging.json](smib/logging.json) in the repo)
+- `.env`
 
-This is mapped to /app/config in the container
+This is mapped to `/app/config` in the container
+
+> [!IMPORTANT]
+> If you map `/app/config` to a host directory, then you *MUST* add the 2 external files to this location.
 
 You can make this location accessible by Mapping the internal directory to a volume or bind mount in the docker compose file.
 
 Linux:
 ```yaml
 volumes:
-  - /var/smib/config:/app/config/
+  - /etc/smib/:/app/config/
 ```
 
 Windows:
@@ -52,7 +54,7 @@ Map the internal /app/logs directory to a volume or bind mount in the docker com
 Linux:
 ```yaml
 volumes:
-  - /var/smib/slack/logs:/app/logs/
+  - /var/log/smib/slack/:/app/logs/
 ```
 
 Windows:
