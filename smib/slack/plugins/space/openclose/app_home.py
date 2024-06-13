@@ -76,7 +76,7 @@ def _get_info_blocks() -> list[Block]:
         text="For more information see the GitHub repository",
         accessory=ButtonElement(
             text="GitHub Repo",
-            url="https://github.com/somakeit/S.M.I.B.",
+            url="https://github.com/somakeit/smib",
             action_id="app_home_url_github_repo"
         )
     )
@@ -86,7 +86,7 @@ def _get_info_blocks() -> list[Block]:
         text="To raise a bug or enhancement idea, visit our issue tracker",
         accessory=ButtonElement(
             text="Issue Tracker",
-            url="https://github.com/somakeit/S.M.I.B./issues",
+            url="https://github.com/somakeit/smib/issues",
             action_id="app_home_url_issue_tracker"
         )
     )
@@ -96,7 +96,7 @@ def _get_info_blocks() -> list[Block]:
         text="How to contribute patches to code or documentation?",
         accessory=ButtonElement(
             text="Contributing",
-            url="https://github.com/somakeit/S.M.I.B./blob/develop/CONTRIBUTING.md",
+            url="https://github.com/somakeit/smib/blob/develop/CONTRIBUTING.md",
             action_id="app_home_url_contributing"
         )
     )
