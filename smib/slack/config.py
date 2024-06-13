@@ -1,3 +1,5 @@
+from decouple import Csv
+
 from smib.common.config import *
 
 SLACK_APP_TOKEN = config('SLACK_APP_TOKEN')
@@ -15,4 +17,4 @@ MONGO_DB_URL = f"mongodb://{MONGO_DB_HOST}:{MONGO_DB_PORT}/"
 
 PLUGINS_DIRECTORY = config('PLUGINS_DIRECTORY', default=ROOT_DIRECTORY / 'slack' / 'plugins', cast=Path)
 
-SPACE_OPEN_ANNOUNCE_CHANNEL_ID = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='C06UDPLQRP1')
+SPACE_OPEN_ANNOUNCE_CHANNEL_ID = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='space-open-announce')

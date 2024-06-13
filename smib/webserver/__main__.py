@@ -1,4 +1,6 @@
 import logging
+import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, APIRouter
@@ -12,9 +14,9 @@ from fastapi.staticfiles import StaticFiles
 
 from smib.webserver.config import (
     WEBSERVER_HOST, WEBSERVER_PORT, WEBSERVER_PATH_PREFIX, WEBSERVER_STATIC_DIRECTORY, WEBSERVER_TEMPLATES_DIRECTORY,
-    ROOT_DIRECTORY
+    ROOT_DIRECTORY, APPLICATION_NAME
 )
-from smib.common.utils import is_pickleable
+from smib.common.utils import is_pickleable, get_version
 from smib.webserver.websocket_handler import WebSocketHandler
 
 from smib.common.logging_.setup import setup_logging, read_logging_json
@@ -56,29 +58,76 @@ async def generate_bolt_request(fastapi_request: Request):
 
 
 def create_directories():
+    logger = inject("logger")
+    logger.debug(f"Resolved Webserver Template Directory to: {WEBSERVER_TEMPLATES_DIRECTORY}")
     if not WEBSERVER_TEMPLATES_DIRECTORY.exists():
+        logger.info(f"Creating webserver templates directory: {WEBSERVER_TEMPLATES_DIRECTORY}")
         WEBSERVER_TEMPLATES_DIRECTORY.mkdir()
 
+    logger.debug(f"Resolved Webserver Static Directory to: {WEBSERVER_STATIC_DIRECTORY}")
     if not WEBSERVER_STATIC_DIRECTORY.exists():
+        logger.info(f"Creating webserver static directory: {WEBSERVER_STATIC_DIRECTORY}")
         WEBSERVER_STATIC_DIRECTORY.mkdir()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    logger = inject("logger")
+    logger.info(f"Webserver started")
+
+    yield
+
+    # Clean up the ML models and release the resources
+    logger.info(f"Webserver Stopping")
+
+
+def get_readme() -> str:
+    description = None
+    description_path = Path(__file__).parent / "README.md"
+    if description_path.exists() and description_path.is_file():
+        with open(description_path) as readme:
+            description = readme.read()
+
+    return description
+
+
+def get_readme_without_title() -> str:
+    description = get_readme()
+    description = re.sub(r"#.*\n", "", description, 1)
+    return description
+
+
+def get_title() -> str:
+    title = None
+    description = get_readme()
+
+    return re.findall(r"#(.*)", description)[0]
+
+
+event_responses = {
+    404: {"description": "Not Processed"},
+    418: {"description": "Unhandled Exception"}
+}
+
 ws_handler = WebSocketHandler()
-app = FastAPI()
-router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
+
+app = FastAPI(lifespan=lifespan, title=get_title(), version=get_version(), description=get_readme_without_title(), redoc_url=None)
+smib_router = APIRouter(prefix=WEBSERVER_PATH_PREFIX)
+event_router = APIRouter(prefix='/event', tags=['S.M.I.B. Events'], responses=event_responses)
 
 create_directories()
 
-router.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
+app.mount("/static", StaticFiles(directory=WEBSERVER_STATIC_DIRECTORY), name="static")
 templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 
 
-@router.get('/event/{event}', tags=['SMIB Events'])
-@router.post('/event/{event}', tags=['SMIB Events'])
-@router.put('/event/{event}', tags=['SMIB Events'])
+@event_router.get('/{event}', name="S.M.I.B. GET Event")
+@event_router.post('/{event}', name="S.M.I.B. POST Event")
+@event_router.put('/{event}', name="S.M.I.B. PUT Event")
 async def smib_event_handler(request: Request, event: str):
     logger = inject("logger")
-    logger.debug(f"Received event {event}")
+    logger.info(f"Received event {event}")
     ws_handler.check_and_reconnect_websocket_conn()
     bolt_request: BoltRequest = await generate_bolt_request(request)
     logger.debug(f"Request: {request} -> Bolt Request: {bolt_request}")
@@ -87,27 +136,28 @@ async def smib_event_handler(request: Request, event: str):
     return to_starlette_response(bolt_response)
 
 
-@router.get('/', response_class=HTMLResponse)
-async def smib_home(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
-
-
 @app.exception_handler(404)
 async def custom_404_handler(request, __):
     return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
 
 
-app.include_router(router)
+smib_router.include_router(event_router)
+app.include_router(smib_router)
 
 
 def main(app: FastAPI, ws_handler: WebSocketHandler):
     logger = inject("logger")
     try:
         import uvicorn
-        logger.info(f"Starting WebServer")
-        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json())
+        logger.info(f"Starting WebServer v{get_version()}")
+        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json(), headers=[("server", APPLICATION_NAME)])
+    except KeyboardInterrupt:
+        ...
     finally:
+        logger.info(f"Stopping WebsocketHandler")
         ws_handler.close_conn()
+
+        logger.info(f"Webserver Stopped")
 
 
 if __name__ == '__main__':

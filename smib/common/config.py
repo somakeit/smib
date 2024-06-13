@@ -1,17 +1,19 @@
-import json
-import logging.config
-from urllib.parse import urlparse
-from decouple import config, Csv
 import warnings
-import os
 from pathlib import Path
-import smib
+from urllib.parse import urlparse
 
+from decouple import config, AutoConfig
+
+import smib
 from smib.common.utils import to_path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 ROOT_DIRECTORY = Path(smib.__file__).parent
+EXTERNAL_CONFIG_LOCATION = config('_EXTERNAL_CONFIG_LOCATION', default='/app/config/', cast=Path)
+
+
+config = AutoConfig(search_path=EXTERNAL_CONFIG_LOCATION)
 
 APPLICATION_NAME = config('APPLICATION_NAME', default='S.M.I.B.')
 

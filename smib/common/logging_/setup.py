@@ -1,20 +1,35 @@
-import inspect
 import json
 import logging
+import logging.config
+from pathlib import Path
 
-from smib.common.config import ROOT_DIRECTORY
+from smib.common.config import EXTERNAL_CONFIG_LOCATION
 from smib.common.utils import get_module_name
 from injectable import injectable_factory, load_injection_container, inject
 
 
-def read_logging_json(path=ROOT_DIRECTORY / 'logging.json'):
+def read_logging_json(path=EXTERNAL_CONFIG_LOCATION / 'logging.json'):
+    path = Path(path)
+
+    logging.basicConfig()
+    logging.info(f'Resolving logging.json to {path}')
+
+    if not (path.exists() and path.is_file()):
+        logging.warning(f'No logging json file found at {path}')
+        return None
+
     with open(path, 'rt') as file:
         config_file = json.load(file)
         return config_file
 
 
-def setup_logging(path=ROOT_DIRECTORY / 'logging.json'):
-    logging.config.dictConfig(read_logging_json(path))
+def setup_logging(path=EXTERNAL_CONFIG_LOCATION / 'logging.json'):
+    try:
+        logging.config.dictConfig(read_logging_json(path))
+    except Exception as e:
+        logging.basicConfig()
+        logger = logging.getLogger('setup_logging')
+        logger.warning(e)
 
 
 @injectable_factory(logging.Logger, qualifier="plugin_logger")
