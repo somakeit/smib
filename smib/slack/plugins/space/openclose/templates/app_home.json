@@ -60,7 +60,7 @@
 					"text": "GitHub Repo",
 					"emoji": true
 				},
-				"url": "https://github.com/somakeit/S.M.I.B"
+				"url": "https://github.com/somakeit/smib"
 			}
 		},
 		{
@@ -76,7 +76,7 @@
 					"text": "Issue Tracker",
 					"emoji": true
 				},
-				"url": "https://github.com/somakeit/S.M.I.B./issues"
+				"url": "https://github.com/somakeit/smib/issues"
 			}
 		},
 		{
@@ -92,7 +92,7 @@
 					"text": "Contributing",
 					"emoji": true
 				},
-				"url": "https://github.com/somakeit/S.M.I.B./blob/develop/CONTRIBUTING.md"
+				"url": "https://github.com/somakeit/smib/blob/develop/CONTRIBUTING.md"
 			}
 		}
 	]
