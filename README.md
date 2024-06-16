@@ -1,7 +1,17 @@
-## Python Version
-Python 3.12.3
+# SMIB (So Make It Bot)
+## Introduction
+SMIB is the So Make It Bot. The architecture is a set of docker containers configured to work together, that can run on a pi4 or similar and provide slack bot interactivity with a maker space (or any space).
+
+### Features
+- A socket mode slack bot server that requires no port forwarding or firewall config to get going on your network.
+- Web server with plugin architecture providing a REST API with swagger API documentation, so you can write your own plugins that can be called by REST API and executed by the slack bot - allows creating web pages or local devices (such as SMIBHID) that drive the slack bot without the need for leaving the local network.
+- Stateful database storage for storing information like space state for coordination among multiple bots/endpoints.
+- SMIBHID (SMIB Human Interface Device) - A Pi Pico based interface device that provides buttons, displays and any other human interface to the slack bot via the REST API. See the [SMIBHID docs](smibhid/README.md) for more information.
 
 ## Docker deployment
+### Supported Python Version
+Python 3.12.3
+
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
@@ -73,7 +83,7 @@ Further documentation can be found [in the smibhid folder](smibhid/).
 ## Legacy SMIB Commands
 Currently, the old [SMIB Commands](https://github.com/somakeit/smib-commands) do not work with the new SMIB.
 
-The old [SMIB](https://github.com/somakeit/smib) worked using the Slack RTM api. This API has been replaced with the Events API. 
+The old [SMIB](https://github.com/somakeit/smib) worked using the Slack RTM API. This API has been replaced with the Events API. 
 
 Previously, SMIB Commands were created as the only way to interact with SMIB.
 
