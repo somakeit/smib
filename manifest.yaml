@@ -10,11 +10,17 @@ features:
   bot_user:
     display_name: SMIB
     always_online: true
+  shortcuts:
+    - name: smib-poll
+      type: global
+      callback_id: smib-poll
+      description: Create and track poll
 oauth_config:
   scopes:
     bot:
       - chat:write
       - chat:write.public
+      - commands
 settings:
   event_subscriptions:
     bot_events:
