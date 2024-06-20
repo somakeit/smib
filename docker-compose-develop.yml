@@ -4,6 +4,9 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#develop
       dockerfile: smib-fast.Dockerfile
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "4123:4123"
     depends_on:
@@ -23,6 +26,9 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#develop
       dockerfile: smib-fast.Dockerfile
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "80:80"
     depends_on:
