@@ -9,3 +9,5 @@ smib/log/
 .env
 /package-lock.json
 /node_modules/
+logs/
+*.log
