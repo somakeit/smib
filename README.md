@@ -83,13 +83,13 @@ Further documentation can be found [in the smibhid folder](smibhid/).
 ## Legacy SMIB Commands
 Currently, the old [SMIB Commands](https://github.com/somakeit/smib-commands) do not work with the new SMIB.
 
-The old [SMIB](https://github.com/somakeit/smib) worked using the Slack RTM API. This API has been replaced with the Events API. 
+The old [SMIB](https://github.com/somakeit/smib-old) worked using the Slack RTM API. This API has been replaced with the Events API. 
 
 Previously, SMIB Commands were created as the only way to interact with SMIB.
 
 I think some form of backwards compatibility or similar functionality would be good. Work on a `ShellPluginLoader` was started but parked as it was not the main focus of the new amped up SMIB [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)
 
-An [issue](https://github.com/somakeit/S.M.I.B./issues/83) has been created to track the progress and gather ideas.
+An [issue](https://github.com/somakeit/smib/issues/83) has been created to track the progress and gather ideas.
 
 ## Version
 When bumping the poetry version (in pyproject.toml), the `HID` class (part of SMIBHID) `version` attribute also needs manually updating.
