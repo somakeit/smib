@@ -2,11 +2,8 @@ services:
   smib-slack:
     container_name: smib-slack
     build:
-      context: https://github.com/somakeit/smib.git#master
+      context: .
       dockerfile: smib-fast.Dockerfile
-    env_file:
-      - path: .env
-        required: false
     ports:
       - "4123:4123"
     depends_on:
@@ -15,6 +12,9 @@ services:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
+    volumes:
+      - /etc/smib/:/app/config/
+      - /var/log/smib/slack/:/app/logs/
 
     networks:
       - smib-bridge-network
@@ -24,17 +24,18 @@ services:
   smib-webserver:
     container_name: smib-webserver
     build:
-      context: https://github.com/somakeit/smib.git#master
+      context: .
       dockerfile: smib-fast.Dockerfile
-    env_file:
-      - path: .env
-        required: false
     ports:
       - "80:80"
     depends_on:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
+
+    volumes:
+      - /etc/smib/:/app/config/
+      - /var/log/smib/webserver/:/app/logs/
 
     networks:
       - smib-bridge-network
