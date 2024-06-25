@@ -1,0 +1,75 @@
+{
+  "type": "modal",
+  "title": {
+    "type": "plain_text",
+    "text": "Poll Creation"
+  },
+  "submit": {
+    "type": "plain_text",
+    "text": "Create"
+  },
+  "blocks": [
+    {
+      "type": "input",
+      "block_id": "poll_title",
+      "label": {
+        "type": "plain_text",
+        "text": "Title"
+      },
+      "element": {
+        "type": "plain_text_input"
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "poll_option_1",
+      "label": {
+        "type": "plain_text",
+        "text": "Option 1"
+      },
+      "element": {
+        "type": "plain_text_input"
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "poll_option_2",
+      "label": {
+        "type": "plain_text",
+        "text": "Option 2"
+      },
+      "element": {
+        "type": "plain_text_input"
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "channel_select",
+      "label": {
+        "type": "plain_text",
+        "text": "Select a channel"
+      },
+      "element": {
+        "type": "conversations_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Select a channel"
+        },
+        "action_id": "channel_select_action"
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Add another option"
+          },
+          "action_id": "button_click"
+        }
+      ]
+    }
+  ]
+}
