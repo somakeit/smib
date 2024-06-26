@@ -14,7 +14,7 @@ from slack_sdk.models.blocks.block_elements import ConversationSelectElement, Bu
 from slack_sdk.models.views import View
 from slack_sdk.web import SlackResponse
 
-from .views import PollView
+from .views import CreatePollModal
 from smib.slack.custom_app import CustomApp
 from slack_sdk.web.client import WebClient
 
@@ -26,7 +26,7 @@ def smib_poll_shortcut(body, payload, ack, client: WebClient, context: dict):
     ack()
     logger: Logger = context.get("logger")
 
-    view = PollView(type="modal", title="Create Poll", submit="Create", external_id="create_poll")
+    poll_modal = CreatePollModal()
     blocks = [
         InputBlock(label="Title", block_id="poll_title", element=PlainTextInputElement()),
         InputBlock(block_id="poll_option_1", label="Option 1", element=PlainTextInputElement()),
@@ -39,15 +39,15 @@ def smib_poll_shortcut(body, payload, ack, client: WebClient, context: dict):
         InputBlock(block_id="channel_select", label="Select a channel",
                    element=ConversationSelectElement(placeholder="Select a channel")),
     ]
-    view.blocks = blocks
+    poll_modal.blocks = blocks
 
-    print(view.to_dict())
+    print(poll_modal.to_dict())
 
     resp: SlackResponse | None = None
     try:
         resp: SlackResponse = client.views_open(
             trigger_id=payload["trigger_id"],
-            view=view
+            view=poll_modal
         )
     except Exception as e:
         logger.exception(e)

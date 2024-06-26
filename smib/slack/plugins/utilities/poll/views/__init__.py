@@ -1,1 +1,1 @@
-from .poll_view import PollView
+from .create_poll_modal import CreatePollModal
