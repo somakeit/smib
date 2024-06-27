@@ -6,6 +6,9 @@ from smib.common.utils import get_utc_datetime
 
 
 class View(Model):
+    # Override collection name to plural
+    _name = 'views'
+
     view_id: str = Field[str](default=None)
     external_id: str = Field[str](default=None)
     last_modified: datetime = Field[datetime](default_factory=get_utc_datetime)
