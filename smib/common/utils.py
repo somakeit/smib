@@ -2,6 +2,7 @@ import importlib
 import inspect
 import logging
 import pickle
+import datetime
 from pathlib import Path
 
 import functools
@@ -100,6 +101,10 @@ def get_version() -> str:
         package_name = ROOT_DIRECTORY.parts[-1]
 
     return version(package_name)
+
+
+def get_utc_datetime() -> datetime:
+    return datetime.datetime.now(tz=datetime.timezone.utc)
 
 
 if __name__ == '__main__':

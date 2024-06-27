@@ -1,5 +1,7 @@
 import json
+from datetime import timedelta
 
+from apscheduler.triggers.base import BaseTrigger
 from slack_bolt import App, CustomListenerMatcher
 from injectable import inject, injectable_factory
 from apscheduler.util import undefined
@@ -36,7 +38,7 @@ class CustomApp(App):
             if scheduler.get_job(id_to_use) is not None:
                 id_to_use = f"{id}_{_id_func(func)}"
 
-            event_type = f'schedule_{trigger}_{id_to_use}_{func.__name__}'
+            event_type = f'schedule_{type(trigger).__name__.lower() if isinstance(trigger, BaseTrigger) else trigger}_{id_to_use}_{func.__name__}'
 
             args = None
             kwargs = {"_plugin_function": func}
@@ -52,6 +54,7 @@ class CustomApp(App):
                         'type': 'event_callback',
                         'event': {
                             "type": event_type,
+                            "job_id": id_to_use
                         }
                     })
 
