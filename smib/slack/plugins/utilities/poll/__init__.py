@@ -58,7 +58,6 @@ def add_option(ack, payload: dict, body, request, context: dict, client: WebClie
     external_id = view.get('external_id')
 
     view = DBView.retrieve(view_id=view_id)
-    logger.debug(view)
 
     new_view = CreatePollModal.from_dict(view.view_json)
     new_view.add_option()
@@ -66,7 +65,6 @@ def add_option(ack, payload: dict, body, request, context: dict, client: WebClie
     try:
         resp = client.views_update(view=new_view, view_id=view_id)
         DBView.store(external_id=external_id, view_id=view_id, view_json=new_view.to_dict())
-        logger.debug(resp.data)
     except Exception as e:
         logger.exception(e)
 
@@ -83,7 +81,6 @@ def remove_option(ack, payload: dict, body, request, context: dict, client: WebC
     external_id = view.get('external_id')
 
     view = DBView.retrieve(view_id=view_id)
-    logger.debug(view)
 
     new_view = CreatePollModal.from_dict(view.view_json)
     new_view.remove_option()
@@ -91,7 +88,6 @@ def remove_option(ack, payload: dict, body, request, context: dict, client: WebC
     try:
         resp = client.views_update(view=new_view, view_id=view_id)
         DBView.store(external_id=external_id, view_id=view_id, view_json=new_view.to_dict())
-        logger.debug(resp.data)
     except Exception as e:
         logger.exception(e)
 
