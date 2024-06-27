@@ -12,7 +12,7 @@ class View(Model):
     view_id: str = Field[str](default=None)
     external_id: str = Field[str](default=None)
     last_modified: datetime = Field[datetime](default_factory=get_utc_datetime)
-    view_json: dict = Field[dict](default={})
+    view_json: dict = Field[dict](default=None)
 
     @classmethod
     def retrieve(cls, /, view_id: str) -> Self:
