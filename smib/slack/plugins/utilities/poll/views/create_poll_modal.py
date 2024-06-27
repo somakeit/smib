@@ -28,9 +28,9 @@ class CreatePollModal(Modal):
 
     def _fresh_blocks(self) -> list[dict | Block]:
         blocks = [
-            InputBlock(label="Title", block_id="poll_title", element=PlainTextInputElement()),
+            InputBlock(label="Title", block_id="poll_title", element=PlainTextInputElement(action_id='poll_title')),
             *[
-                InputBlock(block_id=f"{self.OPTION_PREFIX}_{i+1}", label=f"Option {i+1}", element=PlainTextInputElement())
+                InputBlock(block_id=f"{self.OPTION_PREFIX}_{i+1}", label=f"Option {i+1}", element=PlainTextInputElement(action_id=f"{self.OPTION_PREFIX}_{i+1}"))
                 for i in range(self.MIN_OPTIONS)
             ],
             ActionsBlock(block_id="options_actions", elements=[
@@ -39,7 +39,7 @@ class CreatePollModal(Modal):
             ]),
             DividerBlock(),
             InputBlock(block_id="channel_select", label="Select a channel",
-                       element=ConversationSelectElement(placeholder="Select a channel")),
+                       element=ConversationSelectElement(placeholder="Select a channel", action_id='channel_select')),
         ]
 
         return blocks
@@ -56,7 +56,7 @@ class CreatePollModal(Modal):
         new_option_block = InputBlock(
             block_id=f"{self.OPTION_PREFIX}_{new_option_id}",
             label=f"Option {new_option_id}",
-            element=PlainTextInputElement()
+            element=PlainTextInputElement(action_id=f"{self.OPTION_PREFIX}_{new_option_id}")
         )
         # Insert the new option block before the ActionsBlock
         index = next(i for i, block in enumerate(current_blocks) if block.block_id == "options_actions")
