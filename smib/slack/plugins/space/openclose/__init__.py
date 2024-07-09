@@ -3,6 +3,8 @@ __description__ = "Space Open Close Button"
 __author__ = "Sam Cork"
 
 import re
+from logging import Logger
+from pprint import pformat
 
 from injectable import inject
 from slack_sdk.errors import SlackApiError
@@ -32,15 +34,33 @@ app.action(re.compile('app_home_url_.*'))(lambda ack: ack())
 @app.action('space_open')
 @app.event('http_put_space_open')
 @database()
-def space_open(say, context, ack, client):
+def space_open(say, context, ack, client, event, action):
     ack()
-    context['logger'].debug("Space Open!")
+    logger: Logger = context.get('logger')
+
+    request_data: dict = {}
+
+    if event:
+        logger.info(f"Processing event: {event['type']}")
+        request_data = event.get('data', {})
+    elif action:
+        logger.info(f"Processing action: {action['action_id']}")
+
+    logger.debug(pformat(request_data, sort_dicts=False))
+    logger.debug("Space Open!")
+
+    hours_open_str = request_data.get('hours', 0)
 
     try:
-        say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+        hours_open = int(hours_open_str)
+        if hours_open:
+            say(text=f'Space Open! (For about {hours_open}h)', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+        else:
+            say(text='Space Open!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+
     except SlackApiError as e:
-        context['logger'].debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
-        context['logger'].warning(e)
+        logger.debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
+        logger.warning(e)
 
     space: Space = Space.single()
     space.set_open()
@@ -54,14 +74,26 @@ def space_open(say, context, ack, client):
 @app.action('space_closed')
 @app.event('http_put_space_closed')
 @database()
-def space_closed(say, context, ack, client):
+def space_closed(say, context, ack, client, event, action):
     ack()
-    context['logger'].debug("Space Closed!")
+    logger: Logger = context.get('logger')
+
+    request_data: dict = {}
+
+    if event:
+        logger.info(f"Processing event: {event['type']}")
+        request_data = event.get('data', {})
+    elif action:
+        logger.info(f"Processing action: {action['action_id']}")
+
+    logger.debug(pformat(request_data, sort_dicts=False))
+    logger.debug("Space Closed!")
+
     try:
         say(text='Space Closed!', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
     except SlackApiError as e:
-        context['logger'].debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
-        context['logger'].warning(e)
+        logger.debug(f"{SPACE_OPEN_ANNOUNCE_CHANNEL_ID = }")
+        logger.warning(e)
 
     space: Space = Space.single()
     space.set_closed()
