@@ -22,8 +22,11 @@ Python 3.12.3
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
 - Issue one of the following commands:
   - Local Build: `docker compose up -d --build`
-  - Develop Branch Build: `docker compose -f docker-compose-develop.yml up -d --build`
-  - Master Branch Build: `docker compose -f docker-compose-master.yml up -d --build`
+  - Branch Build (default master): `docker compose -f docker-compose-branch.yml up -d --build`
+    - To specify the branch, do one of the following:
+      - Prefix the command with `SMIB_BRANCH=<branch>`
+        - e.g `SMIB_BRANCH=master docker compose -f docker-compose-branch.yml up -d --build`
+      - Set environment variable in a `.env` file thats alongside the `docker-compose-branch.yml` file
 
 
 ### Configuration
