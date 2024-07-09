@@ -1,4 +1,3 @@
-import logging
 import re
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,7 +7,6 @@ from injectable import load_injection_container, inject
 from slack_bolt.request import BoltRequest
 from slack_bolt.response import BoltResponse
 from slack_bolt.adapter.starlette.handler import to_bolt_request, to_starlette_response
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -127,13 +125,26 @@ templates = Jinja2Templates(directory=str(WEBSERVER_TEMPLATES_DIRECTORY))
 @event_router.put('/{event}', name="S.M.I.B. PUT Event")
 async def smib_event_handler(request: Request, event: str):
     logger = inject("logger")
-    logger.info(f"Received event {event}")
+
     ws_handler.check_and_reconnect_websocket_conn()
+
+    device_ip, port = request.scope["client"]
+    device_hostname = request.headers.get("Device-Hostname", None)
+
+    logger.info(f"Received event {event} from {device_hostname or device_ip}{f' ({device_ip})' if device_hostname else ''}")
+
     bolt_request: BoltRequest = await generate_bolt_request(request)
-    logger.debug(f"Request: {request} -> Bolt Request: {bolt_request}")
+
+    logger.debug(f"Request: {request.__dict__}")
+    logger.debug(f"Bolt Request: {bolt_request.__dict__}")
+
     ws_handler.send_bolt_request(bolt_request)
     bolt_response: BoltResponse = await ws_handler.receive_bolt_response()
-    return to_starlette_response(bolt_response)
+    response = to_starlette_response(bolt_response)
+
+    logger.debug(f"Bolt Response:{bolt_response.__dict__}")
+    logger.debug(f"Response: {response.__dict__}")
+    return response
 
 
 @app.exception_handler(404)
