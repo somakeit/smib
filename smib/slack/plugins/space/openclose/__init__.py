@@ -49,10 +49,9 @@ def space_open(say, context, ack, client, event, action):
     logger.debug(pformat(request_data, sort_dicts=False))
     logger.debug("Space Open!")
 
-    hours_open_str = request_data.get('hours', 0)
+    hours_open = request_data.get('hours', 0)
 
     try:
-        hours_open = int(hours_open_str)
         if hours_open:
             say(text=f'Space Open! (For about {hours_open}h)', channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
         else:
