@@ -2,7 +2,7 @@ services:
   smib-slack:
     container_name: smib-slack
     build:
-      context: https://github.com/somakeit/smib.git#master
+      context: https://github.com/somakeit/smib.git#${SMIB_BRANCH:-master}
       dockerfile: smib-fast.Dockerfile
     env_file:
       - path: .env
