@@ -96,7 +96,7 @@ def _get_info_blocks() -> list[Block]:
         text="How to contribute patches to code or documentation?",
         accessory=ButtonElement(
             text="Contributing",
-            url="https://github.com/somakeit/smib/blob/develop/CONTRIBUTING.md",
+            url="https://github.com/somakeit/smib/blob/master/CONTRIBUTING.md",
             action_id="app_home_url_contributing"
         )
     )
