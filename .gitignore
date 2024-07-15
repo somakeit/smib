@@ -11,3 +11,4 @@ smib/log/
 /node_modules/
 logs/
 *.log
+.pylintrc
