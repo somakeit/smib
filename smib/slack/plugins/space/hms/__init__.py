@@ -26,16 +26,6 @@ app: CustomApp = inject("SlackApp")
 
 @app.event('http_get_hms')
 def get_hms_handler(say, context, ack, client, event):
-    # pprint(event)
-    #
-    # result = Hms.oauth.token.POST(data={
-    #     "grant_type": "client_credentials",
-    #     "client_id": HMS_CLIENT_ID,
-    #     "client_secret": HMS_CLIENT_SECRET
-    # })
-    #
-    # pprint(result)
-    # pprint(result.json())
 
     result = Hms.oauth.token.POST(json={
         "grant_type": "client_credentials",
@@ -79,5 +69,14 @@ def get_hms_handler(say, context, ack, client, event):
     if not result.ok:
         return
 
-    pprint(result.json())
+    email = result.json()['data']['email']
+    result = None
+    try:
+        result = client.users_lookupByEmail(email=email)
+    except SlackApiError as e:
+        print(e)
+
+    if not result:
+        return
+    pprint(result.__dict__)
 
