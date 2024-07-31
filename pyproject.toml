@@ -23,6 +23,9 @@ aiohttp = "^3.9.5"
 pymongo = "^4.7.0"
 mogo = "^0.6.0"
 fastapi = "^0.111.0"
+# Fixed version as this is a builtin package - probably can be un-fixed if we update python to a later version
+typing-extensions = "4.11.0"
+hammock = "^0.2.4"
 
 
 [build-system]
