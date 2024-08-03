@@ -15,6 +15,7 @@ Python 3.12.3
 ### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
+  - If installing on a Raspberry Pi (recommend a pi4), ensure you use a 64 bit OS and follow the [Debian install instructions from Docker](https://docs.docker.com/engine/install/debian/).
 - Set the environment variables (minimum of the slack tokens) using either method below. See [template.env](template.env) for all possible environment variables.
   - `docker-compose` File - **Highest Precedence**
     - Set the variables in your docker-compose file
