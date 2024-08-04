@@ -8,6 +8,7 @@ from lib.networking import WirelessNetwork
 from lib.rfid.reader import RFIDReader
 from config import RFID_ENABLED
 from lib.uistate import UIState
+from lib.ui_log import UILog
 
 class HID:
     
@@ -26,10 +27,12 @@ class HID:
             self.moduleConfig.register_rfid(RFIDReader(Event()))
         self.display = self.moduleConfig.get_display()
         self.wifi = self.moduleConfig.get_wifi()
+        self.moduleConfig.register_ui_log(UILog(self.wifi))
         self.reader = self.moduleConfig.get_rfid()
+        self.ui_log = self.moduleConfig.get_ui_log()
         self.space_state = SpaceState(self.moduleConfig, self)
-        self.errorHandler = ErrorHandler("HID")
-        self.errorHandler.configure_display(self.display)
+        self.error_handler = ErrorHandler("HID")
+        self.error_handler.configure_display(self.display)
         self.ui_state_instance = StartUIState(self, self.space_state)
         self.ui_state_instance.on_enter()
 
@@ -49,6 +52,7 @@ class HID:
         self.space_state.startup()
         if self.reader:
             self.reader.startup()
+        self.ui_log.startup()
       
         self.log.info("Entering main loop")        
         self.switch_to_appropriate_spacestate_uistate()
@@ -74,7 +78,7 @@ class HID:
         else:
             self.log.error("Space state is in an unexpected state")
             raise ValueError("Space state is in an unexpected state")
-
+    
 class StartUIState(UIState):
     
     def __init__(self, hid: HID, space_state: SpaceState) -> None:
