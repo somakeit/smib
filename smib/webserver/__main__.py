@@ -42,7 +42,8 @@ async def generate_request_body(fastapi_request):
                 "base_url": str(fastapi_request.base_url).rstrip('/') + str(fastapi_request.url.path),
                 "url": str(fastapi_request.url),
                 "parameters": dict(fastapi_request.query_params),
-                "headers": dict(filter(lambda item: is_pickleable(item), fastapi_request.headers.items()))
+                "headers": dict(filter(lambda item: is_pickleable(item), fastapi_request.headers.items())),
+                "ip": fastapi_request.scope["client"][0]
             }
         }
     }
