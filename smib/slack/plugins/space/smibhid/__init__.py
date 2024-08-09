@@ -30,8 +30,6 @@ def on_smibhid_ui_log_post(event: dict, context: dict, ack: callable, request: B
     device_hostname, *_ = request.headers.get('device-hostname', None)
     device_ip = event['request']['ip']
 
-    logger.debug(pformat(event))
-
     data = event.get("data", [])
     if not data:
         logger.info("No logs received in request")
