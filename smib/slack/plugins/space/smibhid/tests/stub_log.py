@@ -17,7 +17,9 @@ def main():
     ]
     headers = {'device-hostname': "smibhid-dummy"}
     url = f"http://localhost/smib/event/smibhid_ui_log"
-    print(url)
+    print(f"url: {url}")
+    print(f"data: {data}")
+    print(f"JSON data: {json.dumps(data)}")
     response = requests.post(url, headers=headers, data=json.dumps(data), verify=False)
 
     print(response.status_code)
