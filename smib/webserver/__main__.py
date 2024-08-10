@@ -51,7 +51,7 @@ async def generate_request_body(fastapi_request):
 
 async def generate_bolt_request(fastapi_request: Request):
     body = await fastapi_request.body()
-    bolt_request: BoltRequest = to_bolt_request(fastapi_request, body=body)
+    bolt_request: BoltRequest = to_bolt_request(fastapi_request, body=b'')
     bolt_request.body = await generate_request_body(fastapi_request)
     return bolt_request
 
