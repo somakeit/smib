@@ -161,7 +161,9 @@ def main(app: FastAPI, ws_handler: WebSocketHandler):
     try:
         import uvicorn
         logger.info(f"Starting WebServer v{get_version()}")
-        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT, log_config=read_logging_json(), headers=[("server", APPLICATION_NAME)], proxy_headers=True)
+        uvicorn.run(app, host=WEBSERVER_HOST, port=WEBSERVER_PORT,
+                    log_config=read_logging_json(), headers=[("server", APPLICATION_NAME)], proxy_headers=True,
+                    forwarded_allow_ips="*")
     except KeyboardInterrupt:
         ...
     finally:
