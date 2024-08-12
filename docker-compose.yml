@@ -62,7 +62,7 @@ services:
       - 8082:8081
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
-      ME_CONFIG_BASICAUTH: true
+      ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
 
     networks:
