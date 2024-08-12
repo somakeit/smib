@@ -14,6 +14,9 @@ from slack_sdk.errors import SlackApiError
 from smib.common.utils import http_bolt_response
 from smib.slack.custom_app import CustomApp
 from slack_sdk import WebClient
+from slack_sdk.web.slack_response import SlackResponse
+
+from requests import Response
 
 from smib.slack.db import database
 
@@ -25,9 +28,10 @@ app: CustomApp = inject("SlackApp")
 
 
 @app.event('http_get_hms')
+@http_bolt_response
 def get_hms_handler(say, context, ack, client, event):
 
-    result = Hms.oauth.token.POST(json={
+    result: Response = Hms.oauth.token.POST(json={
         "grant_type": "client_credentials",
         "client_id": HMS_CLIENT_ID,
         "client_secret": HMS_CLIENT_SECRET
@@ -43,7 +47,7 @@ def get_hms_handler(say, context, ack, client, event):
     if None in (access_token, token_type):
         return
 
-    result = Hms.api.cc('rfid-token').POST(
+    result: Response = Hms.api.cc('rfid-token').POST(
         headers={
             "Content-type": "application/json",
             "Accept": "application/json",
@@ -72,11 +76,24 @@ def get_hms_handler(say, context, ack, client, event):
     email = result.json()['data']['email']
     result = None
     try:
-        result = client.users_lookupByEmail(email=email)
+        result: SlackResponse = client.users_lookupByEmail(email=email)
     except SlackApiError as e:
         print(e)
 
     if not result:
         return
-    pprint(result.__dict__)
+
+    user_id = result.data['user']['id']
+    username = result.data['user']['name']
+    display_name = result.data['user']['profile']['display_name_normalized']
+
+    return_data = {
+        "id": user_id,
+        "username": username,
+        "display_name": display_name
+    }
+
+    pprint(return_data, sort_dicts=False)
+
+    return return_data
 
