@@ -83,7 +83,8 @@ services:
     volumes:
       - /etc/caddy/Caddyfile:/etc/caddy/Caddyfile
       - /var/caddy/data/:/data
-    network_mode: host
+    networks:
+      - smib-bridge-network
 
 networks:
   smib-bridge-network:
