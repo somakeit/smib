@@ -1,0 +1,3 @@
+http:// {
+  reverse_proxy smib-webserver:80
+}

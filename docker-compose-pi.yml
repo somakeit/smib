@@ -26,8 +26,8 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
-    ports:
-      - "80:80"
+#    ports:
+#      - "80:80"
     depends_on:
       - smib-slack
     environment:
@@ -72,6 +72,17 @@ services:
       ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
 
+    networks:
+      - smib-bridge-network
+      -
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - /etc/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
     networks:
       - smib-bridge-network
 
