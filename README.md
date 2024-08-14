@@ -30,7 +30,7 @@ Python 3.12.3
       - Set environment variable in a `.env` file thats alongside the `docker-compose-branch.yml` file
 
 
-### Configuration
+### SMIB Slack/Webserver Configuration
 
 #### Network Ports
 The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
@@ -76,6 +76,15 @@ Windows:
 volumes:
   - C:/smib/slack/logs:/app/logs/
 ```
+
+### Database and Database Web UI Configuration
+To set environment varaibles for the `smib-db` and `smib-db-ui` containers, you must do one of the following:
+  - `docker-compose` File - **Highest Precedence**
+    - Set the variables in your docker-compose file
+  - `.env` File
+    - Create a file called `.env` alongside the docker-compose.yml file. See links below for possible values
+      - [Database Web UI Configuration](https://github.com/mongo-express/mongo-express)
+      - [Database Configuration](https://hub.docker.com/_/mongo)
 
 ## SMIBHID
 [SMIBHID](smibhid/README.md) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.

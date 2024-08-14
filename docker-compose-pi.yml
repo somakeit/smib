@@ -48,6 +48,9 @@ services:
     image: mongo:4.4.18
     container_name: smib-db
     restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
     ports:
       - 27017:27017
     networks:
@@ -59,11 +62,14 @@ services:
     depends_on:
       - smib-db
     restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
     ports:
       - 8082:8081
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
-      ME_CONFIG_BASICAUTH: true
+      ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
 
     networks:
