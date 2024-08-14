@@ -16,7 +16,7 @@ from .app_home import get_app_home
 
 from .models import Space
 
-from smib.slack.config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
+from .config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
 from smib.slack.db import database
 
 app: CustomApp = inject("SlackApp")
