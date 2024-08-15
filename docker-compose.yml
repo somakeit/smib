@@ -4,8 +4,7 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
-    ports:
-      - "4123:4123"
+      image: smib-slack
     depends_on:
       - smib-db
     environment:
@@ -23,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
+      image: smib-webserver
     ports:
       - "80:80"
     depends_on:
@@ -44,8 +44,6 @@ services:
     env_file:
       - path: .env
         required: false
-    ports:
-      - 27017:27017
     networks:
       - smib-bridge-network
 

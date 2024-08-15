@@ -4,11 +4,10 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#${SMIB_BRANCH:-master}
       dockerfile: smib-fast.Dockerfile
+      image: smib-slack
     env_file:
       - path: .env
         required: false
-    ports:
-      - "4123:4123"
     depends_on:
       - smib-db
     environment:
@@ -26,6 +25,7 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#master
       dockerfile: smib-fast.Dockerfile
+      image: smib-webserver
     env_file:
       - path: .env
         required: false
@@ -50,8 +50,6 @@ services:
     env_file:
       - path: .env
         required: false
-    ports:
-      - 27017:27017
     networks:
       - smib-bridge-network
 
@@ -78,3 +76,6 @@ networks:
   smib-bridge-network:
     name: smib-bridge-network
     driver: bridge
+  default:
+    external: true
+    name: none
