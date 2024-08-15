@@ -9,7 +9,7 @@ services:
       - smib-db
     environment:
       - WEBSERVER_HOST=smib-webserver
-      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver
       - MONGO_DB_HOST=smib-db
     command: "python -m smib.slack"
     restart: unless-stopped
