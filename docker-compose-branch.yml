@@ -4,7 +4,7 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#${SMIB_BRANCH:-master}
       dockerfile: smib-fast.Dockerfile
-      image: smib-slack
+    image: smib-slack
     env_file:
       - path: .env
         required: false
@@ -25,7 +25,7 @@ services:
     build:
       context: https://github.com/somakeit/smib.git#master
       dockerfile: smib-fast.Dockerfile
-      image: smib-webserver
+    image: smib-webserver
     env_file:
       - path: .env
         required: false
