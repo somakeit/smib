@@ -74,6 +74,6 @@ services:
       - smib-bridge-network
 
 networks:
-  smib-bridge-network:
+  default:
     name: smib-bridge-network
     driver: bridge
