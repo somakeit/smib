@@ -14,9 +14,6 @@ services:
     volumes:
       - /etc/smib/:/app/config/
       - /var/log/smib/slack/:/app/logs/
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.slack"
     restart: unless-stopped
 
@@ -36,9 +33,6 @@ services:
     volumes:
       - /etc/smib/:/app/config/
       - /var/log/smib/webserver/:/app/logs/
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.webserver"
     restart: unless-stopped
 
@@ -51,8 +45,6 @@ services:
     env_file:
       - path: .env
         required: false
-    networks:
-      - smib-bridge-network
 
   smib-db-ui:
     image: mongo-express
@@ -69,9 +61,6 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
       ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
-
-    networks:
-      - smib-bridge-network
 
 networks:
   default:

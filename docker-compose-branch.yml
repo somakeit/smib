@@ -14,9 +14,6 @@ services:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.slack"
     restart: unless-stopped
 
@@ -35,9 +32,6 @@ services:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.webserver"
     restart: unless-stopped
 
@@ -50,8 +44,6 @@ services:
     env_file:
       - path: .env
         required: false
-    networks:
-      - smib-bridge-network
 
   smib-db-ui:
     image: mongo-express
@@ -68,9 +60,6 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://smib-db:27017/
       ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
-
-    networks:
-      - smib-bridge-network
 
 networks:
   default:
