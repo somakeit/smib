@@ -47,9 +47,14 @@ def space_open(say, context, ack, client, event, action):
         logger.info(f"Processing action: {action['action_id']}")
 
     logger.debug(pformat(request_data, sort_dicts=False))
+
     logger.debug("Space Open!")
 
     hours_open = request_data.get('hours', 0)
+
+    print(hours_open)
+
+    assert isinstance(hours_open, int), "Hours not an integer!"
 
     try:
         if hours_open:

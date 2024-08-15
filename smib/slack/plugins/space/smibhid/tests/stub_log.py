@@ -27,6 +27,7 @@ def main():
     response = requests.post(url, headers=headers, data=json.dumps(data), verify=False)
 
     print(response.status_code)
+    print(response.text)
 
 
 if __name__ == '__main__':

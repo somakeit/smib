@@ -13,21 +13,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 ERROR_STATUSES = {
-    BoltUnhandledRequestError: HTTPStatus.NOT_FOUND
+    BoltUnhandledRequestError: HTTPStatus.NOT_FOUND,
+    AssertionError: HTTPStatus.INTERNAL_SERVER_ERROR,
 }
 
 
-def get_http_status_json_response(http_status: HTTPStatus, error: Exception, request: BoltRequest) -> dict:
+def get_http_status_json_response(http_status: HTTPStatus, error: Exception) -> dict:
     resp = {
         "title": http_status.description,
         "status": http_status.value,
-        "instance": error.__class__.__name__
+        "instance": error.__class__.__name__,
+        "extra_info": str(error)
     }
     headers = {"Content-Type": "application/json", 'x-slack-no-retry': 1}
     return {'status': http_status, 'body': json.dumps(resp), 'headers': headers}
 
 
-def get_http_status_json_problem_response(http_status: HTTPStatus, error: Exception, request: BoltRequest) -> dict:
+def get_http_status_json_problem_response(http_status: HTTPStatus, error: Exception) -> dict:
     error_frames = tb.extract_tb(error.__traceback__)
     last_frame = error_frames[-1]
 
@@ -49,16 +51,16 @@ def get_http_status_json_problem_response(http_status: HTTPStatus, error: Except
     return {'status': http_status, 'body': json.dumps(resp), 'headers': headers}
 
 
-def handle_errors(error, context, request, body):
+def handle_errors(error, context, body):
     error_type = type(error)
     if error_type in ERROR_STATUSES:
         logger.debug(f'Pre-defined status code for error {error_type.__name__}: {error} for request {body}')
-        resp = BoltResponse(**get_http_status_json_response(ERROR_STATUSES.get(error_type), error, request))
+        resp = BoltResponse(**get_http_status_json_response(ERROR_STATUSES.get(error_type), error))
         context.ack()
         return resp
 
     logger.exception(f'Unexpected error {error_type.__name__}: {error}', exc_info=error)
-    resp = BoltResponse(**get_http_status_json_problem_response(HTTPStatus.IM_A_TEAPOT, error, request))
+    resp = BoltResponse(**get_http_status_json_problem_response(HTTPStatus.IM_A_TEAPOT, error))
     context.ack()
     return resp
 
