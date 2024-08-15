@@ -1,16 +1,7 @@
 # Use an official Python 3.11 runtime as a base image
-FROM python:3.12.3-bullseye as builder
+FROM python:3.12.3-bullseye AS builder
 
 RUN pip install poetry==1.4.2
-
-# Install tzdata, curl, and jq.
-# RUN apt-get update && apt-get install -y tzdata curl jq
-
-# Fetch the timezone using the API, set the TZ environment variable to the fetched timezone.
-#RUN TIMEZONE=$(curl -s http://worldtimeapi.org/api/ip | jq -r .timezone) && \
- #   ln -fs /usr/share/zoneinfo/$TIMEZONE /etc/localtime && \
-  #  dpkg-reconfigure -f noninteractive tzdata && \
-   # echo "TZ=$TIMEZONE" >> /etc/environment
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -27,7 +18,7 @@ COPY pyproject.toml poetry.lock README.md ./
 RUN poetry install --without dev && rm -rf $POETRY_CACHE_DIR
 
 # The runtime image, used to just run the code provided its virtual environment
-FROM python:3.12.3-slim-bullseye as runtime
+FROM python:3.12.3-slim-bullseye AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
