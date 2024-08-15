@@ -53,6 +53,9 @@ services:
         required: false
     ports:
       - 27017:27017
+    volumes:
+      - /var/mongodb/db:/data/db
+      - /var/mongodb/configdb:/data/configdb
     networks:
       - smib-bridge-network
 
