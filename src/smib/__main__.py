@@ -54,8 +54,17 @@ async def main():
     @app.get('/hello/{name}')
     async def hello(req: Request, name: str):
         return await fastapi_handler.handle(req)
-    @app.get('/state/{method}/{message}')
-    async def hello(http_request: Request, method: Method, message):
+    @app.get('/state/{method}/{message_}')
+    async def hello2(http_request: Request, message_: str, method: Method = Method.GET):
+        args = inspect.signature(hello2).parameters.keys()
+        slack_args = inspect.signature(AsyncArgs.__init__).parameters.keys()
+
+        print(f"{message_=}")
+        print(f"{method=}")
+
+        if set(args).intersection(slack_args):
+            raise Exception("Slack and HTTP Arg overlap")
+
         func = http_request.scope['endpoint']
         return await fastapi_handler.handle(http_request)
 

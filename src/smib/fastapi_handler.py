@@ -1,4 +1,5 @@
 import inspect
+from lib2to3.fixes.fix_input import context
 from pprint import pprint
 
 from slack_bolt.async_app import AsyncApp
@@ -17,11 +18,7 @@ async def to_async_bolt_request(req: Request) -> AsyncBoltRequest:
         }
     }
 
-    context = {}
-    slack_injected_args = inspect.signature(AsyncArgs.__init__).parameters
-    for key, value in req.path_params.items():
-        context[key] = value
-
+    context = dict(req.path_params)
 
     return AsyncBoltRequest(body=request_body, query=dict(req.query_params), headers=dict(req.headers), mode="fastapi", context=context)
 
