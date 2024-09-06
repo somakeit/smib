@@ -3,11 +3,13 @@ import inspect
 from asyncio import CancelledError
 from enum import StrEnum
 from functools import wraps
+
+import logging
 from pprint import pprint
 
 from apscheduler.job import Job
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.kwargs_injection.async_utils import AsyncArgs
@@ -38,15 +40,17 @@ def awaitify(sync_func):
 
 
 async def main():
+    # logging.basicConfig(level=logging.DEBUG)
+
     slack_app = AsyncApp(token=SLACK_BOT_TOKEN,
                          request_verification_enabled=False,
                          process_before_response=True,
                          )
 
 
-    app = FastAPI()
+    app = FastAPI(debug=True)
 
-    config = Config(app, host='0.0.0.0', port=80)
+    config = Config(app, host='0.0.0.0', port=80, log_level='trace')
     server = Server(config)
     @app.get('/hello')
     async def hello(req: Request):
@@ -55,7 +59,7 @@ async def main():
     async def hello(req: Request, name: str):
         return await fastapi_handler.handle(req)
     @app.get('/state/{method}/{message_}')
-    async def hello2(http_request: Request, message_: str, method: Method = Method.GET):
+    async def hello2(http_request: Request, message_: str, say, method: Method = Method.GET):
         args = inspect.signature(hello2).parameters.keys()
         slack_args = inspect.signature(AsyncArgs.__init__).parameters.keys()
 
