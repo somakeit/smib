@@ -1,4 +1,5 @@
 from http import HTTPMethod
+from lib2to3.fixes.fix_input import context
 from pprint import pprint
 
 from fastapi import Request, Response
@@ -42,5 +43,5 @@ class AsyncFastAPIEventHandler:
     async def handle(self, req: Request, context: dict) -> Response:
         bolt_request: AsyncBoltRequest = await to_async_bolt_request(req, context)
         bolt_response: BoltResponse = await self.app.async_dispatch(bolt_request)
-        pprint(bolt_response.__dict__)
+        bolt_response.context=context
         return await to_fastapi_response(bolt_response)

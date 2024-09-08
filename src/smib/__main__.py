@@ -9,6 +9,7 @@ from http import HTTPStatus
 
 from starlette.routing import Match
 import makefun
+from slack_bolt.kwargs_injection.async_args import AsyncArgs
 
 import logging
 from pprint import pprint
@@ -16,7 +17,7 @@ from pydantic import BaseModel
 
 from apscheduler.job import Job
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, Request, Query, Body, APIRouter
+from fastapi import FastAPI, Request, Query, Body, APIRouter, Response
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.kwargs_injection.async_utils import AsyncArgs
@@ -50,7 +51,7 @@ def awaitify(sync_func):
 import makefun
 from fastapi import FastAPI
 from inspect import Signature, Parameter, signature
-from typing import Callable, Annotated
+from typing import Callable, Annotated, Type
 from slack_bolt.kwargs_injection.async_args import AsyncArgs
 
 class MessageBody(BaseModel):
@@ -70,11 +71,9 @@ class SMIBHttp:
         self.fastapi_handler = fastapi_handler
         self.slack_app = slack_app
 
-    def __get_async_args_parameters(self):
-        # Get the Slack AsyncArgs parameters
-        from slack_bolt.kwargs_injection.async_args import AsyncArgs
-        async_args_signature = signature(AsyncArgs)
-        return set(async_args_signature.parameters.keys())
+    def __get_slack_args(self) -> set:
+        # Get the Slack AsyncArgs attributes
+        return set(AsyncArgs.__annotations__.keys())
 
     def __get_new_func(self, func: Callable):
         # Retrieve the original signature
@@ -82,7 +81,8 @@ class SMIBHttp:
         pprint(original_sig.return_annotation)
 
         # Get AsyncArgs parameters to be removed
-        async_args_params = self.__get_async_args_parameters()
+        async_args_params = self.__get_slack_args()
+        print(async_args_params)
 
         # Create a new list of parameters, excluding those in async_args_params
         new_params = [
@@ -133,8 +133,10 @@ class SMIBHttp:
 
                 # Call the modified handler
                 response = await self.fastapi_handler.handle(req_value, wrapper_kwargs)
-
-                return json.loads(response.body)
+                if response.body:
+                    return json.loads(response.body)
+                else:
+                    return response
 
                 # return response
             self.app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
@@ -185,12 +187,8 @@ async def main():
         # return {"123": 123123}
 
     @smib_http.put('/status')
-    async def status(http_req: Request, message_: MessageBody, say_: MessageBody, say):
-        print("test")
-        print(http_req)
-        print(repr(message_))
-        print(repr(say_))
-        pass
+    async def status(http_req: Request, http_resp: Response):
+        http_resp.status_code = HTTPStatus.IM_A_TEAPOT
 
     @app.get('/hello/{name}')
     async def hello(req: Request, name: str):
