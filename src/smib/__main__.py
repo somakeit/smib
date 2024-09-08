@@ -146,6 +146,8 @@ class SMIBHttp:
                 match = Match(match_result[0])
                 return match == Match.FULL
 
+            #TODO - Utilise fastapi's serialize_response to generate response
+
             self.slack_app.event('http', matchers=[matcher])(func)
             return wrapper
         return decorator
