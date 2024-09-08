@@ -1,22 +1,31 @@
-import inspect
-from lib2to3.fixes.fix_input import context
+from http import HTTPMethod
 from pprint import pprint
 
-from slack_bolt.async_app import AsyncApp
-from slack_bolt.async_app import AsyncBoltRequest
+from fastapi import Request, Response
+from fastapi.encoders import jsonable_encoder
 from slack_bolt import BoltResponse
 from slack_bolt.adapter.starlette.async_handler import to_starlette_response
-from slack_bolt.kwargs_injection.async_utils import AsyncArgs
-from fastapi import Request, Response
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.async_app import AsyncBoltRequest
+
 
 async def to_async_bolt_request(req: Request) -> AsyncBoltRequest:
     request_body = {
         "type": "event_callback",
         "event": {
             "type": "http",
-            "body": req.__dict__
+            "request": {
+                "method": HTTPMethod(req.method),
+                "scheme": req.url.scheme,
+                "url": str(req.url),
+                "path": str(req.url.path),
+                "query_string": req.url.query,
+                "query_params": jsonable_encoder(req.query_params),
+            }
         }
     }
+
+    pprint(request_body)
 
     context = dict(req.path_params)
 

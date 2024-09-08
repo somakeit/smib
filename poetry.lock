@@ -379,6 +379,17 @@ files = [
 ]
 
 [[package]]
+name = "makefun"
+version = "1.15.4"
+description = "Small library to dynamically create python functions."
+optional = false
+python-versions = "*"
+files = [
+    {file = "makefun-1.15.4-py2.py3-none-any.whl", hash = "sha256:945d078a7e01a903f2cbef738b33e0ebc52b8d35fb7e20c528ed87b5c80db5b7"},
+    {file = "makefun-1.15.4.tar.gz", hash = "sha256:9f9b9904e7c397759374a88f4c57781fbab2a458dec78df4b3ee6272cd9fb010"},
+]
+
+[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -901,4 +912,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "36cb802162eb37eb267e74805827d68818544b96d4d66b693054f147927ee909"
+content-hash = "8874be3cc14c6227a1291eedf5b1ef9b6c5774b6be564eafd42d7c605638252e"
