@@ -1,20 +1,29 @@
 import asyncio
+import functools
 import inspect
+import json
 from asyncio import CancelledError
 from enum import StrEnum
 from functools import wraps
+from http import HTTPStatus
+
+from starlette.routing import Match
 import makefun
 
 import logging
 from pprint import pprint
+from pydantic import BaseModel
 
 from apscheduler.job import Job
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request, Query, Body, APIRouter
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.kwargs_injection.async_utils import AsyncArgs
+from fastapi.routing import APIRoute
 from uvicorn import Config, Server
+
+from slack_bolt.response import BoltResponse
 
 from smib.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN
 from smib.fastapi_handler import AsyncFastAPIEventHandler
@@ -41,93 +50,111 @@ def awaitify(sync_func):
 import makefun
 from fastapi import FastAPI
 from inspect import Signature, Parameter, signature
-from typing import Callable
+from typing import Callable, Annotated
 from slack_bolt.kwargs_injection.async_args import AsyncArgs
+
+class MessageBody(BaseModel):
+    text: str
+    who: str
+    count: int = 1
+
+class StatusReturn(BaseModel):
+    code: int
+    name: str
+    optional: str | None = None
 
 
 class SMIBHttp:
-    def __init__(self, app: FastAPI, fastapi_handler):
+    def __init__(self, app: FastAPI, fastapi_handler: AsyncFastAPIEventHandler, slack_app: AsyncApp):
         self.app = app
-        self.fastapi_handler = fastapi_handler  # This would be an instance of your handler
+        self.fastapi_handler = fastapi_handler
+        self.slack_app = slack_app
 
     def __get_async_args_parameters(self):
         # Get the Slack AsyncArgs parameters
+        from slack_bolt.kwargs_injection.async_args import AsyncArgs
         async_args_signature = signature(AsyncArgs)
-        return list(async_args_signature.parameters.keys())
+        return set(async_args_signature.parameters.keys())
 
-    def __modify_signature(self, func, to_remove=None, to_inject=None):
+    def __get_new_func(self, func: Callable):
         # Retrieve the original signature
-        sig = Signature.from_callable(func)
+        original_sig = Signature.from_callable(func)
+        pprint(original_sig.return_annotation)
 
-        # Create a new list of parameters
-        params = list(sig.parameters.values())
-
-        # Fetch parameters to remove (from AsyncArgs)
+        # Get AsyncArgs parameters to be removed
         async_args_params = self.__get_async_args_parameters()
-        to_remove = to_remove or []
-        to_remove.extend(async_args_params)
 
-        # Remove specified parameters
-        params = [param for param in params if param.name not in to_remove]
+        # Create a new list of parameters, excluding those in async_args_params
+        new_params = [
+            param for param in original_sig.parameters.values()
+            if param.name not in async_args_params
+        ]
 
-        # Inject new parameters
-        to_inject = to_inject or {}
-        for name, param in to_inject.items():
-            params.append(Parameter(name, Parameter.POSITIONAL_OR_KEYWORD, default=param))
+        # Check if a Request parameter is already present, if not, add it
+        if not any(param.annotation == Request for param in new_params):
+            new_params.insert(0, Parameter('req', Parameter.POSITIONAL_OR_KEYWORD, annotation=Request))
 
         # Construct a new signature
-        new_sig = sig.replace(parameters=params)
-        return new_sig
+        new_sig = original_sig.replace(parameters=new_params)
+        return makefun.create_function(new_sig, func)
 
-    def __create_custom_endpoint(self, func: Callable, path: str, methods: list, to_remove=None, to_inject=None):
-        new_sig = self.__modify_signature(func, to_remove, to_inject)
-        custom_endpoint = makefun.create_function(new_sig, func)
-
-        # Define a wrapper function that includes custom logic
-        async def wrapper(req: Request, *args, **kwargs):
-            # Custom logic before calling the actual handler
-            print(f"Custom logic before handling {path}")
-
-            # Call the fastapi_handler.handle(req) instead of the original handler function
-            response = await self.fastapi_handler.handle(req)
-
-            # Custom logic after calling the actual handler
-            print("Custom logic after handling")
-
-            return response
-
-        return wrapper
-
-    def __call__(self, path: str, methods: list = None, to_remove=None, to_inject=None, *args, **kwargs):
-        if methods is None:
-            methods = ["GET"]
-
+    def __route_decorator(self, path: str, methods: list, *args, **kwargs):
         def decorator(func: Callable):
-            custom_endpoint = self.__create_custom_endpoint(func, path, methods, to_remove, to_inject)
+            custom_func = self.__get_new_func(func)
+            pprint(signature(custom_func).return_annotation)
 
-            for method in methods:
-                self.app.add_api_route(path, custom_endpoint, methods=[method], *args, **kwargs)
+            @makefun.with_signature(signature(custom_func), func_name=func.__name__, doc=func.__doc__)
+            async def wrapper(*wrapper_args, **wrapper_kwargs):
+                custom_func_sig = signature(custom_func)
 
-            return func
+                # Extract `req` parameter's name
+                req_param_name = next(
+                    (param.name for param in custom_func_sig.parameters.values() if param.annotation == Request),
+                    None
+                )
 
+                req_value = None
+
+                if req_param_name:
+                    # Check if `req` is in kwargs
+                    if req_param_name in wrapper_kwargs:
+                        req_value = wrapper_kwargs[req_param_name]
+                    else:
+                        # Otherwise, find `req` in args
+                        req_value = None
+                        for i, (param_name, param) in enumerate(custom_func_sig.parameters.items()):
+                            if param_name == req_param_name:
+                                req_value = wrapper_args[i]
+                                break
+
+                    print(f"Request parameter value: {req_value}")
+
+                print(wrapper_args, wrapper_kwargs)
+
+                # Call the modified handler
+                response = await self.fastapi_handler.handle(req_value, wrapper_kwargs)
+
+                return json.loads(response.body)
+
+                # return response
+            self.app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
+            route = self.app.routes[-1]
+            print(type(route))
+
+            async def matcher(event: dict):
+                match_result = route.matches(event['request']['scope'])
+                match = Match(match_result[0])
+                return match == Match.FULL
+
+            self.slack_app.event('http', matchers=[matcher])(func)
+            return wrapper
         return decorator
 
     def get(self, path: str, *args, **kwargs):
-        return self(path, methods=["GET"], *args, **kwargs)
-
-    def post(self, path: str, *args, **kwargs):
-        return self(path, methods=["POST"], *args, **kwargs)
+        return self.__route_decorator(path, methods=["GET"], *args, **kwargs)
 
     def put(self, path: str, *args, **kwargs):
-        return self(path, methods=["PUT"], *args, **kwargs)
-
-    def patch(self, path: str, *args, **kwargs):
-        return self(path, methods=["PATCH"], *args, **kwargs)
-
-    def delete(self, path: str, *args, **kwargs):
-        return self(path, methods=["DELETE"], *args, **kwargs)
-
-
+        return self.__route_decorator(path, methods=["PUT"], *args, **kwargs)
 
 async def main():
     # logging.basicConfig(level=logging.DEBUG)
@@ -143,20 +170,25 @@ async def main():
 
 
     app = FastAPI(debug=True)
-    smib_http = SMIBHttp(app, fastapi_handler)
+    smib_http = SMIBHttp(app, fastapi_handler, slack_app)
 
-    config = Config(app, host='0.0.0.0', port=80, log_level='trace')
+    config = Config(app, host='0.0.0.0', port=80)
     server = Server(config)
 
-    @smib_http.get('/hello')
-    async def hello(req: Request):
-        return await fastapi_handler.handle(req)
-    @smib_http.get('/status')
-    async def status(req: Request):
-        return await fastapi_handler.handle(req)
-    @smib_http.get('/event/{event}')
-    async def status(req: Request):
-        return await fastapi_handler.handle(req)
+    @smib_http.get('/status', response_model=StatusReturn)
+    async def status(refresh: bool = Query(False)):
+        print(f"{refresh=}")
+        resp = BoltResponse(body=StatusReturn(code=123, name=HTTPStatus.IM_A_TEAPOT.name).model_dump_json(), status=HTTPStatus.OK)
+        return resp
+        # return {"123": 123123}
+
+    @smib_http.put('/status')
+    async def status(http_req: Request, message_: MessageBody, say_: MessageBody, say):
+        print("test")
+        print(http_req)
+        print(repr(message_))
+        print(repr(say_))
+        pass
 
     @app.get('/hello/{name}')
     async def hello(req: Request, name: str):
