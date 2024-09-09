@@ -159,6 +159,39 @@ class SMIBHttp:
     def put(self, path: str, *args, **kwargs):
         return self.__route_decorator(path, methods=["PUT"], *args, **kwargs)
 
+    def post(self, path: str, *args, **kwargs):
+        return self.__route_decorator(path, methods=["POST"], *args, **kwargs)
+
+    def delete(self, path: str, *args, **kwargs):
+        return self.__route_decorator(path, methods=["DELETE"], *args, **kwargs)
+
+    def patch(self, path: str, *args, **kwargs):
+        return self.__route_decorator(path, methods=["PATCH"], *args, **kwargs)
+
+
+class SMIBScheduler:
+    def __init__(self, scheduler: AsyncIOScheduler, scheduler_handler: AsyncSchedulerEventHandler, slack_app: AsyncApp):
+        self.scheduler = scheduler
+        self.scheduler_handler = scheduler_handler
+        self.slack_app = slack_app
+
+    def schedule(self, *args, **kwargs):
+        def decorator(func: Callable):
+            @functools.wraps(func)
+            async def new_func(*f_args, **f_kwargs):
+                await self.scheduler_handler.handle(*f_args, **f_kwargs)
+
+            job = self.scheduler.add_job(new_func, *args, **kwargs)
+            job.modify(kwargs={"job_id": job.id,
+                               "scheduler": self.scheduler})
+
+            async def matcher(event: dict):
+                return job.id == event['job']['id']
+
+            self.slack_app.event("scheduled_job", matchers=[matcher])(func)
+
+        return decorator
+
 
 
 async def main():
@@ -173,20 +206,22 @@ async def main():
     fastapi_handler = AsyncFastAPIEventHandler(slack_app)
     scheduler_handler = AsyncSchedulerEventHandler(slack_app)
 
+    scheduler = AsyncIOScheduler()
 
     app = FastAPI(debug=True)
     smib_http = SMIBHttp(app, fastapi_handler, slack_app)
+    smib_schedule = SMIBScheduler(scheduler, scheduler_handler, slack_app)
 
     config = Config(app, host='0.0.0.0', port=80)
     server = Server(config)
 
-    scheduler = AsyncIOScheduler()
-    job = scheduler.add_job(scheduler_handler.handle, 'interval', minutes=2, name="2_second_schedule_slack")
-    job.modify(kwargs={"job_id": job.id,
-                       "scheduler": scheduler})
+    @smib_schedule.schedule('interval', seconds=10)
+    async def every_10_seconds_interval(job: Job, event: dict, say: callable):
+        pprint(event)
+        await say(text="10 second test", channel='#bot')
 
-    @slack_app.event("scheduled_job")
-    async def handle_scheduled_job(job: Job):
+    @smib_schedule.schedule('interval', seconds=2)
+    async def every_2_seconds_interval(job: Job):
         print(job.name)
 
 
