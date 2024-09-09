@@ -31,7 +31,6 @@ async def to_async_bolt_request(req: Request, context: dict) -> AsyncBoltRequest
 
 async def to_fastapi_response(response: BoltResponse) -> Response:
     resp = to_starlette_response(response)
-    pprint(resp.__dict__, sort_dicts=False)
     return resp
 
 
