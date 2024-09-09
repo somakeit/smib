@@ -197,6 +197,7 @@ class SMIBScheduler:
 # TODO: Add FastAPI Websocket Support
 # TODO: Add MQTT Support (either FastAPI or own Client)
 # TODO: Plugin Functionality
+# TODO: Database (MongoDB with Beanie)
 # TODO: Pytests!
 
 
