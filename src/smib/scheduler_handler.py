@@ -1,6 +1,8 @@
 import json
 import pickle
+from lib2to3.fixes.fix_input import context
 from pprint import pprint
+from sched import scheduler
 
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.async_app import AsyncBoltRequest
@@ -17,9 +19,13 @@ async def to_async_bolt_request(job: Job) -> AsyncBoltRequest:
             "job": job_dict
         }
     }
-    request = AsyncBoltRequest(body='', mode="schedule")
-    request.body = body
-    request.context['job'] = job
+
+    context = {
+        "job": job,
+        "scheduler": job.kwargs["scheduler"]
+    }
+
+    request = AsyncBoltRequest(body=body, mode="schedule", context=context)
 
     return request
 

@@ -60,6 +60,7 @@ class AppStatus(BaseModel):
     slack: bool | None = None
     webserver: bool | None = None
     scheduler: bool | None = None
+    scheduler_job_count: int | None = None
 
 
 class SMIBHttp:
@@ -221,7 +222,8 @@ async def main():
         await say(text="10 second test", channel='#bot')
 
     @smib_schedule.schedule('interval', seconds=2)
-    async def every_2_seconds_interval(job: Job):
+    async def every_2_seconds_interval(job: Job, scheduler: AsyncIOScheduler):
+        print(scheduler.get_jobs())
         print(job.name)
 
 
@@ -231,6 +233,7 @@ async def main():
             slack=await socket_mode_handler.client.is_connected(),
             scheduler=scheduler.running,
             webserver=True,
+            scheduler_job_count=len(scheduler.get_jobs()) if scheduler.running else 0
         )
 
     @smib_http.put('/status')
