@@ -194,6 +194,12 @@ class SMIBScheduler:
         return decorator
 
 
+# TODO: Add FastAPI Websocket Support
+# TODO: Add MQTT Support (either FastAPI or own Client)
+# TODO: Plugin Functionality
+# TODO: Pytests!
+
+
 
 async def main():
     # logging.basicConfig(level=logging.DEBUG)
@@ -266,6 +272,9 @@ async def main():
                         padding: 10px 20px;
                         font-size: 16px;
                         margin-top: 10px;
+                    }
+                    button:hover {
+                        color: red;
                     }
                 </style>
             </head>
