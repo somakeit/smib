@@ -8,6 +8,8 @@ from asyncio import CancelledError
 from enum import StrEnum
 from functools import wraps
 from http import HTTPStatus
+from pathlib import Path
+from xml.etree.ElementInclude import include
 
 from starlette.routing import Match
 import makefun
@@ -26,7 +28,10 @@ from slack_bolt.kwargs_injection.async_utils import AsyncArgs
 from fastapi.routing import APIRoute
 from uvicorn import Config, Server
 
+from fastapi.responses import HTMLResponse, FileResponse
+
 from slack_bolt.response import BoltResponse
+from smib.bolt_response import CustomBoltResponse
 
 from smib.config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN
 from smib.fastapi_handler import AsyncFastAPIEventHandler
@@ -116,8 +121,10 @@ class SMIBHttp:
                                 req_value = wrapper_args[i]
                                 break
 
-                response = await self.fastapi_handler.handle(req_value, wrapper_kwargs)
-                print(response.__dict__)
+                response, response_kwargs = await self.fastapi_handler.handle(req_value, wrapper_kwargs)
+
+                wrapper_kwargs.update(response_kwargs)
+
                 return response
 
                 # return response
@@ -128,8 +135,6 @@ class SMIBHttp:
                 match_result = route.matches(event['request']['scope'])
                 match = Match(match_result[0])
                 return match == Match.FULL
-
-            #TODO - Utilise fastapi's serialize_response to generate response
 
             hijacked_func = self._bolt_response_modifier(func)
 
@@ -143,23 +148,17 @@ class SMIBHttp:
         async def wrapper(*args, **kwargs):
             response = await func(*args, **kwargs)
 
-            pprint(kwargs)
-
-            if isinstance(response, BoltResponse):
-                return response
-
-            encoded_response = base64.b64encode(pickle.dumps(response))
-            print(f"{encoded_response=}")
-            return BoltResponse(status=200, body=encoded_response.decode('utf-8'))
+            return CustomBoltResponse(status=0, body='', fastapi_response=response, fastapi_kwargs=kwargs)
 
         return wrapper
-
 
     def get(self, path: str, *args, **kwargs):
         return self.__route_decorator(path, methods=["GET"], *args, **kwargs)
 
     def put(self, path: str, *args, **kwargs):
         return self.__route_decorator(path, methods=["PUT"], *args, **kwargs)
+
+
 
 async def main():
     # logging.basicConfig(level=logging.DEBUG)
@@ -188,6 +187,56 @@ async def main():
     @smib_http.put('/status')
     async def status(http_req: Request, http_resp: Response):
         http_resp.status_code = HTTPStatus.IM_A_TEAPOT
+        return {"message": "OK"}
+
+    @smib_http.get('/dashboard', response_class=HTMLResponse, include_in_schema=False)
+    async def dashboard() -> str:
+        page_content = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Counter</title>
+                <style>
+                    body {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        font-family: Arial, sans-serif;
+                    }
+                    button {
+                        padding: 10px 20px;
+                        font-size: 16px;
+                        margin-top: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1 id="counter">0</h1>
+                <button onclick="incrementCounter()">Increment</button>
+            
+                <script>
+                    let count = 0;
+                    function incrementCounter() {
+                        count++;
+                        document.getElementById('counter').innerText = count;
+                    }
+                </script>
+            </body>
+            </html>
+            """
+
+        return page_content
+
+    @smib_http.get('/file/{file_path:path}', response_class=FileResponse)
+    async def file(file_path: str):
+        path = Path(file_path)
+        print(path.absolute())
+        return FileResponse(path, media_type="application/octet-stream", filename=path.name)
 
 
     scheduler = AsyncIOScheduler()

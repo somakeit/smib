@@ -9,6 +9,8 @@ from slack_bolt.adapter.starlette.async_handler import to_starlette_response
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.async_app import AsyncBoltRequest
 
+from smib.bolt_response import CustomBoltResponse
+
 
 async def to_async_bolt_request(req: Request, context: dict) -> AsyncBoltRequest:
     request_body = {
@@ -29,9 +31,11 @@ async def to_async_bolt_request(req: Request, context: dict) -> AsyncBoltRequest
 
     return AsyncBoltRequest(body=request_body, query=dict(req.query_params), headers=dict(req.headers), mode="fastapi", context=context)
 
-async def to_fastapi_response(response: BoltResponse) -> Response:
-    resp = to_starlette_response(response)
-    return resp
+async def to_fastapi_response(response: BoltResponse) -> tuple[Response, dict]:
+    if isinstance(response, CustomBoltResponse):
+        return response.fastapi_response, response.fastapi_kwargs
+    else:
+        return to_starlette_response(response), {}
 
 
 
@@ -39,7 +43,7 @@ class AsyncFastAPIEventHandler:
     def __init__(self, app: AsyncApp):
         self.app = app
 
-    async def handle(self, req: Request, context: dict) -> Response:
+    async def handle(self, req: Request, context: dict) -> tuple[Response, dict]:
         bolt_request: AsyncBoltRequest = await to_async_bolt_request(req, context)
         bolt_response: BoltResponse = await self.app.async_dispatch(bolt_request)
         bolt_response.context=context
