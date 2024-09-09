@@ -218,13 +218,15 @@ async def main():
 
     @smib_schedule.schedule('interval', seconds=10)
     async def every_10_seconds_interval(job: Job, event: dict, say: callable):
-        pprint(event)
-        await say(text="10 second test", channel='#bot')
+        # pprint(event)
+        # await say(text="10 second test", channel='#bot')
+        pass
 
     @smib_schedule.schedule('interval', seconds=2)
     async def every_2_seconds_interval(job: Job, scheduler: AsyncIOScheduler):
-        print(scheduler.get_jobs())
-        print(job.name)
+        # print(scheduler.get_jobs())
+        # print(job.name)
+        pass
 
 
     @smib_http.get('/status', response_model=AppStatus)
