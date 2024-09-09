@@ -235,7 +235,10 @@ async def main():
     @smib_http.get('/file/{file_path:path}', response_class=FileResponse)
     async def file(file_path: str):
         path = Path(file_path)
-        print(path.absolute())
+
+        if not path.exists():
+            return Response(status_code=404)
+
         return FileResponse(path, media_type="application/octet-stream", filename=path.name)
 
 
