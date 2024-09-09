@@ -307,9 +307,10 @@ async def main():
     try:
         await asyncio.gather(socket_task, fastapi_task, scheduler_task)
     except (KeyboardInterrupt, SystemExit, CancelledError):
+        scheduler.shutdown()
+        await server.shutdown()
         await socket_mode_handler.client.close()
         await socket_mode_handler.disconnect_async()
-        await server.shutdown()
         return
 
 if __name__ == '__main__':
