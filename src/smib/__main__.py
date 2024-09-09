@@ -9,6 +9,7 @@ from enum import StrEnum
 from functools import wraps
 from http import HTTPStatus
 from pathlib import Path
+from sched import scheduler
 from xml.etree.ElementInclude import include
 
 from starlette.routing import Match
@@ -55,10 +56,10 @@ class MessageBody(BaseModel):
     who: str
     count: int = 1
 
-class StatusReturn(BaseModel):
-    code: int
-    name: str
-    optional: str | None = None
+class AppStatus(BaseModel):
+    slack: bool | None = None
+    webserver: bool | None = None
+    scheduler: bool | None = None
 
 
 class SMIBHttp:
@@ -179,10 +180,23 @@ async def main():
     config = Config(app, host='0.0.0.0', port=80)
     server = Server(config)
 
-    @smib_http.get('/status', response_model=StatusReturn)
-    async def status(refresh: bool = Query(False)) -> StatusReturn:
-        print(f"{refresh=}")
-        return StatusReturn(code=123, name=HTTPStatus.IM_A_TEAPOT.name)
+    scheduler = AsyncIOScheduler()
+    job = scheduler.add_job(scheduler_handler.handle, 'interval', minutes=2, name="2_second_schedule_slack")
+    job.modify(kwargs={"job_id": job.id,
+                       "scheduler": scheduler})
+
+    @slack_app.event("scheduled_job")
+    async def handle_scheduled_job(job: Job):
+        print(job.name)
+
+
+    @smib_http.get('/status', response_model=AppStatus)
+    async def status() -> AppStatus:
+        return AppStatus(
+            slack=await socket_mode_handler.client.is_connected(),
+            scheduler=scheduler.running,
+            webserver=True,
+        )
 
     @smib_http.put('/status')
     async def status(http_req: Request, http_resp: Response):
@@ -241,15 +255,6 @@ async def main():
 
         return FileResponse(path, media_type="application/octet-stream", filename=path.name)
 
-
-    scheduler = AsyncIOScheduler()
-    job = scheduler.add_job(scheduler_handler.handle, 'interval', minutes=2, name="2_second_schedule_slack")
-    job.modify(kwargs={"job_id": job.id,
-                       "scheduler": scheduler})
-
-    @slack_app.event("scheduled_job")
-    async def handle_scheduled_job(job: Job):
-        print(job.name)
 
 
     async def scheduler_run():
