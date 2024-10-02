@@ -303,10 +303,10 @@ class SpaceStateUIState(UIState):
         """
         Call open space with current open hours count if no button press for 2 seconds.
         """
-        while not self.last_button_press_x_seconds_ago(2):
+        while not self.last_button_press_x_seconds_ago(config.ADD_HOURS_INPUT_TIMEOUT):
             await sleep(0.1)
 
-        await self._async_open_space(self.open_for_hours) # TODO change this so it cancels if closed button pressed
+        await self._async_open_space(self.open_for_hours)
 
 class OpenState(UIState):
     """
@@ -346,7 +346,8 @@ class NoneState(UIState):
         await super().async_on_space_closed_button()
 
     async def async_on_space_open_button(self) -> None:
-        await super().async_on_space_open_button()
+        self.log.info("Adding hours to open for hours counter")
+        self.hid.ui_state_instance.transition_to(AddingHoursState(self.hid, self.space_state))
 
 class AddingHoursState(SpaceStateUIState):
     """
@@ -364,8 +365,13 @@ class AddingHoursState(SpaceStateUIState):
         self.hid.display.cancelling()
         self.button_timeout_task.cancel()
         await sleep(1)
-        self.space_state._set_space_output(CLOSED)
-        self.hid.ui_state_instance.transition_to(ClosedState(self.hid, self.space_state))
+        self.space_state._set_space_output(self.space_state.space_state)
+        if self.space_state.space_state == CLOSED:
+            self.hid.ui_state_instance.transition_to(ClosedState(self.hid, self.space_state))
+        if self.space_state.space_state == OPEN:
+            self.hid.ui_state_instance.transition_to(OpenState(self.hid, self.space_state))
+        else:
+            self.hid.ui_state_instance.transition_to(NoneState(self.hid, self.space_state))
 
     async def async_on_space_open_button(self) -> None:
         self.increment_open_for_hours_single_digit()

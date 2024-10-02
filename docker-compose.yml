@@ -4,17 +4,13 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
-    ports:
-      - "4123:4123"
+    image: smib-slack
     depends_on:
       - smib-db
     environment:
       - WEBSERVER_HOST=smib-webserver
-      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver,smib-webserver.smib-bridge-network
+      - WEBSOCKET_ALLOWED_HOSTS=smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.slack"
     restart: unless-stopped
 
@@ -23,15 +19,13 @@ services:
     build:
       context: .
       dockerfile: smib-fast.Dockerfile
+    image: smib-webserver
     ports:
       - "80:80"
     depends_on:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
-
-    networks:
-      - smib-bridge-network
     command: "python -m smib.webserver"
     restart: unless-stopped
 
@@ -44,10 +38,6 @@ services:
     env_file:
       - path: .env
         required: false
-    ports:
-      - 27017:27017
-    networks:
-      - smib-bridge-network
 
   smib-db-ui:
     image: mongo-express
@@ -65,10 +55,7 @@ services:
       ME_CONFIG_BASICAUTH_ENABLED: true
       ME_CONFIG_OPTIONS_READONLY: true
 
-    networks:
-      - smib-bridge-network
-
 networks:
-  smib-bridge-network:
+  default:
     name: smib-bridge-network
     driver: bridge
