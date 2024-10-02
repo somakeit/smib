@@ -24,7 +24,7 @@ services:
       dockerfile: smib-fast.Dockerfile
     image: smib-webserver
     ports:
-      - "80:80"
+      - 80:80
     depends_on:
       - smib-slack
     environment:
@@ -45,6 +45,9 @@ services:
     env_file:
       - path: .env
         required: false
+    volumes:
+      - /var/mongodb/db:/data/db
+      - /var/mongodb/configdb:/data/configdb
 
   smib-db-ui:
     image: mongo-express
