@@ -1,12 +1,9 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
-from smib.event_services import EventServiceProtocol
 
 
-class HttpEventService(EventServiceProtocol):
+class HttpEventService:
     def __init__(self, bolt_app: AsyncApp):
         self.bolt_app = bolt_app
         self.fastapi_app = FastAPI()

@@ -28,6 +28,8 @@ async def main():
         await event_service_manager.start_all()
     except (KeyboardInterrupt, CancelledError, SystemExit) as e:
         logger.info(f"Received termination: {repr(e)}")
+    except Exception as e:
+        logger.exception(f"Unexpected exception: {repr(e)}", exc_info=True)
     finally:
         await event_service_manager.stop_all()
 
