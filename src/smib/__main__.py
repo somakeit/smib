@@ -8,13 +8,16 @@ from smib.config import SLACK_BOT_TOKEN
 from smib.event_services import EventServiceManager
 from smib.event_services.http_event_service import HttpEventService
 from smib.event_services.slack_event_service import SlackEventService
+from smib.plugins import load_plugins
+
+logging.basicConfig(
+    level=logging.INFO
+)
 
 async def main():
     bolt_app = AsyncApp(token=SLACK_BOT_TOKEN, raise_error_for_unhandled_request=True)
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
 
     event_service_manager = EventServiceManager(bolt_app)
 
@@ -23,6 +26,8 @@ async def main():
 
     event_service_manager.register(slack_event_service)
     event_service_manager.register(http_event_service)
+
+    load_plugins()
 
     try:
         await event_service_manager.start_all()
