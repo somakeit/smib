@@ -5,10 +5,12 @@ from asyncio import CancelledError
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_BOT_TOKEN
+from smib.error_handler import error_handler
 from smib.event_services import EventServiceManager
 from smib.event_services.http_event_service import HttpEventService
 from smib.event_services.slack_event_service import SlackEventService
 from smib.plugins import load_plugins
+from smib.plugins.lifecycle_manager import PluginLifecycleManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,6 +23,7 @@ async def main():
         token=SLACK_BOT_TOKEN,
         raise_error_for_unhandled_request=True
     )
+    bolt_app.error(error_handler)
 
     logger = logging.getLogger(__name__)
 
@@ -32,7 +35,8 @@ async def main():
     event_service_manager.register(slack_event_service)
     event_service_manager.register(http_event_service)
 
-    load_plugins()
+    plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
+    plugin_lifecycle_manager.load_plugins()
 
     try:
         await event_service_manager.start_all()

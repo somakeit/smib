@@ -7,7 +7,7 @@ from smib.utilities.lazy_property import lazy_property
 
 class SlackEventService:
     def __init__(self, bolt_app: AsyncApp):
-        self.bolt_app = bolt_app
+        self.bolt_app: AsyncApp = bolt_app
 
     @lazy_property
     def service(self):

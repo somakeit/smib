@@ -6,19 +6,23 @@ from smib.utilities.lazy_property import lazy_property
 
 
 class HttpEventService:
+    fastapi_app: FastAPI
+    uvicorn_config: Config
+    uvicorn_server: Server
+
     def __init__(self, bolt_app: AsyncApp):
-        self.bolt_app = bolt_app
+        self.bolt_app: AsyncApp = bolt_app
 
     @lazy_property
-    def fastapi_app(self):
+    def fastapi_app(self) -> FastAPI:
         return FastAPI()
 
     @lazy_property
-    def uvicorn_config(self):
+    def uvicorn_config(self) -> Config:
         return Config(self.fastapi_app)
 
     @lazy_property
-    def uvicorn_server(self):
+    def uvicorn_server(self) -> Server:
         return Server(config=self.uvicorn_config)
 
     async def start(self):
