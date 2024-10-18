@@ -11,11 +11,16 @@ from smib.event_services.slack_event_service import SlackEventService
 from smib.plugins import load_plugins
 
 logging.basicConfig(
-    level=logging.INFO
+    level=logging.INFO,
+    format='[%(levelname)s] [%(asctime)s] %(name)s: %(message)s',
+    force=True
 )
 
 async def main():
-    bolt_app = AsyncApp(token=SLACK_BOT_TOKEN, raise_error_for_unhandled_request=True)
+    bolt_app = AsyncApp(
+        token=SLACK_BOT_TOKEN,
+        raise_error_for_unhandled_request=True
+    )
 
     logger = logging.getLogger(__name__)
 
