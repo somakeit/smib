@@ -100,32 +100,3 @@ def import_all_from_directory(directory_path: Path | str) -> list[ModuleType]:
             logger.exception(item, exc_info=e)
 
     return imported_modules
-
-def validate_and_register_plugin_modules(modules: list[ModuleType]) -> list[ModuleType]:
-    valid_modules: list[ModuleType] = []
-    for module in modules:
-        if hasattr(module, 'register') and callable(getattr(module, 'register')):
-            valid_modules.append(module)
-        else:
-            # Remove the module from sys.modules if it doesn't have a callable 'register'
-            del sys.modules[module.__name__]
-            logger.info(f"Un-imported module: {module.__name__} due to not having a callable 'register' object")
-    return valid_modules
-
-def load_plugins(bolt_app: AsyncApp):
-    resolved_plugins_directory = PLUGINS_DIRECTORY.resolve()
-    if not resolved_plugins_directory.exists() or not resolved_plugins_directory.is_dir():
-        logger.warning(f"No plugins directory found at {resolved_plugins_directory}")
-
-    logger.info(f'Plugins directory found at {resolved_plugins_directory}')
-
-    modules = import_all_from_directory(resolved_plugins_directory)
-    plugin_modules = validate_and_register_plugin_modules(modules)
-
-    for plugin in plugin_modules:
-        try:
-            plugin.register(bolt_app)
-            logger.info(f"Registered {plugin.__name__}")
-        except Exception as e:
-            logger.exception(f"Error registering plugin {plugin.__name__}", exc_info=e)
-

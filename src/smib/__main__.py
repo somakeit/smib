@@ -6,10 +6,9 @@ from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_BOT_TOKEN
 from smib.error_handler import error_handler
-from smib.event_services import EventServiceManager
-from smib.event_services.http_event_service import HttpEventService
-from smib.event_services.slack_event_service import SlackEventService
-from smib.plugins import load_plugins
+from smib.events.services import EventServiceManager
+from smib.events.services.http_event_service import HttpEventService
+from smib.events.services.slack_event_service import SlackEventService
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 
 logging.basicConfig(
