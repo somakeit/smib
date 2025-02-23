@@ -1,7 +1,7 @@
 # Use an official Python 3.11 runtime as a base image
 FROM python:3.12.3-bullseye AS builder
 
-RUN pip install poetry==1.4.2
+RUN pip install poetry==2
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -15,7 +15,7 @@ WORKDIR /app
 COPY smib ./smib
 COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install --without dev && rm -rf $POETRY_CACHE_DIR
+RUN poetry install && rm -rf $POETRY_CACHE_DIR
 
 # The runtime image, used to just run the code provided its virtual environment
 FROM python:3.12.3-slim-bullseye AS runtime
