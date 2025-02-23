@@ -3,7 +3,6 @@ services:
     container_name: smib-slack
     build:
       context: .
-      dockerfile: smib-fast.Dockerfile
     image: smib-slack
     depends_on:
       - smib-db
@@ -21,7 +20,6 @@ services:
     container_name: smib-webserver
     build:
       context: .
-      dockerfile: smib-fast.Dockerfile
     image: smib-webserver
     ports:
       - 80:80
