@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
 
+from smib.config import WEBSERVER_HOST, WEBSERVER_PORT
 from smib.utilities.lazy_property import lazy_property
 
 
@@ -19,7 +20,10 @@ class HttpEventService:
 
     @lazy_property
     def uvicorn_config(self) -> Config:
-        return Config(self.fastapi_app)
+        return Config(self.fastapi_app,
+            host=WEBSERVER_HOST,
+            port=WEBSERVER_PORT,
+        )
 
     @lazy_property
     def uvicorn_server(self) -> Server:

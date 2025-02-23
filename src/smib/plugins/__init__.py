@@ -6,19 +6,13 @@ from pathlib import Path
 import sys
 from types import ModuleType
 
-import inspect
-
-from slack_bolt.app.async_app import AsyncApp
-from slack_bolt.listener.async_listener import AsyncListener
-
-from smib.config import PLUGINS_DIRECTORY
-
 import logging
 
 
 class PluginModuleFormat(StrEnum):
     MODULE = 'module'
     PACKAGE = 'package'
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +21,10 @@ def import_module_from_path(module_path: Path, module_name: str = None) -> Modul
     module_path = module_path.resolve()
     unique_suffix = str(uuid.uuid4()).replace("-", "")
     module_name = module_name or f"{module_path.with_suffix('').name}_{unique_suffix}"
+
+    # Ensure the module is a .py file
+    if not module_path.suffix == ".py":
+        raise ImportError(f"Module is not a python (.py) file {module_path}")
 
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)

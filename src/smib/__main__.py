@@ -20,13 +20,13 @@ logging.basicConfig(
 async def main():
     bolt_app = AsyncApp(
         token=SLACK_BOT_TOKEN,
-        raise_error_for_unhandled_request=True
+        raise_error_for_unhandled_request=True,
     )
     bolt_app.error(error_handler)
 
     logger = logging.getLogger(__name__)
 
-    event_service_manager = EventServiceManager(bolt_app)
+    event_service_manager = EventServiceManager()
 
     slack_event_service = SlackEventService(bolt_app)
     http_event_service = HttpEventService(bolt_app)

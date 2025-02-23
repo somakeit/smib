@@ -9,17 +9,17 @@ from slack_bolt.error import BoltUnhandledRequestError
 from slack_bolt.listener.async_listener_error_handler import AsyncDefaultListenerErrorHandler
 from slack_bolt.request.async_request import AsyncBoltRequest
 
-class SlackRequestMode(StrEnum):
+class BoltRequestMode(StrEnum):
     SOCKET_MODE = 'socket_mode'
     HTTP = 'http'
 
-default_error_handler_logger = logging.getLogger('default_error_handler')
+default_error_handler_logger = logging.getLogger(AsyncDefaultListenerErrorHandler.__name__)
 default_error_handler = AsyncDefaultListenerErrorHandler(default_error_handler_logger)
 
 async def error_handler(error: Exception, request: AsyncBoltRequest, body: dict, response: BoltResponse, logger: Logger):
 
     match request.mode:
-        case SlackRequestMode.SOCKET_MODE if isinstance(error, BoltUnhandledRequestError):
+        case BoltRequestMode.SOCKET_MODE if isinstance(error, BoltUnhandledRequestError):
             return await default_error_handler.handle(error, request, response)
         case _:
             logger.info(f'Request mode: {request.mode}')

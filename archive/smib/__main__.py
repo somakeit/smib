@@ -96,6 +96,7 @@ class SMIBHttp:
         return makefun.create_function(new_sig, func)
 
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
+        @functools.wraps(self.__route_decorator)
         def decorator(func: Callable):
             custom_func = self.__get_new_func(func)
 
