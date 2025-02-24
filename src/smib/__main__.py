@@ -1,11 +1,10 @@
 import asyncio
 import logging
 from asyncio import CancelledError
-from pathlib import Path
 
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import SLACK_BOT_TOKEN, PLUGINS_DIRECTORY
+from smib.config import SLACK_BOT_TOKEN
 from smib.error_handler import error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
@@ -34,7 +33,7 @@ async def main():
 
     http_event_service = HttpEventService(bolt_app)
     http_event_handler = HttpEventHandler(bolt_app)
-    http_event_interface = HttpEventInterface(http_event_handler, http_event_service)
+    http_event_interface = HttpEventInterface(bolt_app, http_event_handler, http_event_service)
 
     event_service_manager = EventServiceManager()
     event_service_manager.register(slack_event_service)

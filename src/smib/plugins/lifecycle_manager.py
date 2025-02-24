@@ -19,7 +19,7 @@ class PluginLifecycleManager:
         self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
         self.plugins: list[ModuleType] = []
         self.unregister_plugin_callbacks: list[callable] = []
-        self.interfaces: dict[str, object] = {}
+        self.interfaces: dict[str, any] = {}
 
     def load_plugins(self):
         self.logger.info(f"Resolved plugins directory to {self.plugins_directory}")
@@ -41,12 +41,15 @@ class PluginLifecycleManager:
                 self.unregister_plugin(plugin_module)
                 continue
 
+        self.logger.info(f"Registered {len(self.plugins)} plugin(s) ({self.plugin_string})")
+
     def register_plugin(self, plugin_module: ModuleType):
         try:
             dynamic_caller(plugin_module.register, **self.interfaces)
         except ValueError as e:
-            self.plugins.append(plugin_module)
             raise
+        finally:
+            self.plugins.append(plugin_module)
 
     def unregister_plugin(self, plugin_module: ModuleType):
         for unregister_callback in self.unregister_plugin_callbacks:
@@ -66,8 +69,12 @@ class PluginLifecycleManager:
 
         return valid_plugin_modules
 
+    @property
+    def plugin_string(self):
+        return ", ".join(get_actual_module_name(plugin) for plugin in self.plugins) or "None"
+
     def add_unregister_plugin_callback(self, callback: callable):
         self.unregister_plugin_callbacks.append(callback)
 
-    def register_interface(self, interface_name: str, interface: object):
+    def register_interface(self, interface_name: str, interface: any):
         self.interfaces[interface_name] = interface

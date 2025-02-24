@@ -30,7 +30,7 @@ class EventServiceManager:
         if not self._services:
             self.logger.warning("No services registered to start")
             return
-        self.logger.info(f"Starting {len(self._services)} services ({self._services_string})")
+        self.logger.info(f"Starting {len(self._services)} service(s) ({self._services_string})")
         services: list[Coroutine[None, None, None]] = [service.start() for service in self._services]
         await asyncio.gather(*services)
 
@@ -38,6 +38,6 @@ class EventServiceManager:
         if not self._services:
             self.logger.warning("No services registered to stop")
             return
-        self.logger.info(f"Stopping {len(self._services)} services ({self._services_string})")
+        self.logger.info(f"Stopping {len(self._services)} service(s) ({self._services_string})")
         services: list[Coroutine[None, None, None]] = [service.stop() for service in self._services]
         await asyncio.gather(*services)
