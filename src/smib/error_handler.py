@@ -9,9 +9,7 @@ from slack_bolt.error import BoltUnhandledRequestError
 from slack_bolt.listener.async_listener_error_handler import AsyncDefaultListenerErrorHandler
 from slack_bolt.request.async_request import AsyncBoltRequest
 
-class BoltRequestMode(StrEnum):
-    SOCKET_MODE = 'socket_mode'
-    HTTP = 'http_request'
+from smib.events.handlers import BoltRequestMode
 
 default_error_handler_logger = logging.getLogger(AsyncDefaultListenerErrorHandler.__name__)
 default_error_handler = AsyncDefaultListenerErrorHandler(default_error_handler_logger)

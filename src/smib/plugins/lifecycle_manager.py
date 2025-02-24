@@ -8,6 +8,7 @@ from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import PLUGINS_DIRECTORY
 from smib.plugins import import_all_from_directory
+from smib.utilities.dynamic_caller import dynamic_caller
 from smib.utilities.package import get_actual_module_name
 
 
@@ -18,6 +19,7 @@ class PluginLifecycleManager:
         self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
         self.plugins: list[ModuleType] = []
         self.unregister_plugin_callbacks: list[callable] = []
+        self.interfaces: dict[str, object] = {}
 
     def load_plugins(self):
         self.logger.info(f"Resolved plugins directory to {self.plugins_directory}")
@@ -40,8 +42,11 @@ class PluginLifecycleManager:
                 continue
 
     def register_plugin(self, plugin_module: ModuleType):
-        plugin_module.register(self.bolt_app)
-        self.plugins.append(plugin_module)
+        try:
+            dynamic_caller(plugin_module.register, **self.interfaces)
+        except ValueError as e:
+            self.plugins.append(plugin_module)
+            raise
 
     def unregister_plugin(self, plugin_module: ModuleType):
         for unregister_callback in self.unregister_plugin_callbacks:
@@ -63,3 +68,6 @@ class PluginLifecycleManager:
 
     def add_unregister_plugin_callback(self, callback: callable):
         self.unregister_plugin_callbacks.append(callback)
+
+    def register_interface(self, interface_name: str, interface: object):
+        self.interfaces[interface_name] = interface

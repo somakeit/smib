@@ -7,6 +7,8 @@ from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_BOT_TOKEN, PLUGINS_DIRECTORY
 from smib.error_handler import error_handler
+from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService
 from smib.events.services.slack_event_service import SlackEventService
@@ -27,15 +29,20 @@ async def main():
 
     logger = logging.getLogger(__name__)
 
-    event_service_manager = EventServiceManager()
-
+    # Most of the slack stuff is handled by the SlackBolt Framework
     slack_event_service = SlackEventService(bolt_app)
-    http_event_service = HttpEventService(bolt_app)
 
+    http_event_service = HttpEventService(bolt_app)
+    http_event_handler = HttpEventHandler(bolt_app)
+    http_event_interface = HttpEventInterface(http_event_handler, http_event_service)
+
+    event_service_manager = EventServiceManager()
     event_service_manager.register(slack_event_service)
     event_service_manager.register(http_event_service)
 
     plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
+    plugin_lifecycle_manager.register_interface('slack', bolt_app)
+    plugin_lifecycle_manager.register_interface('http', http_event_interface)
     plugin_lifecycle_manager.load_plugins()
 
     try:
