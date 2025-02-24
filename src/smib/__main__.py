@@ -1,10 +1,11 @@
 import asyncio
 import logging
 from asyncio import CancelledError
+from pathlib import Path
 
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import SLACK_BOT_TOKEN
+from smib.config import SLACK_BOT_TOKEN, PLUGINS_DIRECTORY
 from smib.error_handler import error_handler
 from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService

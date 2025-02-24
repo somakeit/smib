@@ -11,7 +11,7 @@ from slack_bolt.request.async_request import AsyncBoltRequest
 
 class BoltRequestMode(StrEnum):
     SOCKET_MODE = 'socket_mode'
-    HTTP = 'http'
+    HTTP = 'http_request'
 
 default_error_handler_logger = logging.getLogger(AsyncDefaultListenerErrorHandler.__name__)
 default_error_handler = AsyncDefaultListenerErrorHandler(default_error_handler_logger)

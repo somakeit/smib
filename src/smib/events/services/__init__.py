@@ -5,8 +5,6 @@ from typing import Protocol
 
 from collections.abc import Coroutine
 
-from slack_bolt.app.async_app import AsyncApp
-
 class EventServiceProtocol(Protocol):
     async def start(self):
         ...

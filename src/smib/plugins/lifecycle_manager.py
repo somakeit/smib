@@ -1,6 +1,7 @@
 import logging
 import sys
 from logging import Logger
+from pathlib import Path
 from types import ModuleType
 
 from slack_bolt.app.async_app import AsyncApp
@@ -14,7 +15,8 @@ class PluginLifecycleManager:
     def __init__(self, bolt_app: AsyncApp):
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
-        self.plugins_directory = PLUGINS_DIRECTORY.resolve()
+        self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
+        self.plugins: list[ModuleType] = []
         self.unregister_plugin_callbacks: list[callable] = []
 
     def load_plugins(self):
@@ -30,16 +32,22 @@ class PluginLifecycleManager:
     def register_plugins(self, plugin_modules: list[ModuleType]):
         for plugin_module in plugin_modules:
             try:
-                plugin_module.register()
+                self.register_plugin(plugin_module)
                 self.logger.info(f"Registered plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)})")
             except Exception as e:
                 self.logger.exception(f"Failed to register plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)}): {e}", exc_info=e)
                 self.unregister_plugin(plugin_module)
                 continue
 
+    def register_plugin(self, plugin_module: ModuleType):
+        plugin_module.register(self.bolt_app)
+        self.plugins.append(plugin_module)
+
     def unregister_plugin(self, plugin_module: ModuleType):
         for unregister_callback in self.unregister_plugin_callbacks:
             unregister_callback(plugin_module)
+
+        self.plugins.remove(plugin_module)
 
     def validate_plugin_modules(self, modules: list[ModuleType]) -> list[ModuleType]:
         valid_plugin_modules: list[ModuleType] = []
@@ -53,6 +61,5 @@ class PluginLifecycleManager:
 
         return valid_plugin_modules
 
-
-
-
+    def add_unregister_plugin_callback(self, callback: callable):
+        self.unregister_plugin_callbacks.append(callback)

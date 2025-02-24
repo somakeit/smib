@@ -1,3 +1,4 @@
+import json
 import logging
 
 from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
@@ -14,7 +15,8 @@ class SlackEventService:
 
     @lazy_property
     def service(self):
-        return AsyncSocketModeHandler(self.bolt_app, app_token=SLACK_APP_TOKEN)
+        service = AsyncSocketModeHandler(self.bolt_app, app_token=SLACK_APP_TOKEN)
+        return service
 
     async def start(self):
         await self.service.start_async()

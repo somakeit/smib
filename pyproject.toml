@@ -1,25 +1,29 @@
-[tool.poetry]
+[project]
 name = "smib"
 version = "2.0.dev1"
 description = ""
-authors = ["Sam Cork <sam57719@gmail.com>"]
+requires-python = ">=3.12,<4.0.0"
+authors = [
+    { name = "Sam Cork", email = "sam57719@gmail.com" }
+]
+dependencies = [
+    "python-decouple>=3.8,<4.0.0",
+    "slack-bolt>=1.20.1,<2.0.0",
+    "asyncio>=3.4.3,<4.0.0",
+    "fastapi>=0.115.2,<0.116.0",
+    "uvicorn>=0.31.1,<0.32.0"
+]
 
+[project.optional-dependencies]
+pytest = [
+    "pytest>=8.3.2,<9.0.0",
+    "pytest-asyncio>=0.24.0,<0.25.0"
+]
+
+[tool.poetry]
 packages = [
     { include = "smib", from = "src" }
 ]
-
-[tool.poetry.dependencies]
-python = "^3.12"
-python-decouple = "^3.8"
-slack-bolt = "^1.20.1"
-asyncio = "^3.4.3"
-fastapi = "^0.115.2"
-uvicorn = "^0.31.1"
-
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-pytest-asyncio = "^0.24.0"
 
 [build-system]
 requires = ["poetry-core"]

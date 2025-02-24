@@ -3,11 +3,6 @@ from types import ModuleType
 import importlib.util
 
 
-# def get_package_root() -> Path:
-#     """ Returns the smib package root directory """
-#     import smib
-#     return Path(smib.__file__).parent
-
 def get_package_root(package_name: str) -> Path:
     spec = importlib.util.find_spec(package_name)
     if spec is None:
