@@ -46,18 +46,23 @@ class HttpEventInterface:
         return decorator
 
     def get(self, path: str, *args, **kwargs):
+        """ See fastapi.FastAPI.get() for parameters """
         return self.__route_decorator(path, ["GET"], *args, **kwargs)
 
     def put(self, path: str, *args, **kwargs):
+        """ See fastapi.FastAPI.put() for parameters """
         return self.__route_decorator(path, ["PUT"], *args, **kwargs)
 
     def post(self, path: str, *args, **kwargs):
+        """ See fastapi.FastAPI.post() for parameters """
         return self.__route_decorator(path, ["POST"], *args, **kwargs)
 
     def delete(self, path: str, *args, **kwargs):
+        """ See fastapi.FastAPI.delete() for parameters """
         return self.__route_decorator(path, ["DELETE"], *args, **kwargs)
 
     def patch(self, path: str, *args, **kwargs):
+        """ See fastapi.FastAPI.patch() for parameters """
         return self.__route_decorator(path, ["PATCH"], *args, **kwargs)
 
 def extract_request_parameter_value(signature: Signature, args, kwargs) -> Request:
