@@ -61,6 +61,7 @@ async def put_hello(request: Request):
 @app.patch('/hello')
 async def patch_hello(request: Request):
     print("[Endpoint]: Handling PATCH request")
+    print(aaaaa)
     return {"message": "Hello, PATCH!"}
 
 

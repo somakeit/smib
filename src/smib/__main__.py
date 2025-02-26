@@ -23,6 +23,7 @@ async def main():
     bolt_app = AsyncApp(
         token=SLACK_BOT_TOKEN,
         raise_error_for_unhandled_request=True,
+        request_verification_enabled=False, #TODO Add proper slack request signature
     )
     bolt_app.error(error_handler)
 

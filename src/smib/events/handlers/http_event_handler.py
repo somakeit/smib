@@ -38,4 +38,5 @@ async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltReq
     return AsyncBoltRequest(body=request_body, query=dict(request.query_params), headers=dict(request.headers), mode=BoltRequestMode.HTTP, context=context)
 
 async def to_http_response(response: BoltResponse) -> Response:
+    print(response.__dict__)
     return to_starlette_response(response)
