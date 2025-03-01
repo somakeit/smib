@@ -19,5 +19,5 @@ def register(slack: AsyncApp, http: HttpEventInterface):
     @http.get("/space/state")
     async def space(say: AsyncSay):
         return {
-            "opem": True
+            "open": True
         }
