@@ -1,6 +1,8 @@
 import asyncio
+import sys
 from logging import Logger
 import logging
+from types import ModuleType
 from typing import Protocol
 
 from collections.abc import Coroutine
@@ -10,6 +12,9 @@ class EventServiceProtocol(Protocol):
         ...
 
     async def stop(self):
+        ...
+
+    def disconnect_module(self, module: ModuleType):
         ...
 
 

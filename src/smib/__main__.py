@@ -1,8 +1,14 @@
 import asyncio
+import inspect
 import logging
+import sys
 from asyncio import CancelledError
+from pathlib import Path
+from types import ModuleType
 
+from fastapi.routing import APIRoute
 from slack_bolt.app.async_app import AsyncApp
+from starlette.routing import BaseRoute
 
 from smib.config import SLACK_BOT_TOKEN
 from smib.error_handler import error_handler
@@ -24,6 +30,7 @@ async def main():
         token=SLACK_BOT_TOKEN,
         raise_error_for_unhandled_request=True,
         request_verification_enabled=False, #TODO Add proper slack request signature
+        process_before_response=True
     )
     bolt_app.error(error_handler)
 
@@ -43,6 +50,9 @@ async def main():
     plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
     plugin_lifecycle_manager.register_interface('slack', bolt_app)
     plugin_lifecycle_manager.register_interface('http', http_event_interface)
+
+    plugin_lifecycle_manager.register_plugin_unregister_callback(slack_event_service.disconnect_module)
+    plugin_lifecycle_manager.register_plugin_unregister_callback(http_event_service.disconnect_module)
     plugin_lifecycle_manager.load_plugins()
 
     try:

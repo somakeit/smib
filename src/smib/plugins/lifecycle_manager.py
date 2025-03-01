@@ -18,7 +18,9 @@ class PluginLifecycleManager:
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
         self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
         self.plugins: list[ModuleType] = []
-        self.unregister_plugin_callbacks: list[callable] = []
+        self.plugin_unregister_callbacks: list[callable] = []
+        self.plugin_preregister_callbacks: list[callable] = []
+        self.plugin_postregister_callbacks: list[callable] = []
         self.interfaces: dict[str, any] = {}
 
     def load_plugins(self):
@@ -46,16 +48,24 @@ class PluginLifecycleManager:
     def register_plugin(self, plugin_module: ModuleType):
         try:
             dynamic_caller(plugin_module.register, **self.interfaces)
-        except ValueError as e:
+        except Exception as e:
             raise
         finally:
             self.plugins.append(plugin_module)
 
     def unregister_plugin(self, plugin_module: ModuleType):
-        for unregister_callback in self.unregister_plugin_callbacks:
+        for unregister_callback in self.plugin_unregister_callbacks:
             unregister_callback(plugin_module)
 
         self.plugins.remove(plugin_module)
+
+    def preregister_plugin(self, plugin_module: ModuleType):
+        for preregister_callback in self.plugin_preregister_callbacks:
+            preregister_callback(plugin_module)
+
+    def postregister_plugin(self, plugin_module: ModuleType):
+        for postregister_callback in self.plugin_postregister_callbacks:
+            postregister_callback(plugin_module)
 
     def validate_plugin_modules(self, modules: list[ModuleType]) -> list[ModuleType]:
         valid_plugin_modules: list[ModuleType] = []
@@ -73,8 +83,14 @@ class PluginLifecycleManager:
     def plugin_string(self):
         return ", ".join(get_actual_module_name(plugin) for plugin in self.plugins) or "None"
 
-    def add_unregister_plugin_callback(self, callback: callable):
-        self.unregister_plugin_callbacks.append(callback)
+    def register_plugin_unregister_callback(self, callback: callable):
+        self.plugin_unregister_callbacks.append(callback)
+
+    def register_plugin_preregister_callback(self, callback: callable):
+        self.plugin_preregister_callbacks.append(callback)
+
+    def register_plugin_postregister_callback(self, callback: callable):
+        self.plugin_postregister_callbacks.append(callback)
 
     def register_interface(self, interface_name: str, interface: any):
         self.interfaces[interface_name] = interface

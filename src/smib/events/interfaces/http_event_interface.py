@@ -1,10 +1,12 @@
+import inspect
+import sys
 from typing import Iterator
 
 import makefun
-from annotated_types import SupportsGe
+from fastapi.routing import APIRouter
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.kwargs_injection.async_args import AsyncArgs
-from starlette.routing import Match
+from starlette.routing import Match, BaseRoute
 
 from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.services.http_event_service import HttpEventService
@@ -15,34 +17,39 @@ from makefun import remove_signature_parameters, add_signature_parameters
 from functools import wraps
 from fastapi import Request
 
+from smib.utilities.package import get_actual_module_name
+
 
 class HttpEventInterface:
     def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService):
-        self.bolt_app = bolt_app
-        self.handler = handler
-        self.service = service
+        self.bolt_app: AsyncApp = bolt_app
+        self.handler: HttpEventHandler = handler
+        self.service: HttpEventService = service
+        self.routers: dict[str, APIRouter] = {}
 
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
         @wraps(self.__route_decorator)
         def decorator(func: callable):
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
 
-            @makefun.with_signature(http_function_signature, func_name=func.__name__, doc=func.__doc__)
+            @makefun.with_signature(http_function_signature,
+                                    func_name=func.__name__,
+                                    doc=func.__doc__,
+                                    module_name=func.__module__
+                                    )
             async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
                 request_value = extract_request_parameter_value(http_function_signature, wrapper_args, wrapper_kwargs)
                 response = await self.handler.handle(request_value, wrapper_kwargs)
                 return response
 
             self.service.fastapi_app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
-            route = self.service.fastapi_app.routes[-1]
+            route: BaseRoute = self.service.fastapi_app.routes[-1]
 
-            async def matcher(event: dict) -> bool:
-                match_result = route.matches(event['request']['scope'])
-                match = Match(match_result[0])
-                return match == Match.FULL
+            matcher: callable = generate_route_matcher(route)
 
             self.bolt_app.event('http', matchers=[matcher])(func)
             return wrapper
+
         return decorator
 
     def get(self, path: str, *args, **kwargs):
@@ -65,6 +72,16 @@ class HttpEventInterface:
         """ See fastapi.FastAPI.patch() for parameters """
         return self.__route_decorator(path, ["PATCH"], *args, **kwargs)
 
+
+def generate_route_matcher(route: BaseRoute) -> callable:
+    async def matcher(event: dict) -> bool:
+        match_result = route.matches(event['request']['scope'])
+        match = Match(match_result[0])
+        return match == Match.FULL
+
+    return matcher
+
+
 def extract_request_parameter_value(signature: Signature, args, kwargs) -> Request:
     bound = signature.bind(*args, **kwargs)
     bound.apply_defaults()
@@ -76,22 +93,27 @@ def extract_request_parameter_value(signature: Signature, args, kwargs) -> Reque
     request_value = bound.arguments.get(request_parameter.name) if request_parameter else None
     return request_value
 
+
 def clean_signature(signature: Signature) -> Signature:
     reserved_parameters: set[str] = get_reserved_parameter_names()
     parameters_to_remove: set[str] = reserved_parameters.intersection(signature.parameters.keys())
     cleaned_signature: Signature = remove_signature_parameters(signature, *parameters_to_remove)
     if not any(parameter.annotation == Request for parameter in cleaned_signature.parameters.values()):
-        request_parameter: Parameter = Parameter(name='_http_request_', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Request)
+        request_parameter: Parameter = Parameter(name='_http_request_', kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                                 annotation=Request)
         cleaned_signature = add_signature_parameters(cleaned_signature, first=request_parameter)
 
     return cleaned_signature
 
+
 def get_reserved_parameter_names() -> set[str]:
     return set(AsyncArgs.__annotations__.keys())
+
 
 if __name__ == '__main__':
     async def test_func(say, context, item: str):
         pass
+
 
     sig = clean_signature(Signature.from_callable(test_func))
     print(sig.parameters)
