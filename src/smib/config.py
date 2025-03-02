@@ -16,3 +16,9 @@ SLACK_APP_TOKEN: str = config("SLACK_APP_TOKEN")
 
 WEBSERVER_PORT: int = config("WEBSERVER_PORT", cast=int, default=80)
 WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="127.0.0.1")
+
+MONGO_DB_HOST: str = config("MONGO_DB_HOST", default="localhost")
+MONGO_DB_PORT: int = config("MONGO_DB_PORT", cast=int, default=27017)
+MONGO_DB_NAME: str = config("MONGO_DB_NAME", default=PACKAGE_NAME)
+
+MONGO_DB_URL: str = f"mongodb://{MONGO_DB_HOST}:{MONGO_DB_PORT}"
