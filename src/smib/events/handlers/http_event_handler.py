@@ -8,6 +8,8 @@ from fastapi import Request, Response
 from slack_bolt.request.async_request import AsyncBoltRequest
 
 from smib.events.handlers import BoltRequestMode
+from smib.events.responses.http_bolt_response import HttpBoltResponse
+
 
 class HttpEventHandler:
     def __init__(self, bolt_app: AsyncApp):
@@ -15,7 +17,7 @@ class HttpEventHandler:
 
     async def handle(self, request: Request, context: dict):
         bolt_request: AsyncBoltRequest = await to_async_bolt_request(request, context)
-        bolt_response: BoltResponse = await self.bolt_app.async_dispatch(bolt_request)
+        bolt_response: BoltResponse | HttpBoltResponse = await self.bolt_app.async_dispatch(bolt_request)
         return await to_http_response(bolt_response)
 
 async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltRequest:
@@ -37,6 +39,9 @@ async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltReq
 
     return AsyncBoltRequest(body=request_body, query=dict(request.query_params), headers=dict(request.headers), mode=BoltRequestMode.HTTP, context=context)
 
-async def to_http_response(response: BoltResponse) -> Response:
-    print(response.__dict__)
-    return to_starlette_response(response)
+async def to_http_response(response: BoltResponse) -> tuple[Response, dict]:
+
+    if isinstance(response, HttpBoltResponse):
+        return response.fastapi_response, response.fastapi_kwargs
+
+    return to_starlette_response(response), {}

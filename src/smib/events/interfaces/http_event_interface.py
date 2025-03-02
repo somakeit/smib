@@ -9,6 +9,7 @@ from slack_bolt.kwargs_injection.async_args import AsyncArgs
 from starlette.routing import Match, BaseRoute
 
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.responses.http_bolt_response import HttpBoltResponse
 from smib.events.services.http_event_service import HttpEventService
 
 from inspect import Signature, Parameter
@@ -39,15 +40,17 @@ class HttpEventInterface:
                                     )
             async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
                 request_value = extract_request_parameter_value(http_function_signature, wrapper_args, wrapper_kwargs)
-                response = await self.handler.handle(request_value, wrapper_kwargs)
+                response, response_kwargs = await self.handler.handle(request_value, wrapper_kwargs)
+                wrapper_kwargs.update(response_kwargs)
                 return response
 
             self.service.fastapi_app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
             route: BaseRoute = self.service.fastapi_app.routes[-1]
 
             matcher: callable = generate_route_matcher(route)
+            response_preserving_func = preserve_http_response(func)
 
-            self.bolt_app.event('http', matchers=[matcher])(func)
+            self.bolt_app.event('http', matchers=[matcher])(response_preserving_func)
             return wrapper
 
         return decorator
@@ -72,6 +75,13 @@ class HttpEventInterface:
         """ See fastapi.FastAPI.patch() for parameters """
         return self.__route_decorator(path, ["PATCH"], *args, **kwargs)
 
+
+def preserve_http_response(func: callable) -> callable:
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        response = await func(*args, **kwargs)
+        return HttpBoltResponse(status=0, body='', fastapi_response=response, fastapi_kwargs=kwargs)
+    return wrapper
 
 def generate_route_matcher(route: BaseRoute) -> callable:
     async def matcher(event: dict) -> bool:
