@@ -19,7 +19,7 @@ class State(BaseModel):
 def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.put("/space/state/{state}", status_code=HTTPStatus.NO_CONTENT)
-    async def space(state: Literal["open", "closed"], say: AsyncSay) -> None:
+    async def set_space_state(state: Literal["open", "closed"], say: AsyncSay) -> None:
         """ Set the space state to open or closed """
         await say(f"Space state changed to {state}", channel="#sam-test")
         space_open = state == "open"
@@ -29,6 +29,6 @@ def register(slack: AsyncApp, http: HttpEventInterface):
 
 
     @http.get("/space/state", response_model=SpaceState)
-    async def space(say: AsyncSay):
+    async def get_space_state(say: AsyncSay):
         space_state = await SpaceStateDB.find_one()
         return space_state

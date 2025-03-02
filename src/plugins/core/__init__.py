@@ -9,7 +9,7 @@ from fastapi import Response
 
 def register(http: HttpEventInterface, _socket_mode_handler: AsyncSocketModeHandler, _database_client: AsyncIOMotorClient):
     @http.get("/status")
-    async def status(response: Response):
+    async def get_status(response: Response):
         socket_status = None
         slack_api_status = None
         if _socket_mode_handler.client is not None and await _socket_mode_handler.client.is_connected():
