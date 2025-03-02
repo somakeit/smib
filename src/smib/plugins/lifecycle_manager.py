@@ -21,7 +21,7 @@ class PluginLifecycleManager:
         self.plugin_unregister_callbacks: list[callable] = []
         self.plugin_preregister_callbacks: list[callable] = []
         self.plugin_postregister_callbacks: list[callable] = []
-        self.interfaces: dict[str, any] = {}
+        self.registration_parameters: dict[str, any] = {}
 
     def load_plugins(self):
         self.logger.info(f"Resolved plugins directory to {self.plugins_directory}")
@@ -47,7 +47,7 @@ class PluginLifecycleManager:
 
     def register_plugin(self, plugin_module: ModuleType):
         try:
-            dynamic_caller(plugin_module.register, **self.interfaces)
+            dynamic_caller(plugin_module.register, **self.registration_parameters)
         except Exception as e:
             raise
         finally:
@@ -92,5 +92,5 @@ class PluginLifecycleManager:
     def register_plugin_postregister_callback(self, callback: callable):
         self.plugin_postregister_callbacks.append(callback)
 
-    def register_interface(self, interface_name: str, interface: any):
-        self.interfaces[interface_name] = interface
+    def register_parameter(self, parameter_name: str, parameter: any):
+        self.registration_parameters[parameter_name] = parameter
