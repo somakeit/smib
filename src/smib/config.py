@@ -1,8 +1,14 @@
 from pathlib import Path
 from decouple import config
-from smib.utilities.package import get_package_root
+from smib.utilities.package import get_package_root, get_package_version
 
-PACKAGE_ROOT: Path = get_package_root('smib')
+PACKAGE_NAME: str = "smib"
+PACKAGE_DISPLAY_NAME: str = "S.M.I.B."
+PACKAGE_DESCRIPTION: str = "The SoMakeIt Bot."
+
+PACKAGE_VERSION: str = get_package_version(PACKAGE_NAME)
+
+PACKAGE_ROOT: Path = get_package_root(PACKAGE_NAME)
 PLUGINS_DIRECTORY: Path = PACKAGE_ROOT.parent / "plugins"
 
 SLACK_BOT_TOKEN: str = config("SLACK_BOT_TOKEN")

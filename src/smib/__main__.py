@@ -50,6 +50,7 @@ async def main():
     plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
     plugin_lifecycle_manager.register_interface('slack', bolt_app)
     plugin_lifecycle_manager.register_interface('http', http_event_interface)
+    plugin_lifecycle_manager.register_interface('_socket_mode_handler', slack_event_service.service)
 
     plugin_lifecycle_manager.register_plugin_unregister_callback(slack_event_service.disconnect_module)
     plugin_lifecycle_manager.register_plugin_unregister_callback(http_event_service.disconnect_module)

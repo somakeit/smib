@@ -1,6 +1,7 @@
 from pathlib import Path
 from types import ModuleType
 import importlib.util
+from importlib.metadata import version
 
 
 def get_package_root(package_name: str) -> Path:
@@ -12,6 +13,14 @@ def get_package_root(package_name: str) -> Path:
         return Path(next(iter(spec.submodule_search_locations)))
     else:
         raise ImportError(f"Could not determine root for package '{package_name}'")
+
+def get_package_version(package_name: str):
+    return version(package_name)
+
+if __name__ == "__main__":
+    print(get_package_root("smib"))
+    print(get_package_version("smib"))
+
 
 
 def get_actual_module_name(module: ModuleType) -> str:
