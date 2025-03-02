@@ -10,7 +10,7 @@ from fastapi.routing import APIRoute
 from slack_bolt.app.async_app import AsyncApp
 from starlette.routing import BaseRoute
 
-from smib.config import SLACK_BOT_TOKEN
+from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME
 from smib.error_handler import error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
@@ -28,6 +28,7 @@ logging.basicConfig(
 
 async def main():
     bolt_app = AsyncApp(
+        name=PACKAGE_DISPLAY_NAME,
         token=SLACK_BOT_TOKEN,
         raise_error_for_unhandled_request=True,
         request_verification_enabled=False, #TODO Add proper slack request signature
