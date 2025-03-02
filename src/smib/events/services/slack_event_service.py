@@ -1,5 +1,7 @@
 import inspect
 import json
+import sys
+from logging import Logger
 import logging
 from pathlib import Path
 from types import ModuleType
@@ -37,7 +39,9 @@ class SlackEventService:
             module_path = module_path.parent
 
         for listener in self.bolt_app._async_listeners[::]:
-            listener_path = inspect.getfile(inspect.unwrap(listener.ack_function))
+            # listener_path = inspect.getfile(inspect.unwrap(listener.ack_function))
+            # print(listener_path, listener.ack_function.__module__)
+            listener_path = sys.modules[listener.ack_function.__module__].__file__
             if Path(listener_path).resolve().is_relative_to(module_path):
                 self.logger.info(f"Removing listener {listener.ack_function.__name__}")
                 self.bolt_app._async_listeners.remove(listener)

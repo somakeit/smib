@@ -22,3 +22,4 @@ async def error_handler(error: Exception, request: AsyncBoltRequest, body: dict,
         case _:
             logger.info(f'Request mode: {request.mode}')
             logger.warning(pprint.pformat(body, sort_dicts=False), exc_info=error)
+            # logger.warning(f'Failed to execute a request ({error})')
