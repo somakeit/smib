@@ -10,10 +10,3 @@ class SpaceStateDB(Document, SpaceState):
 
     class Settings:
         name = "space_state"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "open": True
-            }
-        }
