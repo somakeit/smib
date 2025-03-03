@@ -27,5 +27,6 @@ def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.get("/space/state", response_model=SpaceState)
     async def get_space_state(say: AsyncSay):
+        """ Get the space state """
         space_state = await SpaceState.find_one()
         return space_state
