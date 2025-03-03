@@ -17,7 +17,10 @@ class PluginLifecycleManager:
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
         self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
+
         self.plugins: list[ModuleType] = []
+        self.plugin_map: list = []
+
         self.plugin_unregister_callbacks: list[callable] = []
         self.plugin_preregister_callbacks: list[callable] = []
         self.plugin_postregister_callbacks: list[callable] = []
@@ -52,12 +55,29 @@ class PluginLifecycleManager:
             raise
         finally:
             self.plugins.append(plugin_module)
+            self._add_to_map(plugin_module)
+
+    @staticmethod
+    def _get_map_key(plugin_module: ModuleType):
+        return {
+            'name': get_actual_module_name(plugin_module),
+            'unique_name': plugin_module.__name__,
+            'path': Path(plugin_module.__file__),
+            'module': plugin_module,
+        }
+
+    def _add_to_map(self, plugin_module: ModuleType):
+        self.plugin_map.append(self._get_map_key(plugin_module))
+
+    def _remove_from_map(self, plugin_module: ModuleType):
+        self.plugin_map.remove(self._get_map_key(plugin_module))
 
     def unregister_plugin(self, plugin_module: ModuleType):
         for unregister_callback in self.plugin_unregister_callbacks:
             unregister_callback(plugin_module)
 
         self.plugins.remove(plugin_module)
+        self._remove_from_map(plugin_module)
 
     def preregister_plugin(self, plugin_module: ModuleType):
         for preregister_callback in self.plugin_preregister_callbacks:
@@ -70,14 +90,33 @@ class PluginLifecycleManager:
     def validate_plugin_modules(self, modules: list[ModuleType]) -> list[ModuleType]:
         valid_plugin_modules: list[ModuleType] = []
         for module in modules:
-            if callable(getattr(module, 'register', None)):
+            if self.validate_plugin_module(module):
                 valid_plugin_modules.append(module)
             else:
-                self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) does not have a register callable')
+                self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) is invalid... removing')
                 del sys.modules[module.__name__]
                 continue
 
         return valid_plugin_modules
+
+    def validate_plugin_module(self, module: ModuleType) -> bool:
+        valid = True
+        if not callable(getattr(module, 'register', None)):
+            self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) does not have a register callable')
+            valid = False
+
+        required_attributes = ['__display_name__', '__description__']
+        for attribute in required_attributes:
+            if not hasattr(module, attribute):
+                self.logger.warning(f'{module.__name__} ({get_actual_module_name(module)}) does not have the required {attribute} attribute')
+                valid = False
+
+        recommended_attributes = ['__author__']
+        for attribute in recommended_attributes:
+            if not hasattr(module, attribute):
+                self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) does not have the recommended {attribute} attribute')
+
+        return valid
 
     @property
     def plugin_string(self):

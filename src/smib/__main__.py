@@ -19,6 +19,7 @@ from smib.events.services.http_event_service import HttpEventService
 from smib.events.services.slack_event_service import SlackEventService
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.db.manager import DatabaseManager
+from smib.plugins.locator import PluginLocator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,10 +53,13 @@ async def main():
     database_manager = DatabaseManager()
 
     plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
+    plugin_locator: PluginLocator = PluginLocator(plugin_lifecycle_manager)
+
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
     plugin_lifecycle_manager.register_parameter('_socket_mode_handler', slack_event_service.service)
     plugin_lifecycle_manager.register_parameter('_database_client', database_manager.client)
+    plugin_lifecycle_manager.register_parameter('_plugin_locator', plugin_locator)
 
     plugin_lifecycle_manager.register_plugin_unregister_callback(slack_event_service.disconnect_module)
     plugin_lifecycle_manager.register_plugin_unregister_callback(http_event_service.disconnect_module)
