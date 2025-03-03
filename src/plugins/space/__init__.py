@@ -18,7 +18,7 @@ from .models import SpaceState, SpaceStateDB
 class State(BaseModel):
     state: Literal["open", "closed"]
 
-def register(slack: AsyncApp, http: HttpEventInterface, _plugin_locator: PluginLocator):
+def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.put("/space/state/{state}", status_code=HTTPStatus.NO_CONTENT)
     @http.put("/smib/event/space_{state}", deprecated=True)
@@ -33,13 +33,3 @@ def register(slack: AsyncApp, http: HttpEventInterface, _plugin_locator: PluginL
     async def get_space_state(say: AsyncSay):
         space_state = await SpaceStateDB.find_one()
         return space_state
-
-    @http.get("/plugin")
-    async def get_plugin_info():
-        plugin = _plugin_locator.get_current_plugin()
-        name = _plugin_locator.get_name(plugin)
-        uniquename = _plugin_locator.get_unique_name(plugin)
-        return {
-            "name": name,
-            "unique_name": uniquename,
-        }
