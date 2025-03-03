@@ -39,7 +39,10 @@ class PluginLifecycleManager:
     def register_plugins(self, plugin_modules: list[ModuleType]):
         for plugin_module in plugin_modules:
             try:
+                self.preregister_plugin(plugin_module)
                 self.register_plugin(plugin_module)
+                self.postregister_plugin(plugin_module)
+
                 self.logger.info(f"Registered plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)})")
             except Exception as e:
                 self.logger.exception(f"Failed to register plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)}): {e}", exc_info=e)
