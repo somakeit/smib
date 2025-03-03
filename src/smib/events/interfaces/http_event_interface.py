@@ -1,7 +1,3 @@
-import inspect
-import sys
-from typing import Iterator
-
 import makefun
 from fastapi.routing import APIRouter
 from slack_bolt.app.async_app import AsyncApp
@@ -18,9 +14,6 @@ from makefun import remove_signature_parameters, add_signature_parameters
 from functools import wraps
 from fastapi import Request
 
-from smib.utilities.package import get_actual_module_name
-
-
 class HttpEventInterface:
     def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService):
         self.bolt_app: AsyncApp = bolt_app
@@ -29,7 +22,6 @@ class HttpEventInterface:
         self.routers: dict[str, APIRouter] = {}
 
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
-        @wraps(self.__route_decorator)
         def decorator(func: callable):
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
 
@@ -38,6 +30,7 @@ class HttpEventInterface:
                                     doc=func.__doc__,
                                     module_name=func.__module__
                                     )
+            @wraps(func)
             async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
                 request_value = extract_request_parameter_value(http_function_signature, wrapper_args, wrapper_kwargs)
                 response, response_kwargs = await self.handler.handle(request_value, wrapper_kwargs)

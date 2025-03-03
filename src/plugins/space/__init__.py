@@ -32,3 +32,9 @@ def register(slack: AsyncApp, http: HttpEventInterface):
     async def get_space_state(say: AsyncSay):
         space_state = await SpaceStateDB.find_one()
         return space_state
+
+    @http.put("/smib/event/space_{state}")
+    async def smib_event_space_open(state: Literal['open', 'closed'], say: AsyncSay):
+        """ Deprecated endpoint for smib events """
+        await set_space_state(state, say)
+        return Response(status_code=HTTPStatus.NO_CONTENT)
