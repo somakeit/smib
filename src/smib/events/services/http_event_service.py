@@ -9,7 +9,8 @@ from fastapi.routing import APIRoute
 from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
 
-from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION
+from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
+    WEBSERVER_PATH_PREFIX
 from smib.utilities.lazy_property import lazy_property
 from smib.utilities.package import get_actual_module_name
 
@@ -18,17 +19,23 @@ class HttpEventService:
     fastapi_app: FastAPI
     uvicorn_config: Config
     uvicorn_server: Server
+    openapi_tags: list[dict]
 
     def __init__(self, bolt_app: AsyncApp):
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
     @lazy_property
+    def openapi_tags(self) -> list[dict]:
+        return []
+
+    @lazy_property
     def fastapi_app(self) -> FastAPI:
         return FastAPI(
             version=PACKAGE_VERSION,
             title=PACKAGE_DISPLAY_NAME,
-            description=PACKAGE_DESCRIPTION
+            description=PACKAGE_DESCRIPTION,
+            root_path=WEBSERVER_PATH_PREFIX
         )
 
     @lazy_property
@@ -45,6 +52,7 @@ class HttpEventService:
     async def start(self):
         # On start, force re-generate swagger docs
         self.fastapi_app.openapi_schema = None
+        self.fastapi_app.openapi_tags = self.openapi_tags
         self.fastapi_app.setup()
 
         await self.uvicorn_server.serve()

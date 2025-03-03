@@ -21,6 +21,8 @@ class HttpEventInterface:
         self.service: HttpEventService = service
         self.routers: dict[str, APIRouter] = {}
 
+        self.current_router: APIRouter = APIRouter()
+
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
         def decorator(func: callable):
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
@@ -37,9 +39,8 @@ class HttpEventInterface:
                 wrapper_kwargs.update(response_kwargs)
                 return response
 
-            print(path, func, wrapper)
-            self.service.fastapi_app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
-            route: BaseRoute = self.service.fastapi_app.routes[-1]
+            self.current_router.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
+            route: BaseRoute = self.current_router.routes[-1]
 
             matcher: callable = generate_route_matcher(route)
             response_preserving_func = preserve_http_response(func)

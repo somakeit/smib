@@ -61,12 +61,16 @@ async def main():
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
 
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
-    http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface)
+    http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface, plugin_locator)
 
-    plugin_lifecycle_manager.register_plugin_unregister_callback(slack_plugin_integration.disconnect_module)
-    plugin_lifecycle_manager.register_plugin_unregister_callback(http_plugin_integration.disconnect_module)
+    plugin_lifecycle_manager.register_plugin_unregister_callback(slack_plugin_integration.disconnect_plugin)
+    plugin_lifecycle_manager.register_plugin_unregister_callback(http_plugin_integration.disconnect_plugin)
+
+    plugin_lifecycle_manager.register_plugin_preregister_callback(http_plugin_integration.initialise_plugin_router)
 
     plugin_lifecycle_manager.load_plugins()
+
+    http_plugin_integration.finalise_http_setup()
 
     await database_manager.initialise()
 

@@ -21,6 +21,7 @@ async def get_space_state_from_db() -> SpaceState:
 
 
 def register(slack: AsyncApp, http: HttpEventInterface):
+
     @http.put("/space/state/{state}", status_code=HTTPStatus.NO_CONTENT)
     @http.put("/smib/event/space_{state}", deprecated=True)
     async def set_space_state(
@@ -43,5 +44,3 @@ def register(slack: AsyncApp, http: HttpEventInterface):
         """ Get the space state """
         space_state = await get_space_state_from_db()
         return space_state
-
-    1/0
