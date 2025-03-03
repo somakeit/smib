@@ -12,11 +12,7 @@ from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.plugins.locator import PluginLocator
-from .models import SpaceState, SpaceStateDB
-
-
-class State(BaseModel):
-    state: Literal["open", "closed"]
+from .models import SpaceState
 
 def register(slack: AsyncApp, http: HttpEventInterface):
 
@@ -26,10 +22,10 @@ def register(slack: AsyncApp, http: HttpEventInterface):
         """ Set the space state to open or closed """
         await say(f"Space state changed to {state}", channel="#sam-test")
         space_open = state == "open"
-        await SpaceStateDB.find_one().upsert(Set({ "open": space_open}),
-                                             on_insert=SpaceStateDB(open=space_open))
+        await SpaceState.find_one().upsert(Set({ "open": space_open}),
+                                             on_insert=SpaceState(open=space_open))
 
     @http.get("/space/state", response_model=SpaceState)
     async def get_space_state(say: AsyncSay):
-        space_state = await SpaceStateDB.find_one()
+        space_state = await SpaceState.find_one()
         return space_state
