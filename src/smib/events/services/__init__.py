@@ -14,9 +14,6 @@ class EventServiceProtocol(Protocol):
     async def stop(self):
         ...
 
-    def disconnect_module(self, module: ModuleType):
-        ...
-
 
 
 class EventServiceManager:

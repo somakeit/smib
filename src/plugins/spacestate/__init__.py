@@ -43,3 +43,5 @@ def register(slack: AsyncApp, http: HttpEventInterface):
         """ Get the space state """
         space_state = await get_space_state_from_db()
         return space_state
+
+    1/0

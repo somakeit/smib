@@ -17,6 +17,8 @@ from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService
 from smib.events.services.slack_event_service import SlackEventService
+from smib.plugins.integrations.http_plugin_integration import HttpPluginIntegration
+from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.db.manager import DatabaseManager
 from smib.plugins.locator import PluginLocator
@@ -58,8 +60,12 @@ async def main():
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
 
-    plugin_lifecycle_manager.register_plugin_unregister_callback(slack_event_service.disconnect_module)
-    plugin_lifecycle_manager.register_plugin_unregister_callback(http_event_service.disconnect_module)
+    slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
+    http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface)
+
+    plugin_lifecycle_manager.register_plugin_unregister_callback(slack_plugin_integration.disconnect_module)
+    plugin_lifecycle_manager.register_plugin_unregister_callback(http_plugin_integration.disconnect_module)
+
     plugin_lifecycle_manager.load_plugins()
 
     await database_manager.initialise()

@@ -37,6 +37,7 @@ class HttpEventInterface:
                 wrapper_kwargs.update(response_kwargs)
                 return response
 
+            print(path, func, wrapper)
             self.service.fastapi_app.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
             route: BaseRoute = self.service.fastapi_app.routes[-1]
 

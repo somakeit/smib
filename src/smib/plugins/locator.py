@@ -2,6 +2,7 @@ import inspect
 from pathlib import Path
 from types import ModuleType
 
+import smib
 from smib.config import PLUGINS_DIRECTORY
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.utilities.package import get_actual_module_name
@@ -75,4 +76,3 @@ class PluginLocator:
 
         # If no match is found, return None
         return None
-
