@@ -48,6 +48,6 @@ class HttpPluginIntegration:
         self.http_event_interface.routers[unique_name] = self.http_event_interface.current_router
 
     def finalise_http_setup(self):
-        self.http_event_interface.service.openapi_tags = self.tag_metadata
+        self.http_event_interface.service.openapi_tags += self.tag_metadata
         for router in self.http_event_interface.routers.values():
             self.fastapi_app.include_router(router)

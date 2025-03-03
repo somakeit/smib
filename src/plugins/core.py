@@ -8,7 +8,12 @@ from smib.events.interfaces.http_event_interface import HttpEventInterface
 def register(http: HttpEventInterface):
     http.current_router.prefix = '/core'
 
-    @http.get("/")
+    http.add_openapi_tags([{
+        "name": "Monitoring",
+        "description": "Monitoring endpoints"
+    }])
+
+    @http.get("/health", tags=["Monitoring"])
     async def health():
         """ Check the health of the bot """
         return {"ok": True}

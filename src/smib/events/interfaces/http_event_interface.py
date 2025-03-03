@@ -23,6 +23,9 @@ class HttpEventInterface:
 
         self.current_router: APIRouter = APIRouter()
 
+    def add_openapi_tags(self, tags: list[dict]):
+        self.service.openapi_tags += tags
+
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
         def decorator(func: callable):
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
