@@ -44,7 +44,7 @@ class HttpEventInterface:
             response_preserving_func = preserve_http_response(func)
 
             self.bolt_app.event('http', matchers=[matcher])(response_preserving_func)
-            return wrapper
+            return func
 
         return decorator
 
