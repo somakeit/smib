@@ -2,6 +2,7 @@ __display_name__ = "S.M.I.B.H.I.D."
 __description__ = "A plugin to contain SMIBHID specific interfaces"
 __author__ = "sam57719"
 
+from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -18,6 +19,6 @@ def register(http: HttpEventInterface):
 
     http.current_router.dependencies.append(Depends(verify_smibhid_hostname_header))
 
-    @http.post('/smibhid/log/ui')
+    @http.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
     async def log_ui(ui_logs: list[UILog], smibhid_hostname: Annotated[str, Header(alias="x-smibhid-hostname")]):
         await UILog.insert_many(ui_logs)
