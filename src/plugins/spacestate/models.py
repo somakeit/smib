@@ -14,5 +14,5 @@ class SpaceState(Document):
         name = "space_state"
 
 
-class StateSetExtras(BaseModel):
+class SpaceStateOpen(BaseModel):
     hours: Annotated[int | None, Field(gt=0, default=None, description="How many hours the space is open for?")]
