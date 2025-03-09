@@ -27,13 +27,9 @@ def register(http: HttpEventInterface):
     @http.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
     async def log_ui(ui_logs: list[UILogCreate], smibhid_hostname: Annotated[str, Depends(ensure_smibhid_hostname_header)]):
         db_logs = [UILog.from_api(log, smibhid_hostname) for log in ui_logs]
-        print(ui_logs)
-        print(db_logs)
         await UILog.insert_many(db_logs)
 
     @http.post('/smib/event/smibhid_ui_log', deprecated=True)
     async def log_ui_from_smib_event(ui_logs: list[UILogCreate], smibhid_hostname: Annotated[str, Depends(ensure_smibhid_hostname_header)]):
         db_logs = [UILog.from_api(log, smibhid_hostname) for log in ui_logs]
-        print(ui_logs)
-        print(db_logs)
         await UILog.insert_many(db_logs)

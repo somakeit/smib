@@ -31,7 +31,7 @@ class UILogCreate(BaseModel):
     event: ButtonPressEvent
     type: UILogEventType
     timestamp: Annotated[int | float,
-                        Field(description="Unix timestamp", examples=[int(datetime.now(UTC).timestamp())]),
+                        Field(description="Unix epoch timestamp", examples=[int(datetime.now(UTC).timestamp())]),
                         AfterValidator(validate_timestamp)
     ]
 
@@ -41,7 +41,7 @@ class UILog(Document, UILogCreate):
     id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
 
-    timestamp: Annotated[datetime, Field(description="Timestamp", examples=[datetime.now(UTC)])]
+    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)])]
 
     @classmethod
     def from_api(cls, api_model: UILogCreate, device: str):
