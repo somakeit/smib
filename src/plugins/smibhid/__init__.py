@@ -5,10 +5,11 @@ __author__ = "sam57719"
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Header
 
-from .models import UILog, UILogCreate
 from smib.events.interfaces.http_event_interface import HttpEventInterface
+from .models import UILog, UILogCreate
+
 
 def register(http: HttpEventInterface):
 

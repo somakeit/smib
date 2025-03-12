@@ -1,8 +1,13 @@
-from typing import Optional, Annotated
+from enum import StrEnum
+from typing import Annotated
 
 from beanie import Document, PydanticObjectId
-from bson import ObjectId
-from pydantic import BaseModel, Field, ConfigDict, with_config
+from pydantic import BaseModel, Field
+
+
+class SpaceStateEnum(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
 
 
 class SpaceState(Document):

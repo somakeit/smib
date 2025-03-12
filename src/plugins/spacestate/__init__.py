@@ -2,7 +2,6 @@ __display_name__ = "Space State"
 __description__ = "A plugin to control the space state"
 __author__ = "sam57719"
 
-from enum import StrEnum
 from http import HTTPStatus
 
 from slack_bolt.app.async_app import AsyncApp
@@ -10,12 +9,7 @@ from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from .config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
-from .models import SpaceState, SpaceStateOpen
-
-
-class SpaceStateEnum(StrEnum):
-    OPEN = "open"
-    CLOSED = "closed"
+from .models import SpaceState, SpaceStateOpen, SpaceStateEnum
 
 
 async def get_space_state_from_db() -> SpaceState:
@@ -41,7 +35,7 @@ def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.put("/space/state/open", status_code=HTTPStatus.NO_CONTENT)
     async def set_space_open(say: AsyncSay, space_open_params: SpaceStateOpen) -> None:
-        """ Set the space state to open or closed """
+        """ Set the space state to open """
         state: SpaceStateEnum = SpaceStateEnum.OPEN
         await set_space_state_in_db(state)
         await send_space_open_announcement(say, space_open_params)
@@ -49,7 +43,7 @@ def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.put("/space/state/closed", status_code=HTTPStatus.NO_CONTENT)
     async def set_space_closed(say: AsyncSay) -> None:
-        """ Set the space state to open or closed """
+        """ Set the space state to closed """
         state: SpaceStateEnum = SpaceStateEnum.CLOSED
         await set_space_state_in_db(state)
         await send_space_closed_announcement(say)
@@ -64,14 +58,14 @@ def register(slack: AsyncApp, http: HttpEventInterface):
 
     @http.put("/smib/event/space_open", deprecated=True)
     async def set_space_open_from_smib_event(say: AsyncSay, space_open_params: SpaceStateOpen) -> None:
-        """ Set the space state to open or closed """
+        """ Set the space state to open """
         state: SpaceStateEnum = SpaceStateEnum.OPEN
         await set_space_state_in_db(state)
         await send_space_open_announcement(say, space_open_params)
 
     @http.put("/smib/event/space_closed", deprecated=True)
     async def set_space_closed_from_smib_event(say: AsyncSay) -> None:
-        """ Set the space state to open or closed """
+        """ Set the space state to closed """
         state: SpaceStateEnum = SpaceStateEnum.CLOSED
         await set_space_state_in_db(state)
         await send_space_closed_announcement(say)
