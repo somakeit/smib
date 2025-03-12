@@ -1,0 +1,10 @@
+name: smib
+services:
+  smib:
+    container_name: smib
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:80:80
+    env_file: .env
+    build: .
+    image: smib
