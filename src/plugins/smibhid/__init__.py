@@ -1,6 +1,6 @@
 __display_name__ = "S.M.I.B.H.I.D."
 __description__ = "A plugin to contain SMIBHID specific interfaces"
-__author__ = "sam57719"
+__author__ = "Sam Cork"
 
 from http import HTTPStatus
 from typing import Annotated

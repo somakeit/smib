@@ -1,6 +1,6 @@
 __display_name__ = "Space State"
 __description__ = "A plugin to control the space state"
-__author__ = "sam57719"
+__author__ = "Sam Cork"
 
 from http import HTTPStatus
 
