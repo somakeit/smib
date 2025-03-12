@@ -27,14 +27,14 @@ async def set_space_state_in_db(state: SpaceStateEnum) -> None:
     await space_state.save()
 
 async def send_space_open_announcement(say: AsyncSay, space_open_params: SpaceStateOpen) -> None:
-    message = "Space open!"
+    message = "Space Open!"
     if space_open_params.hours:
         message += f" (For about {space_open_params.hours}h)"
 
     await say(message, channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
 async def send_space_closed_announcement(say: AsyncSay) -> None:
-    await say("Space closed!", channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    await say("Space Closed!", channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
 
 
 def register(slack: AsyncApp, http: HttpEventInterface):

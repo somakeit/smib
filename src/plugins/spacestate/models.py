@@ -15,4 +15,4 @@ class SpaceState(Document):
 
 
 class SpaceStateOpen(BaseModel):
-    hours: Annotated[int | None, Field(gt=0, default=None, description="How many hours the space is open for?")]
+    hours: Annotated[int | None, Field(gt=-1, default=None, description="How many hours the space is open for?")]
