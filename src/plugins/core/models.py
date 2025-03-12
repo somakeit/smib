@@ -1,6 +1,8 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class Version(BaseModel):
-    smib: str
-    python: str
+    smib: Annotated[str, Field(..., examples=["2.0.0"])]
+    python: Annotated[str, Field(..., examples=["3.13.2"])]
