@@ -11,7 +11,6 @@ from .models import Version
 def register(http: HttpEventInterface):
     @http.get("/version")
     async def get_version() -> Version:
-        return Version(
-            smib=PACKAGE_VERSION,
-            python=".".join(map(str, sys.version_info[:3]))
-        )
+        smib_version = PACKAGE_VERSION
+        python_version = ".".join(map(str, sys.version_info[:3]))
+        return Version(smib=smib_version, python=python_version)
