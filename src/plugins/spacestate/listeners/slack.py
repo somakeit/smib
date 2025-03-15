@@ -1,10 +1,8 @@
 import re
-from pprint import pformat
 
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.context.ack.async_ack import AsyncAck
 from slack_bolt.context.say.async_say import AsyncSay
-from slack_sdk.models.attachments import Action
 from slack_sdk.web.async_client import AsyncWebClient
 
 from ..app_home import get_app_home, extract_selected_hours_from_state
