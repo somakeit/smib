@@ -71,6 +71,7 @@ async def _get_space_state_blocks() -> list[Block]:
         case _:
             state_text.text = ":warning: Unable to determine if So Make It is open or closed! :warning:"
             state_set_blocks.append(_get_space_open_actions_block_elements())
+            state_set_blocks.append(SectionBlock(text="OR"))
             state_set_blocks.append(_get_space_close_actions_block_elements())
 
     state_text_block = SectionBlock(text=state_text)
