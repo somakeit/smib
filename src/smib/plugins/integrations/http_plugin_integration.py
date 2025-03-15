@@ -30,11 +30,12 @@ class HttpPluginIntegration:
         if module_path.name == "__init__.py":
             module_path = module_path.parent
 
-        for route in self.fastapi_app.routes[::]:
-            route_module_path = sys.modules[route.endpoint.__module__].__file__
-            if Path(route_module_path).resolve().is_relative_to(module_path):
-                self.logger.info(f"Removing route {route}")
-                self.fastapi_app.routes.remove(route)
+        for router in [self.fastapi_app, *self.http_event_interface.routers.values()]:
+            for route in router.routes[::]:
+                route_module_path = sys.modules[route.endpoint.__module__].__file__
+                if Path(route_module_path).resolve().is_relative_to(module_path):
+                    self.logger.info(f"Removing route {route}")
+                    router.routes.remove(route)
 
     def initialise_plugin_router(self, plugin: ModuleType):
         unique_name = self.plugin_locator.get_unique_name(plugin)
