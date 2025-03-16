@@ -32,6 +32,8 @@ class PluginLifecycleManager:
             self.logger.warning(f"Plugins directory {self.plugins_directory} doesn't exist")
             return
 
+        sys.path.insert(0, str(self.plugins_directory.parent.resolve()))
+
         modules = import_all_from_directory(self.plugins_directory)
         plugin_modules = self.validate_plugin_modules(modules)
         self.register_plugins(plugin_modules)
@@ -43,9 +45,9 @@ class PluginLifecycleManager:
                 self.register_plugin(plugin_module)
                 self.postregister_plugin(plugin_module)
 
-                self.logger.info(f"Registered plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)})")
+                self.logger.info(f"Registered plugin {plugin_module.__name__} ({self.get_relative_path(plugin_module.__file__)})")
             except Exception as e:
-                self.logger.exception(f"Failed to register plugin {plugin_module.__name__} ({get_actual_module_name(plugin_module)}): {e}", exc_info=e)
+                self.logger.exception(f"Failed to register plugin {plugin_module.__name__} ({self.get_relative_path(plugin_module.__file__)}): {e}", exc_info=e)
                 self.unregister_plugin(plugin_module)
                 continue
 
@@ -96,7 +98,7 @@ class PluginLifecycleManager:
             if self.validate_plugin_module(module):
                 valid_plugin_modules.append(module)
             else:
-                self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) is invalid... removing')
+                self.logger.info(f'{module.__name__} ({self.get_relative_path(module.__file__)}) is invalid... removing')
                 del sys.modules[module.__name__]
                 continue
 
@@ -136,3 +138,6 @@ class PluginLifecycleManager:
 
     def register_parameter(self, parameter_name: str, parameter: any):
         self.registration_parameters[parameter_name] = parameter
+
+    def get_relative_path(self, plugin_path: Path | str) -> Path:
+        return Path(plugin_path).resolve().relative_to(self.plugins_directory)

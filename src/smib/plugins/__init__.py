@@ -16,11 +16,15 @@ class PluginModuleFormat(StrEnum):
 
 logger = logging.getLogger(__name__)
 
+def module_exists_by_name(module_name: str) -> bool:
+    return module_name in sys.modules
+
 
 def import_module_from_path(module_path: Path, module_name: str = None) -> ModuleType:
     module_path = module_path.resolve()
-    unique_suffix = str(uuid.uuid4()).replace("-", "")
-    module_name = module_name or f"{module_path.with_suffix('').name}_{unique_suffix}"
+    # unique_suffix = str(uuid.uuid4()).replace("-", "")
+    # module_name = module_name or f"{module_path.with_suffix('').name}_{unique_suffix}"
+    module_name = module_name or module_path.with_suffix('').name
 
     # Ensure the module is a .py file
     if not module_path.suffix == ".py":
@@ -29,6 +33,9 @@ def import_module_from_path(module_path: Path, module_name: str = None) -> Modul
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
 
+    if module_exists_by_name(module_name):
+        raise ImportError(f"Module {module_name} already exists")
+
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
 
@@ -36,8 +43,9 @@ def import_module_from_path(module_path: Path, module_name: str = None) -> Modul
 
 def import_package_from_path(package_path: Path, package_name: str = None) -> ModuleType:
     package_path = package_path.resolve()
-    unique_suffix = str(uuid.uuid4()).replace("-", "")
-    package_name = package_name or f"{package_path.name}_{unique_suffix}"
+    # unique_suffix = str(uuid.uuid4()).replace("-", "")
+    # package_name = package_name or f"{package_path.name}_{unique_suffix}"
+    package_name = package_name or package_path.name
 
     # Ensure the package contains an __init__.py file
     init_file = package_path / '__init__.py'
@@ -50,6 +58,10 @@ def import_package_from_path(package_path: Path, package_name: str = None) -> Mo
     # Load the package
     spec = importlib.util.spec_from_file_location(package_name, init_file)
     package = importlib.util.module_from_spec(spec)
+
+    if module_exists_by_name(package_name):
+        raise ImportError(f"Module {package_name} already exists")
+
     sys.modules[package_name] = package
     spec.loader.exec_module(package)
 
