@@ -86,6 +86,8 @@ def import_all_from_directory(directory_path: Path | str) -> list[ModuleType]:
     imported_modules = []
 
     for item in directory.iterdir():
+        if item.name == '__init__.py':
+            continue
         try:
             # Import module or package if it's a .py file or a directory with __init__.py file
             if item.is_file() and item.suffix == '.py':

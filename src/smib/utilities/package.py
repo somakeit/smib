@@ -25,3 +25,6 @@ def get_actual_module_name(module: ModuleType) -> str:
     else:
         return module_path.with_suffix("").name
 
+def get_module_from_name(module_name: str):
+    return sys.modules[module_name]
+
