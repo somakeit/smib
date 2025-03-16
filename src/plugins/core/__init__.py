@@ -2,15 +2,13 @@ __display_name__ = "Core"
 __description__ = ""
 __author__ = "Sam Cork"
 
-from beanie import Document
-
 from smib.config import PACKAGE_VERSION
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 import sys
 from .models import Version
 
-def register(http: HttpEventInterface, database: DatabaseManager):
+def register(http: HttpEventInterface):
 
     @http.get("/version")
     async def get_version() -> Version:
