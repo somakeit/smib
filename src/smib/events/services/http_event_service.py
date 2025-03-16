@@ -7,7 +7,7 @@ from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
-    WEBSERVER_PATH_PREFIX, PACKAGE_NAME
+    WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
 from smib.utilities.lazy_property import lazy_property
 
 
@@ -40,6 +40,8 @@ class HttpEventService:
         return Config(self.fastapi_app,
             host=WEBSERVER_HOST,
             port=WEBSERVER_PORT,
+            proxy_headers=True,
+            forwarded_allow_ips=WEBSERVER_FORWARDED_ALLOW_IPS,
             headers=self.headers
         )
 

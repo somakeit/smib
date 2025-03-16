@@ -1,5 +1,5 @@
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 from smib.utilities.package import get_package_root, get_package_version
 
 PACKAGE_NAME: str = "smib"
@@ -17,6 +17,8 @@ SLACK_APP_TOKEN: str = config("SLACK_APP_TOKEN")
 WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="127.0.0.1")
 WEBSERVER_PORT: int = config("WEBSERVER_PORT", cast=int, default=80)
 WEBSERVER_PATH_PREFIX: str = config("WEBSERVER_PATH_PREFIX", default="/")
+
+WEBSERVER_FORWARDED_ALLOW_IPS: list = config("WEBSERVER_FORWARDED_ALLOW_IPS", default="*", cast=Csv())
 
 MONGO_DB_HOST: str = config("MONGO_DB_HOST", default="localhost")
 MONGO_DB_PORT: int = config("MONGO_DB_PORT", cast=int, default=27017)
