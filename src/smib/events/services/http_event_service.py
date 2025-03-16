@@ -1,18 +1,14 @@
 import logging
-import sys
+import socket
 from logging import Logger
-from pathlib import Path
-from types import ModuleType
 
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
-    WEBSERVER_PATH_PREFIX
+    WEBSERVER_PATH_PREFIX, PACKAGE_NAME
 from smib.utilities.lazy_property import lazy_property
-from smib.utilities.package import get_actual_module_name
 
 
 class HttpEventService:
@@ -20,6 +16,7 @@ class HttpEventService:
     uvicorn_config: Config
     uvicorn_server: Server
     openapi_tags: list[dict]
+    headers: list[tuple[str, str]] | None
 
     def __init__(self, bolt_app: AsyncApp):
         self.bolt_app: AsyncApp = bolt_app
@@ -43,11 +40,20 @@ class HttpEventService:
         return Config(self.fastapi_app,
             host=WEBSERVER_HOST,
             port=WEBSERVER_PORT,
+            headers=self.headers
         )
 
     @lazy_property
     def uvicorn_server(self) -> Server:
         return Server(config=self.uvicorn_config)
+
+    @lazy_property
+    def headers(self) -> list[tuple[str, str]] | None:
+        return [
+            ("server", f"{socket.gethostname()}"),
+            ("x-app-name", PACKAGE_NAME),
+            ("x-app-version", PACKAGE_VERSION)
+        ]
 
     async def start(self):
         # On start, force re-generate swagger docs

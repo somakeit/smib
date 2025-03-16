@@ -2,9 +2,10 @@ name: smib
 services:
   smib:
     container_name: smib
-    restart: unless-stopped
-    ports:
-      - 80:80
+    hostname: smib
+    image: smib
     env_file: .env
     build: .
-    image: smib
+    ports:
+      - 80:80
+    restart: unless-stopped
