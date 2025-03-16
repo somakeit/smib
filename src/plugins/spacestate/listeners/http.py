@@ -3,8 +3,10 @@ from http import HTTPStatus
 from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
+from ..common import set_space_state_in_db, send_space_open_announcement, send_space_closed_announcement, \
+    get_space_state_from_db
 from ..models import SpaceState, SpaceStateEnum, SpaceStateOpen
-from ..common import set_space_state_in_db, send_space_open_announcement, send_space_closed_announcement, get_space_state_from_db
+
 
 def register(http: HttpEventInterface):
 
@@ -25,7 +27,7 @@ def register(http: HttpEventInterface):
 
 
     @http.get("/space/state", response_model=SpaceState)
-    async def get_space_state(say: AsyncSay):
+    async def get_space_state():
         """ Get the space state """
         space_state = await get_space_state_from_db()
         return space_state
