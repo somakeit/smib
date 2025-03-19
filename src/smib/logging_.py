@@ -1,6 +1,8 @@
 import logging
 import logging.config
 
+from smib.config import ROOT_LOG_LEVEL
+
 # Logger configuration in dictConfig format
 LOGGING_CONFIG = {
     "version": 1,
@@ -19,13 +21,9 @@ LOGGING_CONFIG = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "INFO",
+        "level": ROOT_LOG_LEVEL,
     },
     "loggers": {
-        "": {
-          "level": "DEBUG",
-          "handlers": ["console"]
-        },
         "smib": {
           "level": "DEBUG"
         },

@@ -25,3 +25,5 @@ MONGO_DB_PORT: int = config("MONGO_DB_PORT", cast=int, default=27017)
 MONGO_DB_NAME: str = config("MONGO_DB_NAME", default=PACKAGE_NAME)
 
 MONGO_DB_URL: str = f"mongodb://{MONGO_DB_HOST}:{MONGO_DB_PORT}"
+
+ROOT_LOG_LEVEL: str = config("ROOT_LOG_LEVEL", default="INFO")
