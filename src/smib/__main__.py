@@ -1,16 +1,11 @@
 import asyncio
-import inspect
 import logging
-import sys
 from asyncio import CancelledError
-from pathlib import Path
-from types import ModuleType
 
-from fastapi.routing import APIRoute
 from slack_bolt.app.async_app import AsyncApp
-from starlette.routing import BaseRoute
 
 from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME
+from smib.db.manager import DatabaseManager
 from smib.error_handler import error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
@@ -20,16 +15,14 @@ from smib.events.services.slack_event_service import SlackEventService
 from smib.plugins.integrations.http_plugin_integration import HttpPluginIntegration
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
-from smib.db.manager import DatabaseManager
 from smib.plugins.locator import PluginLocator
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] [%(asctime)s] %(name)s: %(message)s',
-    force=True
-)
+from smib.logging_ import initialise_logging
+
 
 async def main():
+    initialise_logging()
+
     bolt_app = AsyncApp(
         name=PACKAGE_DISPLAY_NAME,
         token=SLACK_BOT_TOKEN,
@@ -59,7 +52,6 @@ async def main():
 
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
-    plugin_lifecycle_manager.register_parameter('database', database_manager)
 
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
     http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface, plugin_locator)

@@ -9,7 +9,7 @@ from uvicorn import Config, Server
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
     WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
 from smib.utilities.lazy_property import lazy_property
-
+from smib.logging_ import LOGGING_CONFIG
 
 class HttpEventService:
     fastapi_app: FastAPI
@@ -42,7 +42,8 @@ class HttpEventService:
             port=WEBSERVER_PORT,
             proxy_headers=True,
             forwarded_allow_ips=WEBSERVER_FORWARDED_ALLOW_IPS,
-            headers=self.headers
+            headers=self.headers,
+            log_config=LOGGING_CONFIG
         )
 
     @lazy_property
