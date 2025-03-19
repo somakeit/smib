@@ -19,7 +19,7 @@ Code should be clear in its intent with minimal comments, ensure you use helpful
 A code update should almost always trigger an update or creation of new documentation; Ensure associated documentation is updated whenver possible with new code patches.
 
 ### Tests
-We haven't got tests yet, but if we do it will be pytest, feel free to provide pytetss for your patch.
+We haven't got tests yet, but if we do it will be pytest, feel free to provide pytests for your patch.
 
 ### Pull request approval
-Pull requests will be reviewed by repo admins (code club) at SoMakeIt and providing at least one repo admin approves a review, the code can be merged into the develop branch ahead of a release into master (and production environment) once fully tested.
+Pull requests will be reviewed by repo admins (code club) at SoMakeIt and providing at least one repo admin approves a review, the code will be merged into the master branch for use on bleeding edge devices. Periodically a release will be created of recent master branch PRs that have been running in production OK.
