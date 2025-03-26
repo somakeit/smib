@@ -1,2 +1,0 @@
-OPEN = True
-CLOSED = False
