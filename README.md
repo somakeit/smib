@@ -98,11 +98,11 @@ To set environment varaibles for the `smib-db` and `smib-db-ui` containers, you 
       - [Database Configuration](https://hub.docker.com/_/mongo)
 
 ## SMIBHID
-[SMIBHID](smibhid/README.md) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
+[SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
 
 This device runs on a Raspberry Pi Pico W and provides physical input and output to humans for the SMIB project; Buttons, LEDs, that sort of thing.
 
-Further documentation can be found [in the smibhid folder](smibhid/).
+Further documentation can be found [in the smibhid repo](https://github.com/somakeit/smibhid/).
 
 ## Legacy SMIB Commands
 Currently, the old [SMIB Commands](https://github.com/somakeit/smib-commands) do not work with the new SMIB.
