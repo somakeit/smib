@@ -8,6 +8,17 @@ SMIB is the So Make It Bot. The architecture is a set of docker containers confi
 - Stateful database storage for storing information like space state for coordination among multiple bots/endpoints.
 - SMIBHID (SMIB Human Interface Device) - A Pi Pico based interface device that provides buttons, displays and any other human interface to the slack bot via the REST API. See the [SMIBHID docs](smibhid/README.md) for more information.
 
+## Slack App Creation
+- If you don't already have a Slack Workspace, [create one](https://slack.com/get-started?entry_point=help_center#/createnew).
+- Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](manifest.yaml) and install it into your workspace.
+- Once created, go to your [installed apps list](https://api.slack.com/apps) and select the newly installed app.
+  - Find the `App-Level Tokens` section of the page and click `Generate Token and Scopes`.
+    - Create a token with the `connections:write` scope. This allows SMIB to establish a Websocket connection to Slack.
+    - Make sure to copy this token, as this will be used as your `SLACK_APP_TOKEN` environment variable. This should start with `xapp-`
+  - On the side navigation panel, click the `OAuth and Permissions` button.
+    - You should find a pre-generated `Bot User OAuth Token` under the `OAuth Tokens` section of this page.
+    - Make sure to copy this token, as this will be used as your `SLACK_BOT_TOKEN` environment variable. This should start with `xapp-`
+
 ## Docker deployment
 ### Supported Python Version
 Python 3.12.3
