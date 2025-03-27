@@ -6,7 +6,7 @@ SMIB is the So Make It Bot. The architecture is a set of docker containers confi
 - A socket mode slack bot server that requires no port forwarding or firewall config to get going on your network.
 - Web server with plugin architecture providing a REST API with swagger API documentation, so you can write your own plugins that can be called by REST API and executed by the slack bot - allows creating web pages or local devices (such as SMIBHID) that drive the slack bot without the need for leaving the local network.
 - Stateful database storage for storing information like space state for coordination among multiple bots/endpoints.
-- SMIBHID (SMIB Human Interface Device) - A Pi Pico based interface device that provides buttons, displays and any other human interface to the slack bot via the REST API. See the [SMIBHID docs](smibhid/README.md) for more information.
+- SMIBHID (SMIB Human Interface Device) - A Pi Pico based interface device that provides buttons, displays and any other human interface to the slack bot via the REST API. See the [SMIBHID repo](https://github.com/somakeit/smibhid/) for more information.
 
 ## Slack App Creation
 - If you don't already have a Slack Workspace, [create one](https://slack.com/get-started?entry_point=help_center#/createnew).
@@ -114,9 +114,3 @@ Previously, SMIB Commands were created as the only way to interact with SMIB.
 I think some form of backwards compatibility or similar functionality would be good. Work on a `ShellPluginLoader` was started but parked as it was not the main focus of the new amped up SMIB [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)
 
 An [issue](https://github.com/somakeit/smib/issues/83) has been created to track the progress and gather ideas.
-
-## Version
-When bumping the poetry version (in pyproject.toml), the `HID` class (part of SMIBHID) `version` attribute also needs manually updating.
-
-> [!IMPORTANT]
-> This version needs to match the release when it goes into the `master` branch. 
