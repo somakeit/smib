@@ -19,6 +19,7 @@ oauth_config:
     bot:
       - chat:write
       - chat:write.public
+      - chat:write.customize
       - commands
 settings:
   event_subscriptions:
