@@ -44,14 +44,14 @@ def _get_space_state_blocks() -> list[Block]:
 
     # Buttons
     open_button = ButtonElement(
-        text=PlainTextObject(text=f"{':large_green_circle: ' if space_open_button_highlight else ''}Space Open", emoji=True),
+        text=PlainTextObject(text=f"{':large_green_circle: ' if space_open_button_highlight else ''}Set Space Open", emoji=True),
         value="open",
         action_id="space_open",
         style="primary" if space_open_button_highlight else None
     )
 
     closed_button = ButtonElement(
-        text=PlainTextObject(text=f"{':red_circle: ' if space_closed_button_highlight else ''} Space Closed", emoji=True),
+        text=PlainTextObject(text=f"{':red_circle: ' if space_closed_button_highlight else ''}Set Space Closed", emoji=True),
         value="closed",
         action_id="space_closed",
         style="danger" if space_closed_button_highlight else None
