@@ -10,11 +10,16 @@ features:
   bot_user:
     display_name: SMIB
     always_online: true
+  slash_commands:
+    - command: /howfresh
+      description: How fresh is the space?
+      should_escape: false
 oauth_config:
   scopes:
     bot:
       - chat:write
       - chat:write.public
+      - commands
 settings:
   event_subscriptions:
     bot_events:
