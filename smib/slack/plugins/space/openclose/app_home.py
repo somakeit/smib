@@ -72,34 +72,60 @@ def _get_divider() -> DividerBlock:
 def _get_info_blocks() -> list[Block]:
     info_blocks = []
 
-    section = SectionBlock(
-        text="For more information see the GitHub repository",
-        accessory=ButtonElement(
-            text="GitHub Repo",
-            url="https://github.com/somakeit/smib",
-            action_id="app_home_url_github_repo"
-        )
-    )
-    info_blocks.append(section)
+    header = HeaderBlock(text="Useful Links")
+    info_blocks.append(header)
 
-    section = SectionBlock(
-        text="To raise a bug or enhancement idea, visit our issue tracker",
-        accessory=ButtonElement(
-            text="Issue Tracker",
-            url="https://github.com/somakeit/smib/issues",
-            action_id="app_home_url_issue_tracker"
-        )
+    smib_header = SectionBlock(
+        text=MarkdownTextObject(text="*For more information on SMIB, visit the following links:*"),
     )
-    info_blocks.append(section)
+    info_blocks.append(smib_header)
 
-    section = SectionBlock(
-        text="How to contribute patches to code or documentation?",
-        accessory=ButtonElement(
-            text="Contributing",
-            url="https://github.com/somakeit/smib/blob/master/CONTRIBUTING.md",
-            action_id="app_home_url_contributing"
-        )
+    smib_actions = ActionsBlock(
+        elements=[
+            ButtonElement(
+                text="GitHub Repo",
+                url="https://github.com/somakeit/smib",
+                action_id="app_home_url_smib_github_repo"
+            ),
+            ButtonElement(
+                text="Issue Tracker",
+                url="https://github.com/somakeit/smib/issues",
+                action_id="app_home_url_smib_issue_tracker"
+            ),
+            ButtonElement(
+                text="Contributing",
+                url="https://github.com/somakeit/smib/contribute",
+                action_id="app_home_url_smib_contributing"
+            )
+        ]
     )
-    info_blocks.append(section)
+    info_blocks.append(smib_actions)
+
+    smibhid_header = SectionBlock(
+        text=MarkdownTextObject(text="*For more information on SMIBHID, visit the following links:*"),
+    )
+    info_blocks.append(smibhid_header)
+
+    smibhid_actions = ActionsBlock(
+        elements=[
+            ButtonElement(
+                text="GitHub Repo",
+                url="https://github.com/somakeit/smibhid",
+                action_id="app_home_url_smibhid_github_repo"
+            ),
+            ButtonElement(
+                text="Issue Tracker",
+                url="https://github.com/somakeit/smibhid/issues",
+                action_id="app_home_url_smibhid_issue_tracker"
+            ),
+            ButtonElement(
+                text="Contributing",
+                url="https://github.com/somakeit/smibhid/contribute",
+                action_id="app_home_url_smibhid_contributing"
+            )
+        ]
+    )
+
+    info_blocks.append(smibhid_actions)
 
     return info_blocks
