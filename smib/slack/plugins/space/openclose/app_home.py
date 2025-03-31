@@ -34,7 +34,7 @@ def _get_space_state_blocks() -> list[Block]:
     # State Text
     state_text = MarkdownTextObject(
         text=":warning: Unable to determine if So Make It is open or closed! :warning:" if space.open is None else
-        f"So Make It is currently *{'open' if space.open else 'closed'}*!",
+        f"So Make It is currently *{'open :large_green_circle:' if space.open else 'closed :red_circle:'}*!",
     )
     state_text_block = SectionBlock(text=state_text)
     space_state_blocks.append(state_text_block)
@@ -76,7 +76,7 @@ def _get_info_blocks() -> list[Block]:
     info_blocks.append(header)
 
     smib_header = SectionBlock(
-        text=MarkdownTextObject(text="*For more information on SMIB, visit the following links:*"),
+        text=MarkdownTextObject(text="*For more information on S.M.I.B., visit the following links:*"),
     )
     info_blocks.append(smib_header)
 
@@ -102,7 +102,7 @@ def _get_info_blocks() -> list[Block]:
     info_blocks.append(smib_actions)
 
     smibhid_header = SectionBlock(
-        text=MarkdownTextObject(text="*For more information on SMIBHID, visit the following links:*"),
+        text=MarkdownTextObject(text="*For more information on S.M.I.B.H.I.D., visit the following links:*"),
     )
     info_blocks.append(smibhid_header)
 
