@@ -102,6 +102,8 @@ def build_sensor_blocks(data: dict) -> list[Block]:
 
     if not metadata["sensors"]:
         update_sensor_metadata()
+    elif not all(sensor in metadata['sensors'] for sensor in data):
+        update_sensor_metadata()
 
     for sensor_name, readings in data.items():
         units = metadata["sensors"].get(sensor_name, {})
@@ -162,12 +164,14 @@ def how_fresh(ack, client: WebClient, command, context: dict,):
 
     if context.get('message_ts', None) is None:
         return
+    data = {}
 
     try:
         # Fetch latest sensor readings
         resp = requests.get(f"{HOW_FRESH_SMIBHID_BASE_URL}/sensors/readings/latest")
         resp.raise_for_status()
         data = resp.json()
+        pprint(data)
     except Exception as e:
         client.chat_update(
             channel=command["channel_id"],
