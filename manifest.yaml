@@ -5,16 +5,22 @@ display_information:
 features:
   app_home:
     home_tab_enabled: true
-    messages_tab_enabled: false
+    messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
     display_name: SMIB
     always_online: true
+  slash_commands:
+    - command: /howfresh
+      description: How fresh is the space?
+      should_escape: false
 oauth_config:
   scopes:
     bot:
       - chat:write
       - chat:write.public
+      - chat:write.customize
+      - commands
 settings:
   event_subscriptions:
     bot_events:
