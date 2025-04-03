@@ -3,8 +3,9 @@ __description__ = "How fresh is the space?"
 __author__ = "Sam Cork"
 
 import json
+import logging
 from datetime import datetime, timedelta
-from pprint import pprint
+from pprint import pformat
 import requests
 from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -39,6 +40,7 @@ sensor_metadata_trigger = OrTrigger([
     IntervalTrigger(minutes=10)
 ])
 
+logger = logging.getLogger(__plugin_name__)
 
 # Helper Functions
 def fetch_sensors() -> list[str]:
@@ -48,7 +50,7 @@ def fetch_sensors() -> list[str]:
         if resp.ok:
             return resp.json()
     except Exception as e:
-        print(f"Error fetching sensors: {e}")
+        logger.warning(f"Error fetching sensors: {e}")
     return []
 
 
@@ -57,12 +59,11 @@ def fetch_sensor_details(sensor: str) -> dict:
     try:
         resp = requests.get(f"{HOW_FRESH_SMIBHID_BASE_URL}/sensors/modules/{sensor}")
         if resp.ok:
-            pprint(resp.__dict__)
             return resp.json()
         else:
-            print(f"Failed to fetch details for sensor {sensor}: {resp.status_code}")
+            logger.warning(f"Failed to fetch details for sensor {sensor}: {resp.status_code}")
     except Exception as e:
-        print(f"Error fetching sensor details for {sensor}: {e}")
+        logger.warning(f"Error fetching sensor details for {sensor}: {e}")
     return {}
 
 
@@ -82,8 +83,8 @@ def update_sensor_metadata():
                 if "name" in entry and "unit" in entry
             }
             metadata["sensors"][sensor] = formatted_data
-    pprint(metadata)
 
+    logger.info(pformat(metadata, sort_dicts=False))
 
 def build_sensor_blocks(data: dict) -> list[Block]:
     """
@@ -101,8 +102,10 @@ def build_sensor_blocks(data: dict) -> list[Block]:
     ]
 
     if not metadata["sensors"]:
+        logger.info("No sensor metadata found, updating...")
         update_sensor_metadata()
     elif not all(sensor in metadata['sensors'] for sensor in data):
+        logger.info("Missing sensor metadata, updating...")
         update_sensor_metadata()
 
     for sensor_name, readings in data.items():
@@ -171,7 +174,6 @@ def how_fresh(ack, client: WebClient, command, context: dict,):
         resp = requests.get(f"{HOW_FRESH_SMIBHID_BASE_URL}/sensors/readings/latest")
         resp.raise_for_status()
         data = resp.json()
-        pprint(data)
     except Exception as e:
         client.chat_update(
             channel=command["channel_id"],
