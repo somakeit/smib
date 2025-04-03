@@ -10,6 +10,9 @@ services:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
+    env_file:
+      - path: .env
+      - required: false
     command: "python -m smib.slack"
     restart: unless-stopped
 
@@ -24,6 +27,9 @@ services:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
+    env_file:
+      - path: .env
+        required: false
     command: "python -m smib.webserver"
     restart: unless-stopped
 
