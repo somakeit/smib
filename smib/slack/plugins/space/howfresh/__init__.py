@@ -13,6 +13,8 @@ from injectable import inject
 from slack_bolt import Ack
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import Block, ContextBlock, SectionBlock, MarkdownTextObject, DividerBlock
+from slack_sdk.web import SlackResponse
+
 from smib.slack.custom_app import CustomApp
 from .config import HOW_FRESH_SMIBHID_HOST, HOW_FRESH_SMIBHID_BASE_URL
 
@@ -26,6 +28,11 @@ HOW_FRESH_USERNAME = "How Fresh?"
 HOW_FRESH_PICTURE = (
     "https://imgix.bustle.com/uploads/image/2018/5/11/8f6aebb3-90cc-4e5f-b153-96a21a765342-will-smith-fresh-prince-um-maluco-no-pedaco-netflix-xlarge_trans_nvbqzqnjv4bqnjjoebt78qiaydkjdey4cngtjfjs74myhny6w3gnbo8.jpg?w=350&h=350&fit=crop&crop=faces&dpr=2"
 )
+
+HOW_FRESH_PROFILE = {
+    "username": HOW_FRESH_USERNAME,
+    "icon_url": HOW_FRESH_PICTURE,
+}
 
 sensor_metadata_trigger = OrTrigger([
     DateTrigger(run_date=datetime.now() + timedelta(seconds=10)),
@@ -50,12 +57,13 @@ def fetch_sensor_details(sensor: str) -> dict:
     try:
         resp = requests.get(f"{HOW_FRESH_SMIBHID_BASE_URL}/sensors/modules/{sensor}")
         if resp.ok:
+            pprint(resp.__dict__)
             return resp.json()
         else:
             print(f"Failed to fetch details for sensor {sensor}: {resp.status_code}")
     except Exception as e:
         print(f"Error fetching sensor details for {sensor}: {e}")
-    return []
+    return {}
 
 
 def update_sensor_metadata():
@@ -119,28 +127,40 @@ def how_fresh_metadata():
     """Scheduled task to update sensor metadata."""
     update_sensor_metadata()
 
-def how_fresh_loading(ack: Ack, client: WebClient, command):
+def how_fresh_loading(ack: Ack, client: WebClient, command, context: dict):
+    """ Acknowledge the command and send a loading message. """
     ack()
     if not HOW_FRESH_SMIBHID_HOST:
         client.chat_postEphemeral(
             channel=command["channel_id"],
             user=command["user_id"],
             text="Unable to comply...\nHow Fresh SMIBHID host not configured...",
+            **HOW_FRESH_PROFILE,
         )
+        context['message_ts'] = None
         return
 
+    resp: SlackResponse = client.chat_postMessage(
+        channel=command["channel_id"],
+        text="Fetching sensor readings...",
+        **HOW_FRESH_PROFILE,
+    )
+    if not resp.status_code == 200:
+        context['message_ts'] = None
+        return
 
-def how_fresh(ack, client: WebClient, command):
+    context["message_ts"] = resp.data["ts"]
+
+
+def how_fresh(ack, client: WebClient, command, context: dict,):
     """
     Handle the `/howfresh` Slack command to display sensor readings.
-
-    Args:
-        ack: Acknowledge the command.
-        client (WebClient): Slack WebClient for interactions.
-        command (dict): Slack command data.
     """
 
     if not HOW_FRESH_SMIBHID_HOST:
+        return
+
+    if context.get('message_ts', None) is None:
         return
 
     try:
@@ -149,21 +169,22 @@ def how_fresh(ack, client: WebClient, command):
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
-        client.chat_postEphemeral(
+        client.chat_update(
             channel=command["channel_id"],
-            user=command["user_id"],
+            ts=context['message_ts'],
             text=f"Unable to comply...\n{e}",
+            **HOW_FRESH_PROFILE,
         )
         return
 
     # Build and send the Slack message
     message_blocks = build_sensor_blocks(data)
-    client.chat_postMessage(
+    client.chat_update(
         channel=command["channel_id"],
-        username=HOW_FRESH_USERNAME,
-        icon_url=HOW_FRESH_PICTURE,
         text="Sensor Readings...",
+        ts=context['message_ts'],
         blocks=[block.to_dict() for block in message_blocks],
+        **HOW_FRESH_PROFILE,
     )
 
-app.command("/howfresh")(ack=lambda ack: ack(), lazy=[how_fresh])
+app.command("/howfresh")(ack=how_fresh_loading, lazy=[how_fresh])
