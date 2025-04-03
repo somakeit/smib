@@ -10,6 +10,7 @@ from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from injectable import inject
+from slack_bolt import Ack
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import Block, ContextBlock, SectionBlock, MarkdownTextObject, DividerBlock
 from smib.slack.custom_app import CustomApp
@@ -118,9 +119,17 @@ def how_fresh_metadata():
     """Scheduled task to update sensor metadata."""
     update_sensor_metadata()
 
+def how_fresh_loading(ack: Ack, client: WebClient, command):
+    ack()
+    if not HOW_FRESH_SMIBHID_HOST:
+        client.chat_postEphemeral(
+            channel=command["channel_id"],
+            user=command["user_id"],
+            text="Unable to comply...\nHow Fresh SMIBHID host not configured...",
+        )
+        return
 
-# Slack Command Handler
-@app.command("/howfresh")
+
 def how_fresh(ack, client: WebClient, command):
     """
     Handle the `/howfresh` Slack command to display sensor readings.
@@ -130,14 +139,8 @@ def how_fresh(ack, client: WebClient, command):
         client (WebClient): Slack WebClient for interactions.
         command (dict): Slack command data.
     """
-    ack()
 
     if not HOW_FRESH_SMIBHID_HOST:
-        client.chat_postEphemeral(
-            channel=command["channel_id"],
-            user=command["user_id"],
-            text="Unable to comply...\nHow Fresh SMIBHID host not configured...",
-        )
         return
 
     try:
@@ -162,3 +165,5 @@ def how_fresh(ack, client: WebClient, command):
         text="Sensor Readings...",
         blocks=[block.to_dict() for block in message_blocks],
     )
+
+app.command("/howfresh")(ack=lambda ack: ack(), lazy=[how_fresh])
