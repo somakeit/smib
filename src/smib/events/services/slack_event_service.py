@@ -1,17 +1,11 @@
-import inspect
-import json
-import sys
-from logging import Logger
 import logging
-from pathlib import Path
-from types import ModuleType
+from logging import Logger
 
 from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_APP_TOKEN
 from smib.utilities.lazy_property import lazy_property
-from smib.utilities.package import get_actual_module_name
 
 
 class SlackEventService:

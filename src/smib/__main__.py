@@ -11,6 +11,7 @@ from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService
+from smib.events.services.scheduled_event_service import ScheduledEventService
 from smib.events.services.slack_event_service import SlackEventService
 from smib.plugins.integrations.http_plugin_integration import HttpPluginIntegration
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
@@ -37,13 +38,16 @@ async def main():
     # Most of the slack stuff is handled by the SlackBolt Framework
     slack_event_service = SlackEventService(bolt_app)
 
-    http_event_service = HttpEventService(bolt_app)
+    http_event_service = HttpEventService()
     http_event_handler = HttpEventHandler(bolt_app)
     http_event_interface = HttpEventInterface(bolt_app, http_event_handler, http_event_service)
+
+    scheduled_event_service = ScheduledEventService()
 
     event_service_manager = EventServiceManager()
     event_service_manager.register(slack_event_service)
     event_service_manager.register(http_event_service)
+    event_service_manager.register(scheduled_event_service)
 
     database_manager = DatabaseManager()
 

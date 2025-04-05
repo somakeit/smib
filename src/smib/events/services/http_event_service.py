@@ -18,8 +18,7 @@ class HttpEventService:
     openapi_tags: list[dict]
     headers: list[tuple[str, str]] | None
 
-    def __init__(self, bolt_app: AsyncApp):
-        self.bolt_app: AsyncApp = bolt_app
+    def __init__(self):
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
     @lazy_property
