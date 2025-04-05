@@ -8,7 +8,9 @@ from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME
 from smib.db.manager import DatabaseManager
 from smib.error_handler import error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.handlers.scheduled_event_handler import ScheduledEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
+from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
 from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService
 from smib.events.services.scheduled_event_service import ScheduledEventService
@@ -43,6 +45,8 @@ async def main():
     http_event_interface = HttpEventInterface(bolt_app, http_event_handler, http_event_service)
 
     scheduled_event_service = ScheduledEventService()
+    schedule_event_handler = ScheduledEventHandler(bolt_app)
+    schedule_event_interface = ScheduledEventInterface(bolt_app, schedule_event_handler, scheduled_event_service)
 
     event_service_manager = EventServiceManager()
     event_service_manager.register(slack_event_service)
@@ -56,6 +60,7 @@ async def main():
 
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
+    plugin_lifecycle_manager.register_parameter('schedule', schedule_event_interface)
 
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
     http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface, plugin_locator)
