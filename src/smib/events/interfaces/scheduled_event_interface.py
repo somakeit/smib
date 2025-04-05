@@ -27,11 +27,11 @@ class ScheduledEventInterface:
     ):
         def decorator(func: callable):
             @wraps(func)
-            def wrapper():
+            async def wrapper():
                 job: Job = self.service.scheduler.get_job(id)
-                self.handler.handle(job)
+                await self.handler.handle(job)
 
-            self.service.scheduler.add_job(func, trigger, id=id, name=name, misfire_grace_time=misfire_grace_time,coalesce=coalesce, max_instances=max_instances, next_run_time=next_run_time, **trigger_args)
+            self.service.scheduler.add_job(wrapper, trigger, id=id, name=name, misfire_grace_time=misfire_grace_time,coalesce=coalesce, max_instances=max_instances, next_run_time=next_run_time, **trigger_args)
             async def matcher(event: dict):
                 return event['job']['id'] == id
 
