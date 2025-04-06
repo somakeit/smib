@@ -17,21 +17,28 @@ def get_all_subclasses(cls: type[T]) -> set[type[T]]:
         subclasses.update(get_all_subclasses(subclass))
     return subclasses
 
+def filter_not_beanie(model: type[Document]) -> bool:
+    return not model.__module__.startswith('beanie')
+
 
 class DatabaseManager:
     def __init__(self, db_name: str = MONGO_DB_NAME) -> None:
         self.db_name: str = db_name
         self.client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_DB_URL)
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
+        self._document_filters: List[callable] = []
 
-    @staticmethod
+        self.register_document_filter(filter_not_beanie)
+
     @cache
-    def get_all_document_models() -> list[type[Document]]:
+    def get_all_document_models(self) -> list[type[Document]]:
         all_documents = get_all_subclasses(Document)
-        filtered_documents: list[type[Document]] = [
-            doc for doc in all_documents if not doc.__module__.startswith('beanie')
-        ]
-        return filtered_documents
+        for filter_func in self._document_filters:
+            all_documents = filter(filter_func, all_documents)
+        return list(all_documents)
+    
+    def register_document_filter(self, filter: callable) -> None:
+        self._document_filters.append(filter)
 
     async def initialise(self) -> None:
         all_documents = self.get_all_document_models()

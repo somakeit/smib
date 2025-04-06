@@ -26,3 +26,5 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface):
     async def log_ui_from_smib_event(ui_logs: list[UILogCreate], device_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
         db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
+
+    1/0

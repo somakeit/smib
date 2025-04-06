@@ -15,13 +15,12 @@ from smib.events.services import EventServiceManager
 from smib.events.services.http_event_service import HttpEventService
 from smib.events.services.scheduled_event_service import ScheduledEventService
 from smib.events.services.slack_event_service import SlackEventService
+from smib.logging_ import initialise_logging
 from smib.plugins.integrations.http_plugin_integration import HttpPluginIntegration
 from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPluginIntegration
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.locator import PluginLocator
-
-from smib.logging_ import initialise_logging
 from smib.utilities import is_running_in_docker
 
 
