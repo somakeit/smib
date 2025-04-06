@@ -63,10 +63,10 @@ async def _get_space_state_blocks() -> list[Block]:
 
     match space.open:
         case True:
-            state_text.text = "So Make It is currently *open!*"
+            state_text.text = ":large_green_circle: So Make It is currently *open!* :large_green_circle:"
             state_set_blocks.append(_get_space_close_actions_block_elements())
         case False:
-            state_text.text = "So Make It is currently *closed!*"
+            state_text.text = ":red_circle: So Make It is currently *closed!* :red_circle:"
             state_set_blocks.append(_get_space_open_actions_block_elements())
         case _:
             state_text.text = ":warning: Unable to determine if So Make It is open or closed! :warning:"
