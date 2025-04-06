@@ -43,14 +43,17 @@ async def main():
     # Most of the slack stuff is handled by the SlackBolt Framework
     slack_event_service = SlackEventService(bolt_app)
 
+    # HTTP Service
     http_event_service = HttpEventService()
     http_event_handler = HttpEventHandler(bolt_app)
     http_event_interface = HttpEventInterface(bolt_app, http_event_handler, http_event_service)
 
+    # Scheduled Job Service
     scheduled_event_service = ScheduledEventService()
     scheduled_event_handler = ScheduledEventHandler(bolt_app)
     scheduled_event_interface = ScheduledEventInterface(bolt_app, scheduled_event_handler, scheduled_event_service)
 
+    # Register Services
     event_service_manager = EventServiceManager()
     event_service_manager.register(slack_event_service)
     event_service_manager.register(http_event_service)
@@ -58,6 +61,7 @@ async def main():
 
     database_manager = DatabaseManager()
 
+    # Plugin Stuff
     plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
     plugin_locator: PluginLocator = PluginLocator(plugin_lifecycle_manager)
 
@@ -65,11 +69,13 @@ async def main():
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
     plugin_lifecycle_manager.register_parameter('schedule', scheduled_event_interface)
 
+    # Plugin integrations
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
     http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface, plugin_locator)
     scheduled_plugin_integration: ScheduledPluginIntegration = ScheduledPluginIntegration(scheduled_event_interface)
     database_plugin_integration: DatabasePluginIntegration = DatabasePluginIntegration(plugin_lifecycle_manager)
 
+    # Plugin lifecycle callbacks
     plugin_lifecycle_manager.register_plugin_unregister_callback(slack_plugin_integration.disconnect_plugin)
     plugin_lifecycle_manager.register_plugin_unregister_callback(http_plugin_integration.disconnect_plugin)
     plugin_lifecycle_manager.register_plugin_unregister_callback(scheduled_plugin_integration.disconnect_plugin)
@@ -82,6 +88,7 @@ async def main():
 
     database_manager.register_document_filter(database_plugin_integration.filter_valid_plugins)
 
+    # Initialise database
     await database_manager.initialise()
 
     try:

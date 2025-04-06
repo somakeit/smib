@@ -5,16 +5,13 @@ __author__ = "Sam Cork"
 from http import HTTPStatus
 from typing import Annotated
 
-import aiohttp
-from apscheduler.job import Job
 from fastapi import Header
 from slack_bolt.app.async_app import AsyncApp
-from slack_bolt.context.ack.async_ack import AsyncAck
-from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
 from .models import UILog, UILogCreate
+
 
 def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack: AsyncApp):
 
@@ -27,10 +24,3 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack:
     async def log_ui_from_smib_event(ui_logs: list[UILogCreate], device_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
         db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
-
-    @slack.middleware
-    async def smibhid_middleware(context, next):
-        context['smibhid_hostname'] = context.request.headers.get('x-smibhid-hostname')
-        return await next()
-
-    1/0
