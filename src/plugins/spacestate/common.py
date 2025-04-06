@@ -1,7 +1,5 @@
-from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.context.say.async_say import AsyncSay
 
-from smib.events.interfaces.http_event_interface import HttpEventInterface
 from .config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
 from .models import SpaceState, SpaceStateOpen, SpaceStateEnum
 
