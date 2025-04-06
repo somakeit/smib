@@ -50,3 +50,17 @@ class TestLazyProperty:
         assert self.obj.lazy_value == 42
         self.obj.lazy_value = 100
         assert self.obj.lazy_value == 100
+
+    def test_descriptor_on_class(self):
+        """Line 13: Accessing the lazy_property on the class should return the descriptor."""
+        descriptor = self.TestClass.lazy_value
+        assert isinstance(descriptor, lazy_property)
+
+    def test_lazy_property_delete(self):
+        """Lines 22-23: Test the __delete__ method functionality."""
+        # Access the lazy property to set it
+        assert self.obj.lazy_value == 42
+
+        # Delete the property and confirm it's removed
+        del self.obj.lazy_value
+        assert 'lazy_value' not in self.obj.__dict__

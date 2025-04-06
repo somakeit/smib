@@ -58,6 +58,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.coveragerc
+pytestdebug.log
+
 
 # Translations
 *.mo
