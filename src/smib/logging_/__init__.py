@@ -10,10 +10,12 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,  # Keeps existing loggers intact unless redefined here
     "formatters": {
         "default": {
-            "format": "[%(asctime)s][%(levelname)s][%(name)s]: %(message)s"
+            "class": "smib.logging_.utc_formatter.UTCFormatter",
+            "format": "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
         },
+        # Docker format has no timestamp, as docker records this separately anyway
         "docker": {
-            "format": "[%(levelname)s][%(name)s]: %(message)s"
+            "format": "[%(levelname)s] [%(name)s]: %(message)s"
         }
     },
     "handlers": {
@@ -29,18 +31,18 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         "smib": {
-          "level": "DEBUG"
+            "level": "DEBUG"
         },
         "slack_bolt": {
-          "level": "WARNING",
-          "propagate": False
+            "level": "WARNING",
+            "propagate": False
         },
         "slack_sdk": {
-          "level": "WARNING",
-          "propagate": False
+            "level": "WARNING",
+            "propagate": False
         },
         "asyncio": {
-          "level": "WARNING"
+            "level": "WARNING"
         }
     },
 }
