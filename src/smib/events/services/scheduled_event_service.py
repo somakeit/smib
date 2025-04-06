@@ -1,14 +1,9 @@
-import asyncio
 import logging
 from logging import Logger
 
-from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
-from slack_bolt.app.async_app import AsyncApp
-
-from smib.config import SLACK_APP_TOKEN
-from smib.utilities.lazy_property import lazy_property
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from smib.utilities.lazy_property import lazy_property
 
 
 class ScheduledEventService:
@@ -19,10 +14,12 @@ class ScheduledEventService:
 
     @lazy_property
     def scheduler(self) -> AsyncIOScheduler:
-        return AsyncIOScheduler()
+        scheduler = AsyncIOScheduler()
+        return scheduler
 
     async def start(self):
         self.scheduler.start()
 
     async def stop(self):
+        self.scheduler.remove_all_jobs()
         self.scheduler.shutdown()

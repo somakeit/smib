@@ -15,8 +15,7 @@ from smib.events.responses.http_bolt_response import HttpBoltResponse
 default_error_handler_logger = logging.getLogger(AsyncDefaultListenerErrorHandler.__name__)
 default_error_handler = AsyncDefaultListenerErrorHandler(default_error_handler_logger)
 
-async def error_handler(error: Exception | HTTPException, request: AsyncBoltRequest, body: dict, response: BoltResponse, logger: Logger):
-
+async def slack_bolt_error_handler(error: Exception | HTTPException, request: AsyncBoltRequest, body: dict, response: BoltResponse, logger: Logger):
     match request.mode:
         case BoltRequestMode.SOCKET_MODE if isinstance(error, BoltUnhandledRequestError):
             return await default_error_handler.handle(error, request, response)

@@ -1,3 +1,5 @@
+import logging
+from asyncio import CancelledError
 from functools import wraps
 
 from apscheduler.job import Job
@@ -14,6 +16,8 @@ class ScheduledEventInterface:
         self.bolt_app: AsyncApp = bolt_app
         self.handler: ScheduledEventHandler = handler
         self.service: ScheduledEventService = service
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def job(
             self,
@@ -36,7 +40,10 @@ class ScheduledEventInterface:
             @wraps(func)
             async def wrapper():
                 job: Job = self.service.scheduler.get_job(id)
-                await self.handler.handle(job)
+                try:
+                    await self.handler.handle(job)
+                except (KeyboardInterrupt, CancelledError, SystemExit) as e:
+                    self.logger.info(f"Scheduled job \"{job}\" received termination: {repr(e)}")
 
             self.service.scheduler.add_job(wrapper, trigger, id=id, name=name, misfire_grace_time=misfire_grace_time,coalesce=coalesce, max_instances=max_instances, next_run_time=next_run_time, **trigger_args)
             async def matcher(event: dict):

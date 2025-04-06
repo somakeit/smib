@@ -6,7 +6,7 @@ from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME
 from smib.db.manager import DatabaseManager
-from smib.error_handler import error_handler
+from smib.error_handler import slack_bolt_error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
 from smib.events.handlers.scheduled_event_handler import ScheduledEventHandler
 from smib.events.interfaces.http_event_interface import HttpEventInterface
@@ -21,6 +21,7 @@ from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.locator import PluginLocator
 
 from smib.logging_ import initialise_logging
+from smib.utilities import is_running_in_docker
 
 
 async def main():
@@ -33,9 +34,10 @@ async def main():
         request_verification_enabled=False, #TODO Add proper slack request signature
         process_before_response=True
     )
-    bolt_app.error(error_handler)
+    bolt_app.error(slack_bolt_error_handler)
 
     logger = logging.getLogger(__name__)
+    logger.info(f"Running in docker: {is_running_in_docker()}")
 
     # Most of the slack stuff is handled by the SlackBolt Framework
     slack_event_service = SlackEventService(bolt_app)

@@ -5,6 +5,7 @@ __author__ = "Sam Cork"
 from http import HTTPStatus
 from typing import Annotated
 
+import aiohttp
 from apscheduler.job import Job
 from fastapi import Header
 from slack_bolt.context.ack.async_ack import AsyncAck
@@ -26,10 +27,10 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface):
         db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
 
-    @schedule.job('interval', seconds=5)
+    @schedule.job('interval', seconds=1)
     async def test_job(say: AsyncSay, job: Job, ack: AsyncAck):
         await ack()
-        print(f"Job {job.id} is running")
-        print(f"Job {job.id} is scheduled to run every {job.trigger} at {job.next_run_time}")
-        print(job._scheduler)
-        print(job.name)
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://localhost:80/space/state') as response:
+                if response.status == HTTPStatus.OK:
+                    print(f"Space state is {await response.json()}")
