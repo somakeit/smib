@@ -14,7 +14,6 @@ from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
 from .models import UILog, UILogCreate
 
-
 def register(http: HttpEventInterface, schedule: ScheduledEventInterface):
 
     @http.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
@@ -27,7 +26,10 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface):
         db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
 
-    @schedule.job('interval', "test_job", name="Test Job", seconds=1)
+    @schedule.job('interval', seconds=5)
     async def test_job(say: AsyncSay, job: Job, ack: AsyncAck):
         await ack()
         print(f"Job {job.id} is running")
+        print(f"Job {job.id} is scheduled to run every {job.trigger} at {job.next_run_time}")
+        print(job._scheduler)
+        print(job.name)

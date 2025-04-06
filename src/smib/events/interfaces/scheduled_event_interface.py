@@ -6,6 +6,7 @@ from slack_bolt.app.async_app import AsyncApp
 
 from smib.events.handlers.scheduled_event_handler import ScheduledEventHandler
 from smib.events.services.scheduled_event_service import ScheduledEventService
+import unicodedata
 
 
 class ScheduledEventInterface:
@@ -17,8 +18,8 @@ class ScheduledEventInterface:
     def job(
             self,
             trigger,
-            id,
-            name,
+            id=None,
+            name=None,
             misfire_grace_time=undefined,
             coalesce=undefined,
             max_instances=undefined,
@@ -26,6 +27,12 @@ class ScheduledEventInterface:
             **trigger_args,
     ):
         def decorator(func: callable):
+            nonlocal id, name
+
+            id = id or func.__name__
+            normalised_name = unicodedata.normalize('NFKD', func.__name__.replace('_', ' ').title()).encode('ascii', 'ignore').decode('utf-8')
+            name = name or func.__doc__ or normalised_name
+
             @wraps(func)
             async def wrapper():
                 job: Job = self.service.scheduler.get_job(id)
