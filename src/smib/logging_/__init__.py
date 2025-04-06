@@ -2,7 +2,7 @@ import logging
 import logging.config
 
 from smib.config import ROOT_LOG_LEVEL
-from smib.utilities import is_running_in_docker
+from smib.utilities.environment import is_running_in_docker
 
 # Logger configuration in dictConfig format
 LOGGING_CONFIG = {

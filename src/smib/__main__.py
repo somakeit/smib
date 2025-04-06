@@ -22,7 +22,7 @@ from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPlug
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.locator import PluginLocator
-from smib.utilities import is_running_in_docker
+from smib.utilities.environment import is_running_in_docker
 
 
 async def main():
