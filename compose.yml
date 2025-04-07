@@ -12,7 +12,7 @@ services:
       - MONGO_DB_HOST=smib-db
     env_file:
       - path: .env
-      - required: false
+        required: false
     command: "python -m smib.slack"
     restart: unless-stopped
 
