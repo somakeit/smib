@@ -10,6 +10,7 @@ from smib.utilities.package import (
 import sys
 import importlib.metadata
 
+
 ### Test: get_package_root ###
 def test_get_package_root_found():
     """Test get_package_root with a valid package."""
@@ -62,7 +63,7 @@ def test_get_actual_module_name_init_file():
     mock_module = MagicMock()
     mock_module.__file__ = "/usr/lib/python3.12/os/__init__.py"
     module_name = get_actual_module_name(mock_module)
-    assert module_name == "os"
+    assert module_name == "os", f"Expected 'os', but got {module_name} for __init__.py"
 
 
 def test_get_actual_module_name_regular_file():
@@ -70,7 +71,23 @@ def test_get_actual_module_name_regular_file():
     mock_module = MagicMock()
     mock_module.__file__ = "/usr/lib/python3.12/os/path.py"
     module_name = get_actual_module_name(mock_module)
-    assert module_name == "path"
+    assert module_name == "path", f"Expected 'path', but got {module_name} for a regular file"
+
+
+def test_get_actual_module_name_missing_file_attribute():
+    """Test get_actual_module_name raises ValueError when module has no __file__."""
+    mock_module = MagicMock()
+    mock_module.__file__ = None
+    with pytest.raises(ValueError, match="Module .* has no __file__ attribute"):
+        get_actual_module_name(mock_module)
+
+
+def test_get_actual_module_name_complex_path():
+    """Test get_actual_module_name for a module with a more complex file path."""
+    mock_module = MagicMock()
+    mock_module.__file__ = "/usr/lib/python3.12/nested/package/module.py"
+    module_name = get_actual_module_name(mock_module)
+    assert module_name == "module", f"Expected 'module', but got {module_name} for complex file path"
 
 
 ### Test: get_module_from_name ###
