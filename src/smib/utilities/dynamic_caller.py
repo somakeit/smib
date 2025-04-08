@@ -1,7 +1,8 @@
-import inspect
+from collections.abc import Callable
+from typing import Any
 
 
-def dynamic_caller(func: callable, **kwargs):
+def dynamic_caller(func: Callable[..., Any], **kwargs: Any) -> Any:
     """
     Dynamically calls a function using arguments from kwargs that match the function's signature.
 
@@ -9,6 +10,8 @@ def dynamic_caller(func: callable, **kwargs):
     :param kwargs: Dictionary containing arguments to pass to the function
     :return: The return value of the function
     """
+    import inspect
+
     # Get the signature of the function
     sig = inspect.signature(func)
 

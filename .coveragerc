@@ -1,3 +1,0 @@
-[run]
-omit =
-    src/smib/__main__.py
