@@ -1,16 +1,19 @@
-from pydantic import BaseModel
-from typing import Any
+from pydantic import BaseModel, RootModel
 
+
+class SensorData(RootModel):
+    root: dict[str, float | int]
+
+class ModuleData(RootModel):
+    root: dict[str, SensorData]
 
 class SensorLog(BaseModel):
-    # Represents one log entry with dynamic sensor names
     timestamp: int
     human_timestamp: str
-    data: dict[str, dict[str, float | int]]  # Dynamic mapping of sensor name to SensorData
+    data: ModuleData
 
 
 class SensorLogs(BaseModel):
-    # A collection of log entries
     logs: list[SensorLog]
 
     def __iter__(self):

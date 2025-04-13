@@ -97,7 +97,7 @@ def save_api_sensor_logs_to_db(api_logs: ApiSensorLogs, device_ip: str, device_h
         api_log: ApiSensorLog
         db_log = DbSensorLog()
         db_log.timestamp = datetime.fromtimestamp(api_log.timestamp, tz=UTC)
-        db_log.data = api_log.data
+        db_log.data = api_log.data.model_dump()
         db_log.device_hostname = device_hostname
         db_log.device_ip = device_ip
         db_log.save()
