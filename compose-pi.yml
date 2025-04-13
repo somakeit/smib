@@ -2,34 +2,41 @@ services:
   smib-slack:
     container_name: smib-slack
     build:
-      context: https://github.com/somakeit/smib.git#${SMIB_BRANCH:-master}
+      context: .
     image: smib-slack
-    env_file:
-      - path: .env
-        required: false
     depends_on:
       - smib-db
     environment:
       - WEBSERVER_HOST=smib-webserver
       - WEBSOCKET_ALLOWED_HOSTS=smib-webserver.smib-bridge-network
       - MONGO_DB_HOST=smib-db
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - /etc/smib/:/app/config/
+      - /var/log/smib/slack/:/app/logs/
     command: "python -m smib.slack"
     restart: unless-stopped
 
   smib-webserver:
     container_name: smib-webserver
     build:
-      context: https://github.com/somakeit/smib.git#${SMIB_BRANCH:-master}
+      context: .
     image: smib-webserver
-    env_file:
-      - path: .env
-        required: false
     ports:
-      - "80:80"
+      - 80:80
     depends_on:
       - smib-slack
     environment:
       - WEBSOCKET_HOST=smib-slack
+    env_file:
+      - path: .env
+        required: false
+
+    volumes:
+      - /etc/smib/:/app/config/
+      - /var/log/smib/webserver/:/app/logs/
     command: "python -m smib.webserver"
     restart: unless-stopped
 
@@ -42,6 +49,9 @@ services:
     env_file:
       - path: .env
         required: false
+    volumes:
+      - /var/mongodb/db:/data/db
+      - /var/mongodb/configdb:/data/configdb
 
   smib-db-ui:
     image: mongo-express

@@ -15,7 +15,12 @@ WORKDIR /app
 COPY smib ./smib
 COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install && rm -rf $POETRY_CACHE_DIR
+# Install all dependencies without the source code first (caches dependencies)
+RUN poetry install --no-root --no-directory && rm -rf $POETRY_CACHE_DIR
+
+# Re-run poetry install to install the `smib` module itself in editable mode
+RUN poetry install --only-root
+
 
 # The runtime image, used to just run the code provided its virtual environment
 FROM python:3.12.3-slim-bullseye AS runtime
