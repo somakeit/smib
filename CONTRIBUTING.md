@@ -1,12 +1,12 @@
 # How to contribute
 ## Read the documentation
-Ensure you have read any appropriate documentation for using or developing S.M.I.B. in the [readme](https://github.com/somakeit/S.M.I.B./blob/develop/README.md)
+Ensure you have read any appropriate documentation for using or developing S.M.I.B. in the [readme](https://github.com/somakeit/smib)
 
 ## Bugs
-Open our [issue tracker](https://github.com/somakeit/S.M.I.B./issues) and create a new issue giving us much detail about the bug as possible, how to recreate it, what outcome you expected vs what outcome you got. You can label this issue with the "bug" label.
+Open our [issue tracker](https://github.com/somakeit/smib/issues) and create a new issue giving us much detail about the bug as possible, how to recreate it, what outcome you expected vs what outcome you got. You can label this issue with the "bug" label.
 
 ## Enhancement ideas
-If you have a new idea, create an [issue](https://github.com/somakeit/S.M.I.B./issues) with details of what you would like to see and why it would be helpful and tag the issue with the "enhancement" label.
+If you have a new idea, create an [issue](https://github.com/somakeit/smib/issues) with details of what you would like to see and why it would be helpful and tag the issue with the "enhancement" label.
 
 ## Writing patches
 If you would like to contribute some code back to the project you are welcome to make a pull request. Ensure an issue exists for your proposed patch and drop a comment in there to let us know you are working on it. Create a fork of the repository, create a new branch for your patch and use that branch to raise a pull request. See the [github documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) for more information.
@@ -16,7 +16,7 @@ In general we follow [pep8 guidelines](https://peps.python.org/pep-0008/).
 
 Code should be clear in its intent with minimal comments, ensure you use helpful variable and function names and keep functions and methods simple in their scope. More well named simple functions are better than monolithic complex functions with short and cryptic names.
 
-A code update should almost always trigger an update or creation of new documentation; Ensure associated documentation is updated whenver possible with new code patches.
+A code update should almost always trigger an update or creation of new documentation; Ensure associated documentation is updated whenever possible with new code patches.
 
 ### Tests
 We haven't got tests yet, but if we do it will be pytest, feel free to provide pytests for your patch.
