@@ -47,5 +47,5 @@ LOGGING_CONFIG = {
     },
 }
 
-def initialise_logging():
+def initialise_logging() -> None:
     logging.config.dictConfig(LOGGING_CONFIG)

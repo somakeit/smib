@@ -1,14 +1,14 @@
 import logging
 from functools import cache
 from logging import Logger
-from typing import Type, List, Optional, TypeVar
+from typing import TypeVar, Any, Callable, cast
 
 from beanie import init_beanie, Document
 from motor.motor_asyncio import AsyncIOMotorClient
 from smib.config import MONGO_DB_URL, MONGO_DB_NAME
 from smib.utilities.package import get_actual_module_name, get_module_from_name
 
-T = TypeVar('T', bound=any)
+T = TypeVar('T', bound=Any)
 
 
 def get_all_subclasses(cls: type[T]) -> set[type[T]]:
@@ -24,20 +24,21 @@ def filter_not_beanie(model: type[Document]) -> bool:
 class DatabaseManager:
     def __init__(self, db_name: str = MONGO_DB_NAME) -> None:
         self.db_name: str = db_name
-        self.client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_DB_URL)
+        self.client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(MONGO_DB_URL)
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
-        self._document_filters: List[callable] = []
+        self._document_filters: list[Callable[[type[Document]], bool]] = []
 
         self.register_document_filter(filter_not_beanie)
 
     @cache
     def get_all_document_models(self) -> list[type[Document]]:
         all_documents = get_all_subclasses(Document)
+        filtered_documents = all_documents
         for filter_func in self._document_filters:
-            all_documents = filter(filter_func, all_documents)
-        return list(all_documents)
-    
-    def register_document_filter(self, filter: callable) -> None:
+            filtered_documents = set(filter(filter_func, filtered_documents))
+        return list(filtered_documents)
+
+    def register_document_filter(self, filter: Callable[[type[Document]], bool]) -> None:
         self._document_filters.append(filter)
 
     async def initialise(self) -> None:
@@ -47,12 +48,12 @@ class DatabaseManager:
             self.logger.info(f"Documents: {', '.join(doc.__name__ for doc in all_documents)}")
         await init_beanie(database=self.client[self.db_name], document_models=all_documents)
 
-    def find_model_by_name(self, model_name: str, plugin_name: Optional[str] = None) -> type[Document] | None:
-        plugin_filter = (
-            lambda module: get_actual_module_name(get_module_from_name(module.split('.')[0]))
-            if plugin_name
-            else None
-        )
+    def find_model_by_name(self, model_name: str, plugin_name: str | None = None) -> type[Document] | None:
+        # Define a properly typed filter function
+        def plugin_filter(module: str) -> str | None:
+            if not plugin_name:
+                return None
+            return get_actual_module_name(get_module_from_name(module.split('.')[0]))
 
         return next(
             (

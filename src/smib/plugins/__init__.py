@@ -20,7 +20,7 @@ def module_exists_by_name(module_name: str) -> bool:
     return module_name in sys.modules
 
 
-def import_module_from_path(module_path: Path, module_name: str = None) -> ModuleType:
+def import_module_from_path(module_path: Path, module_name: str | None = None) -> ModuleType:
     module_path = module_path.resolve()
     # unique_suffix = str(uuid.uuid4()).replace("-", "")
     # module_name = module_name or f"{module_path.with_suffix('').name}_{unique_suffix}"
@@ -31,17 +31,24 @@ def import_module_from_path(module_path: Path, module_name: str = None) -> Modul
         raise ImportError(f"Module is not a python (.py) file {module_path}")
 
     spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None:
+        raise ImportError(f"Failed to create module spec for {module_path}")
+
     module = importlib.util.module_from_spec(spec)
 
     if module_exists_by_name(module_name):
         raise ImportError(f"Module {module_name} already exists")
 
     sys.modules[module_name] = module
+
+    if spec.loader is None:
+        raise ImportError(f"Module loader is None for {module_path}")
+
     spec.loader.exec_module(module)
 
     return module
 
-def import_package_from_path(package_path: Path, package_name: str = None) -> ModuleType:
+def import_package_from_path(package_path: Path, package_name: str | None = None) -> ModuleType:
     package_path = package_path.resolve()
     # unique_suffix = str(uuid.uuid4()).replace("-", "")
     # package_name = package_name or f"{package_path.name}_{unique_suffix}"
@@ -57,12 +64,19 @@ def import_package_from_path(package_path: Path, package_name: str = None) -> Mo
 
     # Load the package
     spec = importlib.util.spec_from_file_location(package_name, init_file)
+    if spec is None:
+        raise ImportError(f"Failed to create module spec for {init_file}")
+
     package = importlib.util.module_from_spec(spec)
 
     if module_exists_by_name(package_name):
         raise ImportError(f"Module {package_name} already exists")
 
     sys.modules[package_name] = package
+
+    if spec.loader is None:
+        raise ImportError(f"Module loader is None for {init_file}")
+
     spec.loader.exec_module(package)
 
     # Remove the package path from sys.path

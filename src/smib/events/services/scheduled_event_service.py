@@ -1,5 +1,6 @@
 import logging
 from logging import Logger
+from typing import cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -7,9 +8,7 @@ from smib.utilities.lazy_property import lazy_property
 
 
 class ScheduledEventService:
-    scheduler: AsyncIOScheduler
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
     @lazy_property
@@ -17,9 +16,13 @@ class ScheduledEventService:
         scheduler = AsyncIOScheduler()
         return scheduler
 
-    async def start(self):
-        self.scheduler.start()
+    async def start(self) -> None:
+        # Use cast to help mypy understand the type
+        scheduler: AsyncIOScheduler = cast(AsyncIOScheduler, self.scheduler)
+        scheduler.start()
 
-    async def stop(self):
-        self.scheduler.remove_all_jobs()
-        self.scheduler.shutdown()
+    async def stop(self) -> None:
+        # Use cast to help mypy understand the type
+        scheduler: AsyncIOScheduler = cast(AsyncIOScheduler, self.scheduler)
+        scheduler.remove_all_jobs()
+        scheduler.shutdown()

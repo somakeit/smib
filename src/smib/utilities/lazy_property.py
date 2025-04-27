@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Generic, Callable, Union
+from typing import Any, TypeVar, Generic, Callable
 
 T = TypeVar('T')
 
@@ -9,7 +9,7 @@ class lazy_property(Generic[T]):
         self.__name__ = func.__name__
         self.__doc__ = func.__doc__
 
-    def __get__(self, instance: Any, owner: Any) -> Union[T, 'lazy_property[T]']:
+    def __get__(self, instance: Any, owner: Any) -> T | 'lazy_property[T]':
         if instance is None:
             return self  # Return self if accessed through the class
 

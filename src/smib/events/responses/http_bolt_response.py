@@ -1,4 +1,4 @@
-from typing import Union, Optional, Dict, Sequence
+from typing import Sequence, Any
 
 from slack_bolt import BoltResponse
 
@@ -8,10 +8,10 @@ class HttpBoltResponse(BoltResponse):
             self,
             *,
             status: int,
-            body: Union[str, dict] = "",
-            headers: Optional[Dict[str, Union[str, Sequence[str]]]] = None,
-            fastapi_response: Optional[any] = None,
-            fastapi_kwargs: Optional[dict] = None
+            body: str | dict[str, Any] = "",
+            headers: dict[str, str | Sequence[str]] | None = None,
+            fastapi_response: Any | None = None,
+            fastapi_kwargs: dict[str, Any] | None = None
     ):
         """The response from a Bolt app with custom fields.
 
@@ -28,7 +28,7 @@ class HttpBoltResponse(BoltResponse):
         self.fastapi_response = fastapi_response
         self.fastapi_kwargs = fastapi_kwargs
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         base_repr = super().__repr__()
         return (
             f"{base_repr}, fastapi_response={self.fastapi_response}, "
