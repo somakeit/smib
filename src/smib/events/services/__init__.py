@@ -8,11 +8,9 @@ from typing import Protocol
 from collections.abc import Coroutine
 
 class EventServiceProtocol(Protocol):
-    async def start(self):
-        ...
+    async def start(self): ...
 
-    async def stop(self):
-        ...
+    async def stop(self): ...
 
 
 
