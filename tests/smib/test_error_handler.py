@@ -75,7 +75,6 @@ async def test_http_mode_with_http_exception(mock_http_handler):
     assert isinstance(result, HttpBoltResponse)
     assert result.status == 404
     assert result.body == "Not Found"
-    print(result.headers)
     assert result.headers == {"content-type": ["application/json"]}  # Fix: Match lowercase headers
 
 
