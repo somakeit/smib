@@ -406,24 +406,6 @@ all = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>
 standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
-name = "filelock"
-version = "3.18.0"
-description = "A platform independent file lock."
-optional = true
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"test\""
-files = [
-    {file = "filelock-3.18.0-py3-none-any.whl", hash = "sha256:c401f4f8377c4464e6db25fff06205fd89bdd83b65eb0488ed1b160f780e21de"},
-    {file = "filelock-3.18.0.tar.gz", hash = "sha256:adbc88eabb99d2fec8c9c1b229b171f18afa655400173ddc653d5d01501fb9f2"},
-]
-
-[package.extras]
-docs = ["furo (>=2024.8.6)", "sphinx (>=8.1.3)", "sphinx-autodoc-typehints (>=3)"]
-testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)", "pytest (>=8.3.4)", "pytest-asyncio (>=0.25.2)", "pytest-cov (>=6)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.28.1)"]
-typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
-
-[[package]]
 name = "frozenlist"
 version = "1.5.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -1201,24 +1183,6 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
-name = "pytest-mypy"
-version = "1.0.1"
-description = "A Pytest Plugin for Mypy"
-optional = true
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "extra == \"test\""
-files = [
-    {file = "pytest_mypy-1.0.1-py3-none-any.whl", hash = "sha256:ad7133c9b92c802e032f2596590ebede7eea7c418e61d60d5cdd571b55c72056"},
-    {file = "pytest_mypy-1.0.1.tar.gz", hash = "sha256:3f5fcaff75c80dccc6b68cf5ecc28e1bbe71e95309469eb7a28bf408ce55c074"},
-]
-
-[package.dependencies]
-filelock = ">=3.0"
-mypy = ">=1.0"
-pytest = ">=7.0"
-
-[[package]]
 name = "python-decouple"
 version = "3.8"
 description = "Strict separation of settings from code."
@@ -1482,9 +1446,9 @@ multidict = ">=4.0"
 propcache = ">=0.2.1"
 
 [extras]
-test = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-mypy"]
+test = ["mypy", "pytest", "pytest-asyncio", "pytest-cov"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0.0"
-content-hash = "dd0aa8e8d5f5fe4884a22fd698e697325368956d5332663c2496c9214574a03b"
+content-hash = "15407bbae492cb71a136d1c5d231ebab8cdd0b14cbf58ebef7e747f1c4103304"
