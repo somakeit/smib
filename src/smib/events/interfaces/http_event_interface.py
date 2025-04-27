@@ -116,12 +116,3 @@ def clean_signature(signature: Signature) -> Signature:
 
 def get_reserved_parameter_names() -> set[str]:
     return set(AsyncArgs.__annotations__.keys())
-
-
-if __name__ == '__main__':
-    async def test_func(say, context, item: str):
-        pass
-
-
-    sig = clean_signature(Signature.from_callable(test_func))
-    print(sig.parameters)
