@@ -24,6 +24,9 @@ from slack_bolt.request import BoltRequest
 
 app: CustomApp = inject("SlackApp")
 
+def extract_device_hostname(request: BoltRequest):
+    device_hostname, *_ = request.headers.get('device-hostname', [None])
+    return device_hostname
 
 @app.event("http_post_smibhid_ui_log")
 @http_bolt_response
@@ -31,7 +34,7 @@ def on_smibhid_ui_log_post(event: dict, context: dict, ack: callable, request: B
     ack()
     logger: Logger = context.get('logger')
 
-    device_hostname, *_ = request.headers.get('device-hostname', None)
+    device_hostname = extract_device_hostname(request)
     device_ip = event['request']['ip']
 
     data = event.get("data", [])
@@ -73,7 +76,7 @@ def on_smibhid_sensor_data_post(event: dict, context: dict, ack: callable, reque
     ack()
     logger: Logger = context.get('logger')
 
-    device_hostname, *_ = request.headers.get('device-hostname', None)
+    device_hostname = extract_device_hostname(request)
     device_ip = event['request']['ip']
     data = event.get("data", [])
     if not data:
