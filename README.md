@@ -104,6 +104,22 @@ This device runs on a Raspberry Pi Pico W and provides physical input and output
 
 Further documentation can be found [in the smibhid repo](https://github.com/somakeit/smibhid/).
 
+### SMIBHID APIs
+
+> [!IMPORTANT]  
+> The `device-hostname` header is a mandatory field for the SMIBHID APIs
+
+#### Pushing Sensor Log Data to SMIB DB
+
+The following us a CURL command that "posts" the provided sensor data to SMIB.
+
+```bash
+curl -X POST http://localhost/smib/event/smibhid_sensor_log ^
+ -H "Content-Type: application/json" ^
+ -H "device-hostname: smibhid-example" ^
+ -d "[{\"human_timestamp\": \"2025-04-03T21:42:58Z\", \"data\": {\"SCD30\": {\"relative_humidity\": 0, \"temperature\": 0, \"co2\": 0}, \"BME280\": {\"pressure\": 1019.3, \"humidity\": 48.7, \"temperature\": 20.03}}, \"timestamp\": 1743716578}, {\"timestamp\": 1743791084, \"data\": {\"SCD30\": {\"co2\": 1548.1, \"temperature\": 26.3, \"relative_humidity\": 52.9}, \"BME280\": {\"pressure\": 632, \"humidity\": 57.64, \"temperature\": 23.05}}, \"human_timestamp\": \"2025-04-04T18:24:44Z\"}]"
+```
+
 ## Legacy SMIB Commands
 Currently, the old [SMIB Commands](https://github.com/somakeit/smib-commands) do not work with the new SMIB.
 

@@ -18,6 +18,3 @@ class UILogs(BaseModel):
 
     def __iter__(self):
         yield from self.ui_logs
-
-
-
