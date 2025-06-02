@@ -21,6 +21,7 @@ from smib.plugins.integrations.http_plugin_integration import HttpPluginIntegrat
 from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPluginIntegration
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
+from smib.plugins.loaders import create_default_plugin_loader
 from smib.plugins.locator import PluginLocator
 from smib.utilities.environment import is_running_in_docker
 
@@ -62,8 +63,8 @@ async def main():
     database_manager = DatabaseManager()
 
     # Plugin Stuff
-    plugin_lifecycle_manager = PluginLifecycleManager(bolt_app)
-    plugin_locator: PluginLocator = PluginLocator(plugin_lifecycle_manager)
+    plugin_loader = create_default_plugin_loader()
+    plugin_lifecycle_manager = PluginLifecycleManager(bolt_app, plugin_loader)
 
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
@@ -71,7 +72,7 @@ async def main():
 
     # Plugin integrations
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)
-    http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface, plugin_locator)
+    http_plugin_integration: HttpPluginIntegration = HttpPluginIntegration(http_event_interface)
     scheduled_plugin_integration: ScheduledPluginIntegration = ScheduledPluginIntegration(scheduled_event_interface)
     database_plugin_integration: DatabasePluginIntegration = DatabasePluginIntegration(plugin_lifecycle_manager)
 
@@ -98,6 +99,7 @@ async def main():
     except Exception as e:
         logger.exception(f"Unexpected exception: {repr(e)}", exc_info=True)
     finally:
+        plugin_lifecycle_manager.unload_plugins()
         await event_service_manager.stop_all()
 
 if __name__ == '__main__':

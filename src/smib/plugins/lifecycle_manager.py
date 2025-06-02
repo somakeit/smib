@@ -3,22 +3,25 @@ import sys
 from logging import Logger
 from pathlib import Path
 from types import ModuleType
+from typing import List, Optional, Union
 
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import PLUGINS_DIRECTORY
-from smib.plugins import import_all_from_directory
+from smib.plugins.plugin import Plugin
+from smib.plugins.loaders import PluginLoader, create_default_plugin_loader
 from smib.utilities.dynamic_caller import dynamic_caller
 from smib.utilities.package import get_actual_module_name
 
 
 class PluginLifecycleManager:
-    def __init__(self, bolt_app: AsyncApp):
+    def __init__(self, bolt_app: AsyncApp, plugin_loader: Optional[PluginLoader] = None):
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
         self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
+        self.plugin_loader: PluginLoader = plugin_loader or create_default_plugin_loader()
 
-        self.plugins: list[ModuleType] = []
+        self.plugins: List[Plugin] = []
         self.plugin_map: list = []
 
         self.plugin_unregister_callbacks: list[callable] = []
@@ -34,98 +37,100 @@ class PluginLifecycleManager:
 
         sys.path.insert(0, str(self.plugins_directory.parent.resolve()))
 
-        modules = import_all_from_directory(self.plugins_directory)
-        plugin_modules = self.validate_plugin_modules(modules)
-        self.register_plugins(plugin_modules)
+        try:
+            plugins = self.plugin_loader.load_all_from_directory(self.plugins_directory)
+            valid_plugins = self.validate_plugins(plugins)
+            self.register_plugins(valid_plugins)
+        except Exception as e:
+            self.logger.exception(f"Failed to load plugins: {e}", exc_info=e)
 
-    def register_plugins(self, plugin_modules: list[ModuleType]):
-        for plugin_module in plugin_modules:
+    def register_plugins(self, plugins: List[Plugin]):
+        for plugin in plugins:
             try:
-                self.preregister_plugin(plugin_module)
-                self.register_plugin(plugin_module)
-                self.postregister_plugin(plugin_module)
+                self.preregister_plugin(plugin)
+                self.register_plugin(plugin)
+                self.postregister_plugin(plugin)
 
-                self.logger.info(f"Registered plugin {plugin_module.__name__} ({self.get_relative_path(plugin_module.__file__)})")
+                self.logger.info(f"Registered plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)})")
             except Exception as e:
-                self.logger.exception(f"Failed to register plugin {plugin_module.__name__} ({self.get_relative_path(plugin_module.__file__)}): {e}", exc_info=e)
-                self.unregister_plugin(plugin_module)
+                self.logger.exception(f"Failed to register plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)}): {e}", exc_info=e)
+                self.unregister_plugin(plugin)
                 continue
 
         self.logger.info(f"Registered {len(self.plugins)} plugin(s) ({self.plugin_string})")
 
-    def register_plugin(self, plugin_module: ModuleType):
+    def register_plugin(self, plugin: Plugin):
         try:
-            dynamic_caller(plugin_module.register, **self.registration_parameters)
+            plugin.register(**self.registration_parameters)
         except Exception as e:
             raise
         finally:
-            self.plugins.append(plugin_module)
-            self._add_to_map(plugin_module)
+            self.plugins.append(plugin)
+            self._add_to_map(plugin)
 
     @staticmethod
-    def _get_map_key(plugin_module: ModuleType):
+    def _get_map_key(plugin: Plugin):
         return {
-            'name': get_actual_module_name(plugin_module),
-            'unique_name': plugin_module.__name__,
-            'path': Path(plugin_module.__file__),
-            'module': plugin_module,
+            'name': plugin.name,
+            'unique_name': plugin.unique_name,
+            'path': plugin.path,
+            'plugin': plugin,
         }
 
-    def _add_to_map(self, plugin_module: ModuleType):
-        self.plugin_map.append(self._get_map_key(plugin_module))
+    def _add_to_map(self, plugin: Plugin):
+        self.plugin_map.append(self._get_map_key(plugin))
 
-    def _remove_from_map(self, plugin_module: ModuleType):
-        self.plugin_map.remove(self._get_map_key(plugin_module))
+    def _remove_from_map(self, plugin: Plugin):
+        self.plugin_map.remove(self._get_map_key(plugin))
 
-    def unregister_plugin(self, plugin_module: ModuleType):
+    def unregister_plugin(self, plugin: Plugin):
         for unregister_callback in self.plugin_unregister_callbacks:
-            unregister_callback(plugin_module)
+            unregister_callback(plugin)
 
-        self.plugins.remove(plugin_module)
-        self._remove_from_map(plugin_module)
+        plugin.unregister()
+        self.plugins.remove(plugin)
+        self._remove_from_map(plugin)
 
-    def preregister_plugin(self, plugin_module: ModuleType):
+    def preregister_plugin(self, plugin: Plugin):
         for preregister_callback in self.plugin_preregister_callbacks:
-            preregister_callback(plugin_module)
+            preregister_callback(plugin)
 
-    def postregister_plugin(self, plugin_module: ModuleType):
+    def postregister_plugin(self, plugin: Plugin):
         for postregister_callback in self.plugin_postregister_callbacks:
-            postregister_callback(plugin_module)
+            postregister_callback(plugin)
 
-    def validate_plugin_modules(self, modules: list[ModuleType]) -> list[ModuleType]:
-        valid_plugin_modules: list[ModuleType] = []
-        for module in modules:
-            if self.validate_plugin_module(module):
-                valid_plugin_modules.append(module)
+    def validate_plugins(self, plugins: List[Plugin]) -> List[Plugin]:
+        valid_plugins: List[Plugin] = []
+        for plugin in plugins:
+            if self.validate_plugin(plugin):
+                valid_plugins.append(plugin)
             else:
-                self.logger.info(f'{module.__name__} ({self.get_relative_path(module.__file__)}) is invalid... removing')
-                del sys.modules[module.__name__]
+                self.logger.info(f'{plugin.unique_name} ({self.get_relative_path(plugin.path)}) is invalid... removing')
                 continue
 
-        return valid_plugin_modules
+        return valid_plugins
 
-    def validate_plugin_module(self, module: ModuleType) -> bool:
-        valid = True
-        if not callable(getattr(module, 'register', None)):
-            self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) does not have a register callable')
-            valid = False
+    def validate_plugin(self, plugin: Plugin) -> bool:
+        """Validate that a plugin meets the required interface."""
+        # All plugins must have metadata with display_name and description
+        if not plugin.metadata.display_name or not plugin.metadata.description:
+            self.logger.warning(f'{plugin.unique_name} ({plugin.name}) does not have required metadata')
+            return False
 
-        required_attributes = ['__display_name__', '__description__']
-        for attribute in required_attributes:
-            if not hasattr(module, attribute):
-                self.logger.warning(f'{module.__name__} ({get_actual_module_name(module)}) does not have the required {attribute} attribute')
-                valid = False
+        # All plugins must have a register method
+        if not hasattr(plugin, 'register'):
+            self.logger.info(f'{plugin.unique_name} ({plugin.name}) does not have a register method')
+            return False
 
-        recommended_attributes = ['__author__']
-        for attribute in recommended_attributes:
-            if not hasattr(module, attribute):
-                self.logger.info(f'{module.__name__} ({get_actual_module_name(module)}) does not have the recommended {attribute} attribute')
+        # Log if recommended metadata is missing
+        if not plugin.metadata.author:
+            self.logger.info(f'{plugin.unique_name} ({plugin.name}) does not have the recommended author metadata')
 
-        return valid
+        return True
 
     @property
     def plugin_string(self):
-        return ", ".join(get_actual_module_name(plugin) for plugin in self.plugins) or "None"
+        return ", ".join(plugin.name for plugin in self.plugins) or "None"
 
     def register_plugin_unregister_callback(self, callback: callable):
         self.plugin_unregister_callbacks.append(callback)
@@ -140,4 +145,15 @@ class PluginLifecycleManager:
         self.registration_parameters[parameter_name] = parameter
 
     def get_relative_path(self, plugin_path: Path | str) -> Path:
-        return Path(plugin_path).resolve().relative_to(self.plugins_directory)
+        """Get the path relative to the plugins directory."""
+        path = Path(plugin_path).resolve()
+        try:
+            return path.relative_to(self.plugins_directory)
+        except ValueError:
+            # If the path is not relative to the plugins directory, return the path itself
+            return path
+
+    def unload_plugins(self):
+        self.logger.info(f"Unloading {len(self.plugins)} plugin(s) ({self.plugin_string})")
+        for plugin in self.plugins[::]:
+            self.unregister_plugin(plugin)
