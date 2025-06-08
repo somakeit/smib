@@ -1,3 +1,6 @@
+__display_name__ = "Test Plugin"
+__description__ = "Test Description"
+
 import logging
 
 import httpx
