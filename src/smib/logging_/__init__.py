@@ -22,7 +22,7 @@ LOGGING_CONFIG = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "docker" if is_running_in_docker() else "default",
-            "level": "INFO",
+            "level": ROOT_LOG_LEVEL,
         },
     },
     "root": {
@@ -42,6 +42,9 @@ LOGGING_CONFIG = {
             "propagate": False
         },
         "asyncio": {
+            "level": "WARNING"
+        },
+        "pymongo": {
             "level": "WARNING"
         }
     },
