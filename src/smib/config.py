@@ -1,3 +1,5 @@
+import os
+import secrets
 from pathlib import Path
 from decouple import config, Csv
 from smib.utilities.package import get_package_root, get_package_version
@@ -13,6 +15,8 @@ PLUGINS_DIRECTORY: Path = PACKAGE_ROOT.parent / "plugins"
 
 SLACK_BOT_TOKEN: str = config("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN: str = config("SLACK_APP_TOKEN")
+
+SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET") or secrets.token_hex(16)
 
 WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="127.0.0.1")
 WEBSERVER_PORT: int = config("WEBSERVER_PORT", cast=int, default=80)

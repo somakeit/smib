@@ -1,4 +1,6 @@
+import json
 from http import HTTPMethod
+from pprint import pprint
 
 from fastapi.encoders import jsonable_encoder
 from slack_bolt import BoltResponse
@@ -7,7 +9,7 @@ from slack_bolt.app.async_app import AsyncApp
 from fastapi import Request, Response
 from slack_bolt.request.async_request import AsyncBoltRequest
 
-from smib.events.handlers import BoltRequestMode
+from smib.events.handlers import BoltRequestMode, get_slack_signature_headers
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 
 
@@ -37,7 +39,18 @@ async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltReq
         }
     }
 
-    return AsyncBoltRequest(body=request_body, query=dict(request.query_params), headers=dict(request.headers), mode=BoltRequestMode.HTTP, context=context)
+    #TODO Custom Scope DICT - will allow proper parsing of signature
+    # {
+    #     "type": "http",
+    #     "method": "GET",  # or POST, PUT, etc. depending on your route
+    #     "path": "/your/path/here",  # the actual URL path
+    #     "path_params": {},  # optional existing path params
+    #     "root_path": "",  # if you have any root path prefix
+    # }
+
+
+    headers = dict(request.headers)
+    return AsyncBoltRequest(body=request_body, query=dict(request.query_params), headers=headers, mode=BoltRequestMode.HTTP, context=context)
 
 async def to_http_response(response: BoltResponse) -> tuple[Response, dict]:
 

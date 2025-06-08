@@ -33,7 +33,7 @@ async def main():
         name=PACKAGE_DISPLAY_NAME,
         token=SLACK_BOT_TOKEN,
         raise_error_for_unhandled_request=True,
-        request_verification_enabled=False, #TODO Add proper slack request signature
+        #request_verification_enabled=False, #TODO Add proper slack request signature
         process_before_response=True
     )
     bolt_app.error(slack_bolt_error_handler)

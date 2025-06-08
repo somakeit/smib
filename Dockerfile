@@ -27,7 +27,7 @@ RUN uv pip install -e .
 ## ------------------------------- Production Stage ------------------------------ ##
 FROM python:3.13-slim-bookworm AS runtime
 
-RUN useradd --create-home smibuser
+RUN useradd --create-home --home-dir /home/smibuser smibuser
 USER smibuser
 
 WORKDIR /app

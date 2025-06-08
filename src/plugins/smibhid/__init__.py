@@ -35,7 +35,7 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack:
         db_logs = [SensorLog.from_api(log, device_hostname) for log in sensor_logs]
         await SensorLog.insert_many(db_logs)
 
-    @http.get('/smib/log/sensor/latest')
+    @http.get('/smibhid/log/sensor/latest')
     async def get_latest_sensor_log() -> SensorLog:
         # Use find_one instead of get for querying with filters
         latest_log = await SensorLog.find_one({}, sort=[("timestamp", -1)])
