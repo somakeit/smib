@@ -25,26 +25,20 @@ class HttpPluginIntegration:
 
 
     def disconnect_plugin(self, plugin: Plugin):
-        self.logger.info(f"Locating http routes in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing http routes in {plugin.unique_name} ({plugin.name})")
         plugin_path = plugin.path
 
-        # Handle Python module plugins
-        if isinstance(plugin, PythonModulePlugin) and hasattr(plugin._module, '__file__'):
-            module_path = Path(plugin._module.__file__)
-            if module_path.name == "__init__.py":
-                module_path = module_path.parent
+        module_path = Path(plugin._module.__file__)
+        if module_path.name == "__init__.py":
+            module_path = module_path.parent
 
-            for router in [self.fastapi_app,]:
-                for route in router.routes[::]:
-                    if hasattr(route.endpoint, '__module__') and route.endpoint.__module__ in sys.modules:
-                        route_module_path = sys.modules[route.endpoint.__module__].__file__
-                        if Path(route_module_path).resolve().is_relative_to(module_path):
-                            self.logger.info(f"Removing route {route}")
-                            router.routes.remove(route)
-        else:
-            # For non-Python plugins, we would need a different way to identify routes
-            # This is a placeholder for future implementation
-            self.logger.info(f"Non-Python plugin {plugin.unique_name} disconnected")
+        for router in [self.fastapi_app,]:
+            for route in router.routes[::]:
+                if hasattr(route.endpoint, '__module__') and route.endpoint.__module__ in sys.modules:
+                    route_module_path = sys.modules[route.endpoint.__module__].__file__
+                    if Path(route_module_path).resolve().is_relative_to(module_path):
+                        self.logger.debug(f"Removing route {route}")
+                        router.routes.remove(route)
 
     def initialise_plugin_router(self, plugin: Plugin):
         unique_name = plugin.unique_name

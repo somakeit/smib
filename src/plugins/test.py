@@ -5,7 +5,7 @@ from smib.events.interfaces.scheduled_event_interface import ScheduledEventInter
 
 
 def register(schedule: ScheduledEventInterface):
-    logger = logging.Logger(__name__)
+    logger = logging.getLogger(__name__)
     @schedule.job('interval', seconds=5)
     async def test_job():
         async with httpx.AsyncClient() as client:

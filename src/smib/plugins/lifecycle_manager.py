@@ -87,7 +87,6 @@ class PluginLifecycleManager:
         for unregister_callback in self.plugin_unregister_callbacks:
             unregister_callback(plugin)
 
-        plugin.unregister()
         self.plugins.remove(plugin)
         self._remove_from_map(plugin)
 
@@ -112,9 +111,10 @@ class PluginLifecycleManager:
 
     def validate_plugin(self, plugin: Plugin) -> bool:
         """Validate that a plugin meets the required interface."""
+        self.logger.debug(f"Validating plugin {plugin.unique_name}")
         # All plugins must have metadata with display_name and description
         if not plugin.metadata.display_name or not plugin.metadata.description:
-            self.logger.warning(f'{plugin.unique_name} ({plugin.name}) does not have required metadata')
+            self.logger.warning(f'{plugin.unique_name} ({plugin.name}) does not have required metadata (display_name, description)')
             return False
 
         # All plugins must have a register method

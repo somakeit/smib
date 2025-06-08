@@ -15,15 +15,12 @@ class DatabasePluginIntegration:
         model_file = sys.modules[model.__module__].__file__
 
         for plugin in self.plugin_lifecycle_manager.plugins:
-            # Handle Python module plugins
-            if isinstance(plugin, PythonModulePlugin) and hasattr(plugin._module, '__file__'):
-                module_path = Path(plugin._module.__file__)
-                if module_path.name == "__init__.py":
-                    module_path = module_path.parent
 
-                if Path(model_file).resolve().is_relative_to(module_path):
-                    return True
-            # For non-Python plugins, we would need a different way to identify models
-            # This is a placeholder for future implementation
+            module_path = Path(plugin._module.__file__)
+            if module_path.name == "__init__.py":
+                module_path = module_path.parent
+
+            if Path(model_file).resolve().is_relative_to(module_path):
+                return True
 
         return False

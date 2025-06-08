@@ -10,7 +10,6 @@ from typing import List, Optional
 
 from smib.plugins.plugin import Plugin
 from smib.plugins.loaders.plugin_loaders import PluginLoader, PythonModulePluginLoader, PythonPackagePluginLoader
-from smib.plugins.loaders.shell_loaders import ShellScriptPluginLoader
 
 
 class CompositePluginLoader:
@@ -68,5 +67,4 @@ def create_default_plugin_loader() -> PluginLoader:
     return CompositePluginLoader([
         PythonModulePluginLoader(),
         PythonPackagePluginLoader(),
-        ShellScriptPluginLoader()
     ])
