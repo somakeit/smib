@@ -14,13 +14,15 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy the entire project content
-COPY . .
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
 
 # Create venv and install dependencies
-RUN uv venv .venv && \
-    . .venv/bin/activate && \
-    uv pip install -e .
+RUN uv sync
+
+COPY src/ src
+RUN uv pip install -e .
+
 
 ## ------------------------------- Production Stage ------------------------------ ##
 FROM python:3.13-slim-bookworm AS runtime

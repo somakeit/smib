@@ -16,15 +16,17 @@ from smib.events.responses.http_bolt_response import HttpBoltResponse
 default_error_handler_logger = logging.getLogger(AsyncDefaultListenerErrorHandler.__name__)
 default_error_handler = AsyncDefaultListenerErrorHandler(default_error_handler_logger)
 
-async def slack_bolt_error_handler(error: Exception | HTTPException, request: AsyncBoltRequest, body: dict, response: BoltResponse, logger: Logger):
+
+async def slack_bolt_error_handler(error: Exception | HTTPException, request: AsyncBoltRequest, body: dict,
+                                   response: BoltResponse, logger: Logger):
     match request.mode:
         case BoltRequestMode.SOCKET_MODE if isinstance(error, BoltUnhandledRequestError):
             return await default_error_handler.handle(error, request, response)
         case BoltRequestMode.HTTP if isinstance(error, HTTPException):
             # noinspection PyTypeChecker
             fastapi_response: Response = await http_exception_handler(None, error)
-            return HttpBoltResponse(status=fastapi_response.status_code, body=fastapi_response.body, headers=dict(fastapi_response.headers), fastapi_response=response)
+            return HttpBoltResponse(status=fastapi_response.status_code, body=fastapi_response.body,
+                                    headers=dict(fastapi_response.headers), fastapi_response=response)
         case _:
             logger.info(f'Request mode: {request.mode}')
             logger.warning(pprint.pformat(body, sort_dicts=False), exc_info=error)
-            # logger.warning(f'Failed to execute a request ({error})')

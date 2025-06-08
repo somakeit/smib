@@ -5,12 +5,12 @@ __author__ = "Sam Cork"
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Header
+from fastapi import Header, HTTPException
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
-from .models import UILog, UILogCreate
+from .models import UILog, UILogCreate, SensorLog, SensorLogCreate
 
 
 def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack: AsyncApp):
@@ -20,7 +20,26 @@ def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack:
         db_logs = [UILog.from_api(log, x_smibhid_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
 
+    @http.post('/smibhid/log/sensor', status_code=HTTPStatus.CREATED)
+    async def log_sensor(sensor_logs: list[SensorLogCreate], x_smibhid_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
+        db_logs = [SensorLog.from_api(log, x_smibhid_hostname) for log in sensor_logs]
+        await SensorLog.insert_many(db_logs)
+
     @http.post('/smib/event/smibhid_ui_log', deprecated=True)
     async def log_ui_from_smib_event(ui_logs: list[UILogCreate], device_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
         db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
         await UILog.insert_many(db_logs)
+
+    @http.post('/smib/event/smibhid_sensor_log', deprecated=True)
+    async def log_sensor_from_smib_event(sensor_logs: list[SensorLogCreate], device_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
+        db_logs = [SensorLog.from_api(log, device_hostname) for log in sensor_logs]
+        await SensorLog.insert_many(db_logs)
+
+    @http.get('/smib/log/sensor/latest')
+    async def get_latest_sensor_log() -> SensorLog:
+        # Use find_one instead of get for querying with filters
+        latest_log = await SensorLog.find_one({}, sort=[("timestamp", -1)])
+        
+        if not latest_log:
+            raise HTTPException(status_code=404, detail="No sensor logs found")
+        return latest_log
