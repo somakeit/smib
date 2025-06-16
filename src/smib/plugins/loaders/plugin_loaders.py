@@ -74,8 +74,8 @@ class PythonModulePluginLoader:
 
         plugins = []
 
-        for item in directory.iterdir():
-            if item.is_file() and item.suffix == '.py' and item.name != '__init__.py':
+        for item in directory.glob('*/*.py'):
+            if item.is_file() and item.suffix == '.py' and item.name != '__init__.py' and not item.name.startswith('_'):
                 try:
                     plugins.append(self.load_from_path(item))
                 except (ImportError, FileNotFoundError) as e:
@@ -139,8 +139,8 @@ class PythonPackagePluginLoader:
 
         plugins = []
 
-        for item in directory.iterdir():
-            if item.is_dir() and (item / '__init__.py').exists():
+        for item in directory.glob('*/*/'):
+            if item.is_dir() and (item / '__init__.py').exists() and not item.name.startswith('_'):
                 try:
                     plugins.append(self.load_from_path(item))
                 except (ImportError, FileNotFoundError) as e:

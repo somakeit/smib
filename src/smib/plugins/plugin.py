@@ -37,6 +37,10 @@ class Plugin(Protocol):
     def unique_name(self) -> str:
         """Get the plugin's unique name."""
         pass
+
+    @property
+    def category(self) -> str:
+        pass
     
     def register(self, **kwargs: Any) -> None:
         """Register the plugin with the system."""
@@ -67,6 +71,10 @@ class PythonModulePlugin:
     @property
     def unique_name(self) -> str:
         return self._module.__name__
+
+    @property
+    def category(self) -> str:
+        return self._path.parent.name
     
     def register(self, **kwargs: Any) -> None:
         """Register the plugin by calling its register function."""
