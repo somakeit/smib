@@ -4,7 +4,7 @@ from asyncio import CancelledError
 
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME
+from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME, SIGNING_SECRET
 from smib.db.manager import DatabaseManager
 from smib.error_handler import slack_bolt_error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
@@ -32,8 +32,8 @@ async def main():
     bolt_app = AsyncApp(
         name=PACKAGE_DISPLAY_NAME,
         token=SLACK_BOT_TOKEN,
+        signing_secret=SIGNING_SECRET,
         raise_error_for_unhandled_request=True,
-        #request_verification_enabled=False, #TODO Add proper slack request signature
         process_before_response=True
     )
     bolt_app.error(slack_bolt_error_handler)

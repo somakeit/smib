@@ -34,23 +34,21 @@ async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltReq
                 "path": str(request.url.path),
                 "query_string": request.url.query,
                 "query_params": jsonable_encoder(request.query_params),
-                "scope": request.scope,
+                "scope": {
+                    "type": request.scope["type"],
+                    "method": request.scope["method"],
+                    "path": request.scope["path"],
+                    "path_params": request.scope["path_params"],
+                    "root_path": request.scope["root_path"],
+                }
             }
         }
     }
 
-    #TODO Custom Scope DICT - will allow proper parsing of signature
-    # {
-    #     "type": "http",
-    #     "method": "GET",  # or POST, PUT, etc. depending on your route
-    #     "path": "/your/path/here",  # the actual URL path
-    #     "path_params": {},  # optional existing path params
-    #     "root_path": "",  # if you have any root path prefix
-    # }
+    json_body = json.dumps(request_body)
+    headers = dict(request.headers) | get_slack_signature_headers(json_body)
 
-
-    headers = dict(request.headers)
-    return AsyncBoltRequest(body=request_body, query=dict(request.query_params), headers=headers, mode=BoltRequestMode.HTTP, context=context)
+    return AsyncBoltRequest(body=json_body, query=dict(request.query_params), headers=headers, mode=BoltRequestMode.HTTP, context=context)
 
 async def to_http_response(response: BoltResponse) -> tuple[Response, dict]:
 
