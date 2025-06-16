@@ -49,7 +49,7 @@ class ScheduledEventInterface:
                 except (KeyboardInterrupt, CancelledError, SystemExit) as e:
                     self.logger.info(f"Scheduled job \"{job}\" received termination: {repr(e)}")
 
-            self.service.scheduler.add_job(wrapper, trigger, id=id, name=name, misfire_grace_time=misfire_grace_time,coalesce=coalesce, max_instances=max_instances, next_run_time=next_run_time, **trigger_args)
+            self.service.scheduler.add_job(wrapper, trigger, id=id, name=name, misfire_grace_time=misfire_grace_time, coalesce=coalesce, max_instances=max_instances, next_run_time=next_run_time, **trigger_args)
             async def matcher(event: dict):
                 return event['job']['id'] == id
 
