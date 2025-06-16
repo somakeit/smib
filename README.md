@@ -17,7 +17,7 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 
 ### Slack App Creation
 - If you don't already have a Slack Workspace, [create one](https://slack.com/get-started?entry_point=help_center#/createnew).
-- Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](manifest.yaml) and install it into your workspace.
+- Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](slack-manifest.yaml) and install it into your workspace.
 - Once created, go to your [installed apps list](https://api.slack.com/apps) and select the newly installed app.
   - Find the `App-Level Tokens` section of the page and click `Generate Token and Scopes`.
     - Create a token with the `connections:write` scope. This allows SMIB to establish a Websocket connection to Slack.
