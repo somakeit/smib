@@ -1,3 +1,5 @@
+import json
+
 from apscheduler.job import Job
 from fastapi.encoders import jsonable_encoder
 from slack_bolt import BoltResponse
@@ -6,7 +8,7 @@ from slack_bolt.app.async_app import AsyncApp
 from fastapi import Request, Response
 from slack_bolt.request.async_request import AsyncBoltRequest
 
-from smib.events.handlers import BoltRequestMode
+from smib.events.handlers import BoltRequestMode, get_slack_signature_headers
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 
 
@@ -29,4 +31,7 @@ async def to_async_bolt_request(job: Job) -> AsyncBoltRequest:
         }
     }
     context: dict = {"job": job}
-    return AsyncBoltRequest(body=body, mode=BoltRequestMode.SCHEDULED, context=context)
+
+    json_body = json.dumps(body)
+    headers = get_slack_signature_headers(json_body)
+    return AsyncBoltRequest(body=json_body, mode=BoltRequestMode.SCHEDULED, context=context, headers=headers)
