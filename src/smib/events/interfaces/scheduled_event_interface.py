@@ -1,4 +1,5 @@
 import logging
+import uuid
 from asyncio import CancelledError
 from functools import wraps
 
@@ -34,6 +35,9 @@ class ScheduledEventInterface:
             nonlocal id, name
 
             id = id or func.__name__
+            if self.service.scheduler.get_job(id):
+                id = f"{id}_{uuid.uuid4()}"
+
             normalised_name = unicodedata.normalize('NFKD', func.__name__.replace('_', ' ').title()).encode('ascii', 'ignore').decode('utf-8')
             name = name or func.__doc__ or normalised_name
 
