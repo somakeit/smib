@@ -1,15 +1,11 @@
 import json
 
 from apscheduler.job import Job
-from fastapi.encoders import jsonable_encoder
 from slack_bolt import BoltResponse
-from slack_bolt.adapter.starlette.async_handler import to_starlette_response
 from slack_bolt.app.async_app import AsyncApp
-from fastapi import Request, Response
 from slack_bolt.request.async_request import AsyncBoltRequest
 
 from smib.events.handlers import BoltRequestMode, get_slack_signature_headers
-from smib.events.responses.http_bolt_response import HttpBoltResponse
 
 
 class ScheduledEventHandler:
@@ -22,16 +18,22 @@ class ScheduledEventHandler:
         return bolt_response
 
 async def to_async_bolt_request(job: Job) -> AsyncBoltRequest:
-    job_dict = {slot: getattr(job, slot, None) for slot in job.__slots__ if not slot.startswith('_')}
     body = {
         "type": "event_callback",
         "event": {
             "type": "scheduled_job",
-            "job": job_dict
+            "job": {
+                "id": job.id,
+                "name": job.name,
+                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+                "trigger": str(job.trigger),
+            }
         }
     }
+
     context: dict = {"job": job}
 
     json_body = json.dumps(body)
     headers = get_slack_signature_headers(json_body)
+
     return AsyncBoltRequest(body=json_body, mode=BoltRequestMode.SCHEDULED, context=context, headers=headers)

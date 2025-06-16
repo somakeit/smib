@@ -147,7 +147,7 @@ def _get_info_blocks() -> list[Block]:
 
     return info_blocks
 
-def extract_selected_hours_from_state(state: str) -> int:
+def extract_selected_hours_from_state(state: dict) -> int:
     try:
         return int(state["values"]["space_open_block"]["space_open_hours_select"]["selected_option"]["value"])
     except (KeyError, TypeError, ValueError):
