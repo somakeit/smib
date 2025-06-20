@@ -208,3 +208,4 @@ cython_debug/
 .idea/
 
 .output.txt
+static/
