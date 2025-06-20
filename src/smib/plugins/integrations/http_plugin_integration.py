@@ -40,16 +40,26 @@ class HttpPluginIntegration:
                         self.logger.debug(f"Removing route {route}")
                         router.routes.remove(route)
 
+    @staticmethod
+    def get_plugin_tags(plugin: Plugin) -> dict[str, str]:
+        return {
+            "name": plugin.metadata.display_name,
+            "description": plugin.metadata.description,
+        }
+
     def initialise_plugin_router(self, plugin: Plugin):
         unique_name = plugin.unique_name
-        tag_name = plugin.metadata.display_name
-        tag_description = plugin.metadata.description
-        self.tag_metadata.append({
-            "name": tag_name,
-            "description": tag_description
-        })
-        self.http_event_interface.current_router = APIRouter(tags=[tag_name])
+        tags = self.get_plugin_tags(plugin)
+        self.tag_metadata.append(tags)
+        self.http_event_interface.current_router = APIRouter(tags=[tags["name"]])
         self.http_event_interface.routers[unique_name] = self.http_event_interface.current_router
+
+    def remove_router_if_unused(self, plugin: Plugin):
+        router = self.http_event_interface.routers.get(plugin.unique_name)
+        if len(router.routes) == 0:
+            self.logger.debug(f"Removing unused router {router}")
+            self.http_event_interface.routers.pop(plugin.unique_name)
+            self.tag_metadata.remove(self.get_plugin_tags(plugin))
 
     def finalise_http_setup(self):
         self.http_event_interface.service.openapi_tags += self.tag_metadata

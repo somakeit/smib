@@ -21,3 +21,13 @@ async def send_space_open_announcement(say: AsyncSay, space_open_params: SpaceSt
 
 async def send_space_closed_announcement(say: AsyncSay) -> None:
     await say("Space Closed!", channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+
+async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
+    state: SpaceStateEnum = SpaceStateEnum.OPEN
+    await set_space_state_in_db(state)
+    await send_space_open_announcement(say, space_open_params)
+
+async def close_space(say: AsyncSay) -> None:
+    state: SpaceStateEnum = SpaceStateEnum.CLOSED
+    await set_space_state_in_db(state)
+    await send_space_closed_announcement(say)

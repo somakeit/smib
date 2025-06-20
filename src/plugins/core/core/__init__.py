@@ -1,5 +1,6 @@
 __display_name__ = "Core"
 __description__ = "Core plugin"
+__author__ = "Sam Cork"
 
 from smib.config import PACKAGE_VERSION
 from smib.events.interfaces.http_event_interface import HttpEventInterface

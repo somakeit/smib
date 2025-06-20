@@ -82,6 +82,7 @@ async def main():
     plugin_lifecycle_manager.register_plugin_unregister_callback(scheduled_plugin_integration.disconnect_plugin)
 
     plugin_lifecycle_manager.register_plugin_preregister_callback(http_plugin_integration.initialise_plugin_router)
+    plugin_lifecycle_manager.register_plugin_postregister_callback(http_plugin_integration.remove_router_if_unused)
 
     plugin_lifecycle_manager.load_plugins()
 
