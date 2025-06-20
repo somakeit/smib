@@ -12,7 +12,7 @@ class SpaceStateEnum(StrEnum):
 
 
 class SpaceState(Document):
-    # Redefine mongodb default 'id' field to be excluded from the schema
+    # Redefine mongodb default 'id' field to be excluded from the swagger schema
     id: Annotated[PydanticObjectId | None, Field(default=None, description="MongoDB document ObjectID", exclude=True)]
     open: Annotated[bool | None, Field(default=None, description="Whether the space is open")]
 
