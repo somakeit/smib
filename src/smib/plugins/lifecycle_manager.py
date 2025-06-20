@@ -38,7 +38,7 @@ class PluginLifecycleManager:
         sys.path.insert(0, str(self.plugins_directory.parent.resolve()))
 
         try:
-            plugins = self.plugin_loader.load_all_from_directory(self.plugins_directory)
+            plugins = sorted(self.plugin_loader.load_all_from_directory(self.plugins_directory))
             valid_plugins = self.validate_plugins(plugins)
             self.register_plugins(valid_plugins)
         except Exception as e:

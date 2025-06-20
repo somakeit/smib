@@ -31,7 +31,8 @@ class HttpEventService:
             version=PACKAGE_VERSION,
             title=PACKAGE_DISPLAY_NAME,
             description=PACKAGE_DESCRIPTION,
-            root_path=WEBSERVER_PATH_PREFIX
+            root_path=WEBSERVER_PATH_PREFIX,
+            root_path_in_servers=False,
         )
 
     @lazy_property

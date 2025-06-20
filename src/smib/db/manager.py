@@ -64,3 +64,7 @@ class DatabaseManager:
             ),
             None,
         )
+
+    async def get_db_version(self) -> str:
+        info = await self.client.server_info()
+        return info['version']

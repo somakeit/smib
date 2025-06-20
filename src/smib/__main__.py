@@ -69,6 +69,7 @@ async def main():
     plugin_lifecycle_manager.register_parameter('slack', bolt_app)
     plugin_lifecycle_manager.register_parameter('http', http_event_interface)
     plugin_lifecycle_manager.register_parameter('schedule', scheduled_event_interface)
+    plugin_lifecycle_manager.register_parameter('database', database_manager)
 
     # Plugin integrations
     slack_plugin_integration: SlackPluginIntegration = SlackPluginIntegration(bolt_app)

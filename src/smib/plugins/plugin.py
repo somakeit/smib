@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
@@ -14,40 +14,50 @@ class PluginMetadata:
     description: str
     author: Optional[str] = None
 
-
-class Plugin(Protocol):
+class Plugin(ABC, metaclass=ABCMeta):
     """Protocol defining the interface for plugins."""
-    
+
     @property
+    @abstractmethod
     def metadata(self) -> PluginMetadata:
         """Get the plugin's metadata."""
         pass
-    
+
     @property
+    @abstractmethod
     def path(self) -> Path:
         """Get the plugin's path."""
         pass
-    
+
     @property
+    @abstractmethod
     def name(self) -> str:
         """Get the plugin's name."""
         pass
-    
+
     @property
+    @abstractmethod
     def unique_name(self) -> str:
         """Get the plugin's unique name."""
         pass
 
     @property
+    @abstractmethod
     def category(self) -> str:
         pass
-    
+
+    @abstractmethod
     def register(self, **kwargs: Any) -> None:
         """Register the plugin with the system."""
         pass
 
+    def __lt__(self, other: "Plugin") -> bool:
+        if not isinstance(other, Plugin):
+            return NotImplemented
+        return f"{self.category}\\{self.name}" < f"{other.category}\\{other.name}"
 
-class PythonModulePlugin:
+
+class PythonModulePlugin(Plugin):
     """Adapter for Python module plugins."""
     
     def __init__(self, module: ModuleType, path: Path):

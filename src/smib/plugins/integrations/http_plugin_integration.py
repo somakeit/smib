@@ -2,17 +2,12 @@ import logging
 import sys
 from logging import Logger
 from pathlib import Path
-from pprint import pprint
-from types import ModuleType
-from typing import Optional, cast
 
 from fastapi import APIRouter
 
 from smib.config import PLUGINS_DIRECTORY
 from smib.events.interfaces.http_event_interface import HttpEventInterface
-from smib.plugins.locator import PluginLocator
-from smib.plugins.plugin import Plugin, PythonModulePlugin
-from smib.utilities.package import get_actual_module_name
+from smib.plugins.plugin import Plugin
 
 
 class HttpPluginIntegration:
