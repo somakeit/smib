@@ -1,3 +1,7 @@
+import logging
+from http import HTTPStatus
+from typing import Annotated, Callable
+
 import makefun
 from fastapi.routing import APIRouter
 from slack_bolt.app.async_app import AsyncApp
@@ -21,10 +25,28 @@ class HttpEventInterface:
         self.service: HttpEventService = service
         self.routers: dict[str, APIRouter] = {}
 
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.current_router: APIRouter = APIRouter()
 
-    def add_openapi_tags(self, tags: list[dict]):
-        self.service.openapi_tags += tags
+    def add_openapi_tag(self, tag: str, description: str):
+        self.service.openapi_tags.append({
+            "name": tag,
+            "description": description,
+        })
+
+    def exception_handler(self, exc_class_or_status_code: int | type[Exception]):
+        """ See fastapi.FastAPI.exception_handler() for parameters """
+        def decorator(func: Callable):
+            exception: type[Exception] = exc_class_or_status_code if isinstance(exc_class_or_status_code, type) else None
+            status_code: HTTPStatus = HTTPStatus(exc_class_or_status_code) if isinstance(exc_class_or_status_code, int) else None
+            if exc_class_or_status_code in self.service.fastapi_app.exception_handlers.keys():
+                if exception:
+                    self.logger.warning(f"Handler already registered for exception: {exception}. Overriding with new handler.")
+                elif status_code:
+                    self.logger.warning(f"Handler already registered for status code: {status_code} ({status_code.name}). Overriding with new handler.")
+            self.service.fastapi_app.add_exception_handler(exc_class_or_status_code, func)
+            return func
+        return decorator
 
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
         def decorator(func: callable):

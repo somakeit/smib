@@ -1,5 +1,5 @@
 from http import HTTPStatus
-
+from fastapi import Request
 from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface

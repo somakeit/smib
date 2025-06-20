@@ -62,7 +62,17 @@ class HttpPluginIntegration:
             self.http_event_interface.routers.pop(plugin.unique_name)
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
 
+
     def finalise_http_setup(self):
-        self.http_event_interface.service.openapi_tags += self.tag_metadata
+        # Filter out tags that don't have corresponding routes in any router
+        active_tags = set()
+        for router in self.http_event_interface.routers.values():
+            for route in router.routes:
+                if hasattr(route, 'tags'):
+                    active_tags.update(route.tags)
+
+        all_tags = self.tag_metadata + self.http_event_interface.service.openapi_tags
+        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags if tag["name"] in active_tags]
+
         for router in self.http_event_interface.routers.values():
             self.fastapi_app.include_router(router)

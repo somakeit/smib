@@ -15,6 +15,9 @@ from .models import UILog, UILogCreate, SensorLog, SensorLogCreate
 
 def register(http: HttpEventInterface, schedule: ScheduledEventInterface, slack: AsyncApp):
 
+
+    http.add_openapi_tag("Gay", "Emily is Gay")
+
     @http.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
     async def log_ui(ui_logs: list[UILogCreate], x_smibhid_hostname: Annotated[str, Header(description="Hostname of S.M.I.B.H.I.D. device")]):
         """ Logs a UI event to the database """
