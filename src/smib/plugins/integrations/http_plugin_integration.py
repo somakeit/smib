@@ -8,6 +8,7 @@ from typing import Optional, cast
 
 from fastapi import APIRouter
 
+from smib.config import PLUGINS_DIRECTORY
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.plugins.locator import PluginLocator
 from smib.plugins.plugin import Plugin, PythonModulePlugin
@@ -57,7 +58,7 @@ class HttpPluginIntegration:
     def remove_router_if_unused(self, plugin: Plugin):
         router = self.http_event_interface.routers.get(plugin.unique_name)
         if len(router.routes) == 0:
-            self.logger.debug(f"Removing unused router {router}")
+            self.logger.debug(f"Removing unused router for {plugin.path.relative_to(PLUGINS_DIRECTORY)}")
             self.http_event_interface.routers.pop(plugin.unique_name)
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
 

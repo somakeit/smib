@@ -130,7 +130,7 @@ class PluginLifecycleManager:
 
     @property
     def plugin_string(self):
-        return ", ".join(plugin.name for plugin in self.plugins) or "None"
+        return ", ".join(str(self.get_relative_path(plugin.path)) for plugin in self.plugins) or "None"
 
     def register_plugin_unregister_callback(self, callback: callable):
         self.plugin_unregister_callbacks.append(callback)
