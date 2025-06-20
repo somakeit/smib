@@ -42,6 +42,8 @@ The easiest way to run SMIB is with Docker Compose:
   - `docker compose up -d --build`
 
 ### Environment Variables
+Here are all the SMIB environment variables, along with some other ones that are used in the docker-compose files to make the stack work.
+
 | Variable | Description | Example                    | Default | Where Used |
 |----------|-------------|----------------------------|---------|------------|
 | **Slack Configuration** ||                            |||
