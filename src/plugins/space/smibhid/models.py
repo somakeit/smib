@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from enum import StrEnum
 from typing import Annotated, Any
 
-from beanie import Document, PydanticObjectId
+from beanie import Document, PydanticObjectId, Indexed
 from pydantic import BaseModel, Field, AfterValidator
 
 
@@ -39,7 +39,7 @@ class UILog(Document, UILogCreate):
     id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
 
-    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)])]
+    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
 
     @classmethod
     def from_api(cls, api_model: UILogCreate, device: str):
@@ -82,7 +82,7 @@ class SensorLog(Document, SensorLogBase):
     id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
 
-    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)])]
+    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
 
 
     @classmethod

@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from enum import StrEnum
 from typing import Annotated
 
-from beanie import Document, PydanticObjectId
+from beanie import Document, PydanticObjectId, Indexed
 from pydantic import BaseModel, Field
 
 
@@ -20,9 +20,7 @@ class SpaceState(Document):
         name = "space_state"
 
 class SpaceStateHistory(Document):
-    id: Annotated[PydanticObjectId | None, Field(default=None, description="MongoDB document ObjectID")]
-
-    timestamp: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
+    timestamp: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC)), Indexed()]
     open: Annotated[bool, Field(description="Whether the space is open")]
 
     class Settings:
