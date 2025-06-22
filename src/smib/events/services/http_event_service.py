@@ -5,9 +5,12 @@ from logging import Logger
 from fastapi import FastAPI
 from slack_bolt.app.async_app import AsyncApp
 from uvicorn import Config, Server
+from fastapi.middleware import Middleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
     WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
+from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware
 from smib.utilities.lazy_property import lazy_property
 from smib.logging_ import LOGGING_CONFIG
 
@@ -58,11 +61,16 @@ class HttpEventService:
             ("x-app-version", PACKAGE_VERSION)
         ]
 
+    def apply_middlewares(self):
+        self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
+
     async def start(self):
         # On start, force re-generate swagger docs
         self.fastapi_app.openapi_schema = None
         self.fastapi_app.openapi_tags = self.openapi_tags
         self.fastapi_app.setup()
+
+        self.apply_middlewares()
 
         await self.uvicorn_server.serve()
 
