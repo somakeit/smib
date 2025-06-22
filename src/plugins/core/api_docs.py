@@ -1,6 +1,7 @@
 __display_name__ = "API Docs"
 __description__ = "Plugin to override the default API docs, allowing for customisation"
 
+from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
 from smib.events.interfaces.http_event_interface import HttpEventInterface
@@ -8,14 +9,15 @@ from smib.events.interfaces.http_event_interface import HttpEventInterface
 FAVICON_URL = "https://members.somakeit.org.uk/images/somakeit/favicon.ico"
 
 def register(http: HttpEventInterface):
-    app_title = http.service.fastapi_app.title
+    fastapi_app: FastAPI = http.service.fastapi_app
+    app_title = fastapi_app.title
 
     http.service.fastapi_app.redoc_url = None
     http.service.fastapi_app.docs_url = None
 
-    remove_route_by_name(http.service.fastapi_app, "swagger_ui_html")
-    remove_route_by_name(http.service.fastapi_app, "redoc_html")
-    remove_route_by_name(http.service.fastapi_app, "swagger_ui_redirect")
+    remove_route_by_name(fastapi_app, "swagger_ui_html")
+    remove_route_by_name(fastapi_app, "swagger_ui_redirect")
+    remove_route_by_name(fastapi_app, "redoc_html")
 
     @http.get("/docs", include_in_schema=False)
     async def overridden_swagger():
