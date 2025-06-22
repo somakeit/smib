@@ -1,5 +1,6 @@
 __display_name__ = "Static Files"
 __description__ = "Serves static files from the static folder"
+__author__ = "Sam Cork"
 
 import logging
 from pathlib import Path

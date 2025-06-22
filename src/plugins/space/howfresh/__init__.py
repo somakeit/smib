@@ -1,5 +1,6 @@
 __display_name__ = "How Fresh?"
 __description__ = "How fresh is something?"
+__author__ = "Sam Cork"
 
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.context.ack.async_ack import AsyncAck

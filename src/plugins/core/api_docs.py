@@ -1,5 +1,6 @@
 __display_name__ = "API Docs"
 __description__ = "Plugin to override the default API docs, allowing for customisation"
+__author__ = "Sam Cork"
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
