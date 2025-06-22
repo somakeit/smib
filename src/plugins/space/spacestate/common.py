@@ -1,13 +1,17 @@
+import logging
+
 from slack_bolt.context.say.async_say import AsyncSay
 
 from .config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
 from .models import SpaceState, SpaceStateOpen, SpaceStateEnum, SpaceStateHistory
 
+logger = logging.getLogger("Space State Plugin - Common")
 
 async def get_space_state_from_db() -> SpaceState:
     return await SpaceState.find_one() or SpaceState()
 
 async def set_space_state_in_db(state: SpaceStateEnum) -> None:
+    logger.debug(f"Setting space state to {state} in DB")
     space_state = await get_space_state_from_db()
     space_state.open = state == SpaceStateEnum.OPEN
     await space_state.save()
