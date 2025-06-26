@@ -1,6 +1,6 @@
 
 import logging
-from pprint import pprint
+from pprint import pformat
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -28,3 +28,12 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
             if match == Match.FULL and getattr(route, "deprecated", False):
                 return True
         return False
+
+class HeaderLoggingMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    async def dispatch(self, request: Request, call_next):
+        self.logger.debug(pformat(request.headers.items()))
+        return await call_next(request)

@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
     WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
-from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware
+from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, HeaderLoggingMiddleware
 from smib.utilities.lazy_property import lazy_property
 from smib.logging_ import LOGGING_CONFIG
 
@@ -63,6 +63,7 @@ class HttpEventService:
 
     def apply_middlewares(self):
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
+        self.fastapi_app.add_middleware(HeaderLoggingMiddleware)
 
     async def start(self):
         # On start, force re-generate swagger docs
