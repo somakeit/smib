@@ -23,7 +23,6 @@ from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPlug
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.loaders import create_default_plugin_loader
-from smib.plugins.locator import PluginLocator
 from smib.utilities.environment import is_running_in_docker
 
 
@@ -95,10 +94,13 @@ async def main():
     try:
         # Initialise database
         await database_manager.initialise()
+
+        # Start services
         await event_service_manager.start_all()
     except (KeyboardInterrupt, CancelledError, SystemExit) as e:
         logger.info(f"Received termination: {repr(e)}")
     except PyMongoError as e:
+        # Already handled in DatabaseManager
         pass
     except Exception as e:
         logger.exception(f"Unexpected exception: {repr(e)}", exc_info=True)
