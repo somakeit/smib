@@ -41,6 +41,11 @@ The easiest way to run SMIB is with Docker Compose:
     - e.g. `SMIB_BUILD_GIT_TAG=v2.0.0` or `SMIB_BUILD_GIT_TAG=master`
   - `docker compose up -d --build`
 
+> [!IMPORTANT]
+> If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
+> On a 64-bit Raspberry Pi its `4.4.18`, so the following environment variable will need to be set: `MONGO_DB_TAG=4.4.18`
+> Easiest way to check is by starting up the MongoDB container and checking the logs.
+
 ### Environment Variables
 Here are all the SMIB environment variables, along with some other ones that are used in the docker-compose files to make the stack work.
 
