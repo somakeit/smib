@@ -18,7 +18,7 @@ SLACK_APP_TOKEN: str = config("SLACK_APP_TOKEN")
 
 SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET") or secrets.token_hex(16)
 
-WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="127.0.0.1")
+WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="0.0.0.0")
 WEBSERVER_PORT: int = config("WEBSERVER_PORT", cast=int, default=80)
 WEBSERVER_PATH_PREFIX: str = config("WEBSERVER_PATH_PREFIX", default="/")
 
