@@ -29,7 +29,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
                 return True
         return False
 
-class HeaderLoggingMiddleware(BaseHTTPMiddleware):
+class RequestHeaderLoggingMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         self.logger = logging.getLogger(self.__class__.__name__)
