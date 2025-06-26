@@ -76,4 +76,5 @@ class HttpEventService:
         await self.uvicorn_server.serve()
 
     async def stop(self):
-        await self.uvicorn_server.shutdown()
+        if self.uvicorn_server.started:
+            await self.uvicorn_server.shutdown()

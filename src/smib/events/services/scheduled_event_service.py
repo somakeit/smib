@@ -24,5 +24,6 @@ class ScheduledEventService:
     async def stop(self) -> None:
         # Use cast to help mypy understand the type
         scheduler: AsyncIOScheduler = cast(AsyncIOScheduler, self.scheduler)
-        scheduler.remove_all_jobs()
-        scheduler.shutdown()
+        if scheduler.running:
+            scheduler.remove_all_jobs()
+            scheduler.shutdown()

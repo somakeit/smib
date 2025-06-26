@@ -2,6 +2,7 @@ import asyncio
 import logging
 from asyncio import CancelledError
 
+from pymongo.errors import PyMongoError
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME, SIGNING_SECRET
@@ -91,13 +92,14 @@ async def main():
 
     database_manager.register_document_filter(database_plugin_integration.filter_valid_plugins)
 
-    # Initialise database
-    await database_manager.initialise()
-
     try:
+        # Initialise database
+        await database_manager.initialise()
         await event_service_manager.start_all()
     except (KeyboardInterrupt, CancelledError, SystemExit) as e:
         logger.info(f"Received termination: {repr(e)}")
+    except PyMongoError as e:
+        pass
     except Exception as e:
         logger.exception(f"Unexpected exception: {repr(e)}", exc_info=True)
     finally:

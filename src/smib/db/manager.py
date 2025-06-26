@@ -5,6 +5,7 @@ from typing import TypeVar, Any, Callable
 
 from beanie import init_beanie, Document
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import PyMongoError
 
 from smib.config import MONGO_DB_URL, MONGO_DB_NAME
 from smib.utilities.package import get_actual_module_name, get_module_from_name
@@ -47,7 +48,11 @@ class DatabaseManager:
         self.logger.info(f"Initializing database '{self.db_name}' with {len(all_documents)} document(s)")
         if all_documents:
             self.logger.info(f"Documents: {', '.join(doc.__name__ for doc in all_documents)}")
-        await init_beanie(database=self.client[self.db_name], document_models=all_documents)
+        try:
+            await init_beanie(database=self.client[self.db_name], document_models=all_documents)
+        except PyMongoError as e:
+            self.logger.error(f"Failed to initialise database '{self.db_name}'")
+            raise e
 
     def find_model_by_name(self, model_name: str, plugin_name: str | None = None) -> type[Document] | None:
         def plugin_filter(module: str) -> str | None:
