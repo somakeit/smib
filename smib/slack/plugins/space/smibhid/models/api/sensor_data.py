@@ -7,10 +7,17 @@ class SensorData(RootModel):
 class ModuleData(RootModel):
     root: dict[str, SensorData]
 
+class SensorUnits(RootModel):
+    root: dict[str, str]
+
+class ModuleUnits(RootModel):
+    root: dict[str, SensorUnits]
+
 class SensorLog(BaseModel):
     timestamp: int
     human_timestamp: str
     data: ModuleData
+    units: ModuleUnits
 
 
 class SensorLogs(BaseModel):

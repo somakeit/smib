@@ -23,6 +23,18 @@ def main():
                     "temperature": 20.03
                 }
             },
+            "units": {
+              "SCD30": {
+                "co2": "ppm",
+                "temperature": "C",
+                "relative_humidity": "%"
+              },
+              "BME280": {
+                "pressure": "hPa",
+                "temperature": "C",
+                "humidity": "%"
+              }
+            },
             "timestamp": utc_timestamp
         },
         {
@@ -38,6 +50,18 @@ def main():
                     "humidity": 57.64,
                     "temperature": 23.05
                 }
+            },
+            "units": {
+              "SCD30": {
+                "co2": "ppm",
+                "temperature": "C",
+                "relative_humidity": "%"
+              },
+              "BME280": {
+                "pressure": "hPa",
+                "temperature": "C",
+                "humidity": "%"
+              }
             },
             "human_timestamp": utc_time.isoformat()
         }
