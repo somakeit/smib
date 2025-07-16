@@ -78,7 +78,7 @@ def on_smibhid_sensor_data_post(event: dict, context: dict, ack: callable, reque
 
     device_hostname = extract_device_hostname(request)
     device_ip = event['request']['ip']
-    data = event.get("data", [])
+    data = event.get("data", {})
     if not data:
         logger.info("No logs received in request")
         return
@@ -86,7 +86,7 @@ def on_smibhid_sensor_data_post(event: dict, context: dict, ack: callable, reque
     logger.debug(pformat(data))
 
     try:
-        sensor_logs = ApiSensorLogs(logs=data)
+        sensor_logs = ApiSensorLogs(readings=data["readings"], units=data["units"])
         logger.debug(sensor_logs)
     except ValidationError as e:
         logger.warning(e)

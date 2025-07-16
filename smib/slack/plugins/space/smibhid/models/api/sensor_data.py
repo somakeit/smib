@@ -7,6 +7,12 @@ class SensorData(RootModel):
 class ModuleData(RootModel):
     root: dict[str, SensorData]
 
+class SensorUnits(RootModel):
+    root: dict[str, str]
+
+class ModuleUnits(RootModel):
+    root: dict[str, SensorUnits]
+
 class SensorLog(BaseModel):
     timestamp: int
     human_timestamp: str
@@ -14,7 +20,8 @@ class SensorLog(BaseModel):
 
 
 class SensorLogs(BaseModel):
-    logs: list[SensorLog]
+    readings: list[SensorLog]
+    units: ModuleUnits
 
     def __iter__(self):
-        yield from self.logs
+        yield from self.readings
