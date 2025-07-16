@@ -17,11 +17,11 @@ class SensorLog(BaseModel):
     timestamp: int
     human_timestamp: str
     data: ModuleData
-    units: ModuleUnits
 
 
 class SensorLogs(BaseModel):
-    logs: list[SensorLog]
+    readings: list[SensorLog]
+    units: ModuleUnits
 
     def __iter__(self):
-        yield from self.logs
+        yield from self.readings

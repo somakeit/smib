@@ -8,7 +8,19 @@ import requests
 def main():
     utc_time = datetime.now(timezone.utc)
     utc_timestamp = int(utc_time.timestamp())
-    data = [
+    units = {
+              "SCD30": {
+                "co2": "ppm",
+                "temperature": "C",
+                "relative_humidity": "%"
+              },
+              "BME280": {
+                "pressure": "hPa",
+                "temperature": "C",
+                "humidity": "%"
+              }
+            }
+    readings = [
         {
             "human_timestamp": utc_time.isoformat(),
             "data": {
@@ -22,18 +34,6 @@ def main():
                     "humidity": 48.7,
                     "temperature": 20.03
                 }
-            },
-            "units": {
-              "SCD30": {
-                "co2": "ppm",
-                "temperature": "C",
-                "relative_humidity": "%"
-              },
-              "BME280": {
-                "pressure": "hPa",
-                "temperature": "C",
-                "humidity": "%"
-              }
             },
             "timestamp": utc_timestamp
         },
@@ -51,28 +51,22 @@ def main():
                     "temperature": 23.05
                 }
             },
-            "units": {
-              "SCD30": {
-                "co2": "ppm",
-                "temperature": "C",
-                "relative_humidity": "%"
-              },
-              "BME280": {
-                "pressure": "hPa",
-                "temperature": "C",
-                "humidity": "%"
-              }
-            },
             "human_timestamp": utc_time.isoformat()
         }
     ]
+
+    payload = {
+        "readings": readings,
+        "units": units
+    }
+
     headers = {"Content-Type": "application/json", 'device-hostname': "smibhid-dummy"}
     url = f"http://localhost/smib/event/smibhid_sensor_log"
     print(f"url: {url}")
     print(f"headers: {headers}")
-    print(f"data: {data}")
-    print(f"JSON data: {json.dumps(data)}")
-    response = requests.post(url, headers=headers, data=json.dumps(data), verify=False)
+    print(f"data: {payload}")
+    print(f"JSON data: {json.dumps(payload)}")
+    response = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
 
     print(response.status_code)
 
