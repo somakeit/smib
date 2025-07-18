@@ -4,6 +4,7 @@ from logging import Logger
 
 from fastapi import FastAPI
 from slack_bolt.app.async_app import AsyncApp
+from starlette.responses import RedirectResponse
 from uvicorn import Config, Server
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,7 +47,8 @@ class HttpEventService:
             proxy_headers=True,
             forwarded_allow_ips=WEBSERVER_FORWARDED_ALLOW_IPS,
             headers=self.headers,
-            log_config=LOGGING_CONFIG
+            log_config=LOGGING_CONFIG,
+            access_log=False,
         )
 
     @lazy_property
@@ -65,13 +67,15 @@ class HttpEventService:
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
         self.fastapi_app.add_middleware(RequestHeaderLoggingMiddleware)
 
+
     async def start(self):
         # On start, force re-generate swagger docs
         self.fastapi_app.openapi_schema = None
         self.fastapi_app.openapi_tags = self.openapi_tags
-        self.fastapi_app.setup()
 
         self.apply_middlewares()
+
+        self.fastapi_app.setup()
 
         await self.uvicorn_server.serve()
 

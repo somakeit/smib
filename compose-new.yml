@@ -13,9 +13,20 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.smib.rule=PathPrefix(`/`)"
+
+      # API router (with PathPrefix and stripPrefix)
+      - "traefik.http.routers.smib.rule=PathPrefix(`${WEBSERVER_PATH_PREFIX:-/}`)"
       - "traefik.http.routers.smib.entrypoints=web"
-      - "traefik.http.services.smib.loadbalancer.server.port=${SMIB_WEBSERVER_INTERNAL_PORT:-80}"
+      - "traefik.http.services.smib.loadbalancer.server.port=${WEBSERVER_PORT:-80}"
+      - "traefik.http.middlewares.smib-stripprefix.stripprefix.prefixes=${WEBSERVER_PATH_PREFIX:-/}"
+      - "traefik.http.routers.smib.middlewares=smib-stripprefix@docker"
+      - "traefik.http.routers.smib.priority=5"   # lower priority for fallback
+
+      # Static files router (no stripPrefix)
+      - "traefik.http.routers.smib-static.rule=PathPrefix(`/static`)"
+      - "traefik.http.routers.smib-static.entrypoints=web"
+      - "traefik.http.routers.smib-static.priority=10"  # higher priority so /static is matched first
+
     networks:
       - smib-bridge-network
 
@@ -41,14 +52,11 @@ services:
     environment:
       ME_CONFIG_MONGODB_URL: ${ME_CONFIG_MONGODB_URL:-mongodb://smib-db:27017/}
       ME_CONFIG_SITE_BASEURL: /database/ui
-    ports:
-      - "${MONGO_DB_UI_PORT:-8081}:8081"
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.smib-db-ui.rule=PathPrefix(`/database/ui`)"
       - "traefik.http.routers.smib-db-ui.entrypoints=web"
-      - "traefik.http.services.smib-db-ui.loadbalancer.server.port=8081"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://0.0.0.0:8081/database/ui/status || exit 1"]
       interval: 30s
@@ -62,16 +70,17 @@ services:
   smib-proxy:
     container_name: smib-proxy
     hostname: smib-proxy
-    image: 11notes/traefik
+    image: traefik:3
     restart: unless-stopped
     command:
-      - --log.level=INFO
+      - --log.level=DEBUG
       - --providers.docker=true
       - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --providers.docker.network=smib-bridge-network
-      - --api=false
+      - --api.dashboard=false
+      - --api.debug=false
       - --providers.docker.constraints=Label("com.docker.compose.project", "smib")
       - --ping=true
     ports:
@@ -83,9 +92,8 @@ services:
 
   smib-socket-proxy:
     container_name: smib-socket-proxy
-    image: 11notes/socket-proxy
+    image:  tecnativa/docker-socket-proxy:edge
     restart: unless-stopped
-    user: "0:996"
     environment:
       - LOG_LEVEL=warning
       - EVENTS=1
@@ -94,7 +102,6 @@ services:
       - CONTAINERS=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "socket-proxy:/run/proxy"
     networks:
       - smib-bridge-network
 
