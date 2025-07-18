@@ -9,7 +9,7 @@ from smib.events.interfaces.http_event_interface import HttpEventInterface
 
 FAVICON_URL = "https://members.somakeit.org.uk/images/somakeit/favicon.ico"
 
-def register_x(http: HttpEventInterface):
+def register(http: HttpEventInterface):
     fastapi_app: FastAPI = http.service.fastapi_app
     app_title = fastapi_app.title
 
