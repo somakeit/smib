@@ -7,7 +7,7 @@ from uvicorn import Config, Server
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
     WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
-from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, RequestHeaderLoggingMiddleware
+from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, RequestLoggingMiddleware
 from smib.logging_ import LOGGING_CONFIG
 from smib.utilities.lazy_property import lazy_property
 
@@ -62,7 +62,7 @@ class HttpEventService:
 
     def apply_middlewares(self):
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
-        self.fastapi_app.add_middleware(RequestHeaderLoggingMiddleware)
+        self.fastapi_app.add_middleware(RequestLoggingMiddleware)
 
 
     async def start(self):

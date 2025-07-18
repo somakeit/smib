@@ -6,10 +6,10 @@ import logging
 from pathlib import Path
 
 from fastapi import HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 
+from smib.config import config
 from smib.events.interfaces.http_event_interface import HttpEventInterface
-from smib.config import config, PACKAGE_ROOT
 
 STATIC_FILES_DIRECTORY: Path = config('STATIC_FILES_DIRECTORY', default='static', cast=Path)
 
@@ -30,6 +30,6 @@ def register(http: HttpEventInterface):
     @http.get("/static/{rest_of_path:path}", include_in_schema=False)
     async def static_files(rest_of_path: str):
         file_path = resolved_static_directory_path / rest_of_path
-        if not file_path.exists():
+        if not rest_of_path or not file_path.exists():
             raise HTTPException(status_code=404, detail="File not found")
         return FileResponse(file_path)

@@ -24,6 +24,8 @@ WEBSERVER_PATH_PREFIX: str = config("WEBSERVER_PATH_PREFIX", default="/api")
 
 WEBSERVER_FORWARDED_ALLOW_IPS: list[str] = config("WEBSERVER_FORWARDED_ALLOW_IPS", default="*", cast=Csv())
 
+WEBSERVER_LOG_REQUEST_DETAILS: bool = config("WEBSERVER_LOG_REQUEST_DETAILS", default=False, cast=bool)
+
 MONGO_DB_HOST: str = config("MONGO_DB_HOST", default="localhost")
 MONGO_DB_PORT: int = config("MONGO_DB_PORT", cast=int, default=27017)
 MONGO_DB_NAME: str = config("MONGO_DB_NAME", default=PACKAGE_NAME)

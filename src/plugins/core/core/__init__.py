@@ -5,7 +5,7 @@ __author__ = "Sam Cork"
 from smib.config import PACKAGE_VERSION
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.http_event_interface import HttpEventInterface
-from .models import Versions
+from .models import Versions, PingPong
 
 
 def register(http: HttpEventInterface, database: DatabaseManager):
@@ -15,3 +15,8 @@ def register(http: HttpEventInterface, database: DatabaseManager):
             smib=PACKAGE_VERSION,
             mongo=await database.get_db_version()
         )
+
+    @http.get("/ping")
+    async def ping_pong() -> PingPong:
+        return PingPong()
+

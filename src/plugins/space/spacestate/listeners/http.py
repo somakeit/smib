@@ -27,7 +27,7 @@ def register(http: HttpEventInterface):
 
 
     @http.get("/space/state", response_model=SpaceState)
-    async def get_space_state():
+    async def get_space_state() -> SpaceState:
         """ Get the space state """
         logger.info("Received space state request.")
         space_state = await get_space_state_from_db()
@@ -48,7 +48,7 @@ def register(http: HttpEventInterface):
         await close_space(say)
 
     @http.get("/smib/event/space_state", deprecated=True)
-    async def get_space_state_from_smib_event(say: AsyncSay):
+    async def get_space_state_from_smib_event(say: AsyncSay) -> SpaceState:
         """ Get the space state """
         logger.info("Received legacy space state request (deprecated).")
         space_state = await get_space_state_from_db()
