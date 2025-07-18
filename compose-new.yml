@@ -77,12 +77,12 @@ services:
     ports:
       - "${SMIB_PROXY_EXTERNAL_PORT:-80}:80"
     depends_on:
-      - socket-proxy
+      - smib-socket-proxy
     networks:
       - smib-bridge-network
 
-  socket-proxy:
-    container_name: socket-proxy
+  smib-socket-proxy:
+    container_name: smib-socket-proxy
     image: 11notes/socket-proxy
     restart: unless-stopped
     user: "0:996"
