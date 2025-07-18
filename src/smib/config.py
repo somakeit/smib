@@ -20,7 +20,7 @@ SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET") or secrets.token_hex(16)
 
 WEBSERVER_HOST: str = config("WEBSERVER_HOST", default="0.0.0.0")
 WEBSERVER_PORT: int = config("WEBSERVER_PORT", cast=int, default=80)
-WEBSERVER_PATH_PREFIX: str = config("WEBSERVER_PATH_PREFIX", default="/")
+WEBSERVER_PATH_PREFIX: str = config("WEBSERVER_PATH_PREFIX", default="/api")
 
 WEBSERVER_FORWARDED_ALLOW_IPS: list[str] = config("WEBSERVER_FORWARDED_ALLOW_IPS", default="*", cast=Csv())
 

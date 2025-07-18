@@ -209,3 +209,4 @@ cython_debug/
 
 .output.txt
 static/
+db/

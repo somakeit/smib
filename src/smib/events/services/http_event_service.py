@@ -3,17 +3,14 @@ import socket
 from logging import Logger
 
 from fastapi import FastAPI
-from slack_bolt.app.async_app import AsyncApp
-from starlette.responses import RedirectResponse
 from uvicorn import Config, Server
-from fastapi.middleware import Middleware
-from fastapi.middleware.cors import CORSMiddleware
 
 from smib.config import WEBSERVER_HOST, WEBSERVER_PORT, PACKAGE_VERSION, PACKAGE_DISPLAY_NAME, PACKAGE_DESCRIPTION, \
     WEBSERVER_PATH_PREFIX, PACKAGE_NAME, WEBSERVER_FORWARDED_ALLOW_IPS
 from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, RequestHeaderLoggingMiddleware
-from smib.utilities.lazy_property import lazy_property
 from smib.logging_ import LOGGING_CONFIG
+from smib.utilities.lazy_property import lazy_property
+
 
 class HttpEventService:
     fastapi_app: FastAPI
@@ -36,7 +33,7 @@ class HttpEventService:
             title=PACKAGE_DISPLAY_NAME,
             description=PACKAGE_DESCRIPTION,
             root_path=WEBSERVER_PATH_PREFIX,
-            root_path_in_servers=False,
+            root_path_in_servers=True,
         )
 
     @lazy_property
