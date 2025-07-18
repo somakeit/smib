@@ -20,7 +20,7 @@ services:
     depends_on:
       - smib-db
     labels:
-      - "traefik.enable=true"
+      - "smib-traefik.enable=true"
       # API router
       - "traefik.http.routers.smib.rule=PathPrefix(`${WEBSERVER_PATH_PREFIX:-/api}`)"
       - "traefik.http.routers.smib.entrypoints=web"
@@ -60,7 +60,7 @@ services:
       ME_CONFIG_MONGODB_URL: ${ME_CONFIG_MONGODB_URL:-mongodb://smib-db:27017/}
       ME_CONFIG_SITE_BASEURL: /database/ui
     labels:
-      - "traefik.enable=true"
+      - "smib-traefik.enable=true"
       - "traefik.http.routers.smib-db-ui.rule=PathPrefix(`/database/ui`)"
       - "traefik.http.routers.smib-db-ui.entrypoints=web"
     healthcheck:
@@ -84,7 +84,7 @@ services:
       - --providers.docker.network=smib-bridge-network
       - --api.dashboard=false
       - --api.debug=false
-      - --providers.docker.constraints=Label("com.docker.compose.project", "smib")
+      - --providers.docker.constraints=Label("com.docker.compose.project", "smib") && Label(`smib-traefik.enable`, `true`)
       - --ping=true
     healthcheck:
       test: traefik healthcheck --ping
