@@ -99,19 +99,25 @@ async def main():
         # Initialise database
         await database_manager.initialise()
 
+        # Start services and wait for them to be ready
         services_task = asyncio.create_task(event_service_manager.start_all())
+        await asyncio.sleep(1)  # Give services time to initialize
+        
         shutdown_task = asyncio.create_task(shutdown_event.wait())
         
         try:
             # Wait for shutdown signal
             await shutdown_task
         finally:
-            # Once shutdown is triggered, cancel the services task
+            # First cancel the services task
             services_task.cancel()
             try:
                 await services_task
             except asyncio.CancelledError:
                 logger.info("Services shutdown gracefully")
+                
+            # Then stop all services properly
+            await event_service_manager.stop_all()
             
     except (KeyboardInterrupt, CancelledError, SystemExit) as e:
         logger.info(f"Received termination: {repr(e)}")
@@ -121,8 +127,10 @@ async def main():
     except Exception as e:
         logger.exception(f"Unexpected exception: {repr(e)}", exc_info=True)
     finally:
+        # Always unload plugins, regardless of how we got here
         plugin_lifecycle_manager.unload_plugins()
-        await event_service_manager.stop_all()
+
+    logger.info("Shutdown complete")
 
 if __name__ == '__main__':
     asyncio.run(main())
