@@ -79,7 +79,7 @@ services:
       - --log.level=DEBUG
       - --providers.docker=true
       - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
-      - --providers.docker.exposedbydefault=false
+      - --providers.docker.exposedbydefault=true
       - --entrypoints.web.address=:80
       - --providers.docker.network=smib-bridge-network
       - --api.dashboard=false
