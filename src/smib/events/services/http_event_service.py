@@ -74,6 +74,7 @@ class HttpEventService:
 
         self.fastapi_app.setup()
 
+        self.logger.info(f"Starting webserver with root path prefix '{WEBSERVER_PATH_PREFIX}'")
         await self.uvicorn_server.serve()
 
     async def stop(self):

@@ -23,11 +23,13 @@ from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPlug
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.loaders import create_default_plugin_loader
+from smib.signal_handler import register_signal_handlers
 from smib.utilities.environment import is_running_in_docker
 
 
 async def main():
     initialise_logging()
+    register_signal_handlers()
 
     bolt_app = AsyncApp(
         name=PACKAGE_DISPLAY_NAME,
