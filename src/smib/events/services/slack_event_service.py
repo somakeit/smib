@@ -19,7 +19,7 @@ class SlackEventService:
 
     @lazy_property
     def service(self) -> AsyncSocketModeHandler:
-        service = AsyncSocketModeHandler(self.bolt_app, app_token=SLACK_APP_TOKEN)
+        service = AsyncSocketModeHandler(self.bolt_app, app_token=SLACK_APP_TOKEN, logger=logging.getLogger("slack_bolt.AsyncSocketModeHandler"))
         service.client.on_message_listeners.append(self.log_number_of_connections)
         return service
 

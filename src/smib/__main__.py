@@ -34,7 +34,8 @@ async def main():
         token=SLACK_BOT_TOKEN,
         signing_secret=SIGNING_SECRET,
         raise_error_for_unhandled_request=True,
-        process_before_response=True
+        process_before_response=True,
+        logger=logging.getLogger("slack_bolt.AsyncApp")
     )
     bolt_app.error(slack_bolt_error_handler)
 
