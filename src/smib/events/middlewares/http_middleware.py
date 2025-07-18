@@ -32,7 +32,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         return False
 
 
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
+class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
     EXCLUDED_PATHS = {
         "/openapi.json",
         "/docs",
