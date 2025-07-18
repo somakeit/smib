@@ -28,6 +28,7 @@ RUN uv pip install -e .
 FROM python:3.13-slim-bookworm AS runtime
 
 RUN useradd --create-home --home-dir /home/smibuser smibuser
+
 USER smibuser
 
 WORKDIR /app
@@ -39,5 +40,8 @@ COPY --from=builder /app/.venv ./.venv
 # Set up environment variables for production
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 --start-period=10s \
+  CMD bash -c "echo > /dev/tcp/localhost/${SMIB_WEBSERVER_INTERNAL_PORT:-80} || exit 1"
 
 CMD ["python", "-m", "smib"]
