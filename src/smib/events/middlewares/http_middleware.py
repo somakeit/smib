@@ -52,7 +52,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         should_log = self.should_log_request(request)
         
         if should_log:
-            self.logger.debug(f"Received {request.method} request to {request.url.path}")
+            self.logger.debug(f"Received {request.method} request to {request.url.path} from {request.client.host}")
             self.logger.debug(f"Request Headers {pformat(request.headers.items())}")
             
             # Safely get request body as JSON
