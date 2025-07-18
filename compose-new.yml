@@ -1,0 +1,107 @@
+name: smib
+services:
+  smib:
+    container_name: smib
+    hostname: smib
+    image: smib
+    build: ${SMIB_BUILD_GIT_TAG:+https://github.com/somakeit/smib.git#}${SMIB_BUILD_GIT_TAG:-.}
+    env_file: .env
+    environment:
+      MONGO_DB_HOST: ${MONGO_DB_HOST:-smib-db}
+    depends_on:
+      - smib-db
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.smib.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.smib.entrypoints=web"
+      - "traefik.http.services.smib.loadbalancer.server.port=${SMIB_WEBSERVER_INTERNAL_PORT:-80}"
+    networks:
+      - smib-bridge-network
+
+  smib-db:
+    image: mongo:${MONGO_DB_TAG:-latest}
+    container_name: smib-db
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - smib-bridge-network
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  smib-db-ui:
+    image: mongo-express
+    container_name: smib-db-ui
+    depends_on:
+      - smib-db
+    env_file: .env
+    environment:
+      ME_CONFIG_MONGODB_URL: ${ME_CONFIG_MONGODB_URL:-mongodb://smib-db:27017/}
+      ME_CONFIG_SITE_BASEURL: /database/ui
+    ports:
+      - "${MONGO_DB_UI_PORT:-8081}:8081"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.smib-db-ui.rule=PathPrefix(`/database/ui`)"
+      - "traefik.http.routers.smib-db-ui.entrypoints=web"
+      - "traefik.http.services.smib-db-ui.loadbalancer.server.port=8081"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://0.0.0.0:8081/database/ui/status || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - smib-bridge-network
+
+  smib-proxy:
+    container_name: smib-proxy
+    hostname: smib-proxy
+    image: 11notes/traefik
+    restart: unless-stopped
+    command:
+      - --log.level=INFO
+      - --providers.docker=true
+      - --providers.docker.endpoint=tcp://socket-proxy:2375
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --providers.docker.network=smib-bridge-network
+      - --api=false
+      - --providers.docker.constraints=Label("com.docker.compose.project", "smib")
+      - --ping=true
+    ports:
+      - "${SMIB_PROXY_EXTERNAL_PORT:-80}:80"
+    depends_on:
+      - socket-proxy
+    networks:
+      - smib-bridge-network
+
+  socket-proxy:
+    container_name: socket-proxy
+    image: 11notes/socket-proxy
+    restart: unless-stopped
+    user: "0:996"
+    environment:
+      - LOG_LEVEL=warning
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - CONTAINERS=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "socket-proxy:/run/proxy"
+    networks:
+      - smib-bridge-network
+
+networks:
+  smib-bridge-network:
+    name: smib-bridge-network
+    driver: bridge
+
+volumes:
+  socket-proxy:
