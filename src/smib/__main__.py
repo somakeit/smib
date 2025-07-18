@@ -23,13 +23,14 @@ from smib.plugins.integrations.scheduled_plugin_integration import ScheduledPlug
 from smib.plugins.integrations.slack_plugin_integration import SlackPluginIntegration
 from smib.plugins.lifecycle_manager import PluginLifecycleManager
 from smib.plugins.loaders import create_default_plugin_loader
-from smib.signal_handler import register_signal_handlers
+from smib.signal_handler import register_signal_handlers, get_shutdown_event
 from smib.utilities.environment import is_running_in_docker
 
 
 async def main():
     initialise_logging()
     register_signal_handlers()
+    shutdown_event = get_shutdown_event()
 
     bolt_app = AsyncApp(
         name=PACKAGE_DISPLAY_NAME,
@@ -98,8 +99,20 @@ async def main():
         # Initialise database
         await database_manager.initialise()
 
-        # Start services
-        await event_service_manager.start_all()
+        services_task = asyncio.create_task(event_service_manager.start_all())
+        shutdown_task = asyncio.create_task(shutdown_event.wait())
+        
+        try:
+            # Wait for shutdown signal
+            await shutdown_task
+        finally:
+            # Once shutdown is triggered, cancel the services task
+            services_task.cancel()
+            try:
+                await services_task
+            except asyncio.CancelledError:
+                logger.info("Services shutdown gracefully")
+            
     except (KeyboardInterrupt, CancelledError, SystemExit) as e:
         logger.info(f"Received termination: {repr(e)}")
     except PyMongoError as e:

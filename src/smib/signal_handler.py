@@ -2,6 +2,18 @@ import asyncio
 import logging
 import signal
 import sys
+from typing import Optional
+
+# Global shutdown event
+_shutdown_event: Optional[asyncio.Event] = None
+
+
+def get_shutdown_event() -> asyncio.Event:
+    """Get the global shutdown event."""
+    global _shutdown_event
+    if _shutdown_event is None:
+        _shutdown_event = asyncio.Event()
+    return _shutdown_event
 
 
 def register_signal_handlers() -> None:
@@ -9,9 +21,11 @@ def register_signal_handlers() -> None:
     logger = logging.getLogger(__name__)
     
     def handle_sigterm(*args):
-        """Handle SIGTERM by raising SystemExit, which will trigger cleanup."""
+        """Handle SIGTERM by setting the shutdown event."""
         logger.info("Received SIGTERM signal")
-        raise SystemExit("SIGTERM received")
+        # Set the shutdown event
+        shutdown_event = get_shutdown_event()
+        shutdown_event.set()
 
     if sys.platform == 'win32':
         # Windows-specific signal handling
