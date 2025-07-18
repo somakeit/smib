@@ -38,12 +38,17 @@ services:
     image: mongo:${MONGO_DB_TAG:-latest}
     container_name: smib-db
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval \"db.adminCommand('ping').ok\" || mongo --quiet --eval \"db.adminCommand('ping').ok\""
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       - ./db/:/data/db
+
 
   smib-db-ui:
     <<: *common
@@ -81,6 +86,8 @@ services:
       - --api.debug=false
       - --providers.docker.constraints=Label("com.docker.compose.project", "smib")
       - --ping=true
+    healthcheck:
+      test: traefik healthcheck --ping
     ports:
       - "${SMIB_PROXY_EXTERNAL_PORT:-80}:80"
     depends_on:
@@ -90,6 +97,8 @@ services:
     <<: *common
     container_name: smib-socket-proxy
     image: tecnativa/docker-socket-proxy:edge
+    healthcheck:
+      test: wget --spider http://localhost:2375/version || exit 1
     environment:
       - LOG_LEVEL=warning
       - EVENTS=1
