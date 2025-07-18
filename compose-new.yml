@@ -67,7 +67,7 @@ services:
     command:
       - --log.level=INFO
       - --providers.docker=true
-      - --providers.docker.endpoint=tcp://socket-proxy:2375
+      - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --providers.docker.network=smib-bridge-network
