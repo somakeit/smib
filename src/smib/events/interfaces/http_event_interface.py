@@ -49,7 +49,7 @@ class HttpEventInterface:
         return decorator
 
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
-        def decorator(func: callable):
+        def decorator(func: Callable):
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
 
             @makefun.with_signature(http_function_signature,
