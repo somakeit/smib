@@ -41,7 +41,7 @@ COPY --from=builder /app/.venv ./.venv
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-HEALTHCHECK --interval=10s --timeout=5s --retries=3 --start-period=10s \
+HEALTHCHECK \
   CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_INTERNAL_PORT\", \"80\")}/openapi.json').status == 200 else exit(1)"
 
 CMD ["python", "-m", "smib"]

@@ -28,12 +28,13 @@ class HttpEventService:
 
     @lazy_property
     def fastapi_app(self) -> FastAPI:
+        root_path = WEBSERVER_PATH_PREFIX.rstrip('/')
         return FastAPI(
             version=PACKAGE_VERSION,
             title=PACKAGE_DISPLAY_NAME,
             description=PACKAGE_DESCRIPTION,
-            root_path=WEBSERVER_PATH_PREFIX,
-            root_path_in_servers=True,
+            root_path=root_path,
+            root_path_in_servers=bool(root_path),
         )
 
     @lazy_property

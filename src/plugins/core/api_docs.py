@@ -22,11 +22,11 @@ def register(http: HttpEventInterface):
 
     @http.get("/docs", include_in_schema=False)
     async def overridden_swagger():
-        return get_swagger_ui_html(openapi_url=fastapi_app.root_path + "/openapi.json", title=f"{app_title} - Swagger UI", swagger_favicon_url=FAVICON_URL)
+        return get_swagger_ui_html(openapi_url=fastapi_app.root_path.rstrip('/') + "/openapi.json", title=f"{app_title} - Swagger UI", swagger_favicon_url=FAVICON_URL)
 
     @http.get("/redoc", include_in_schema=False)
     async def overridden_redoc():
-        return get_redoc_html(openapi_url=fastapi_app.root_path + "/openapi.json", title=f"{app_title} - ReDoc", redoc_favicon_url=FAVICON_URL)
+        return get_redoc_html(openapi_url=fastapi_app.root_path.rstrip('/') + "/openapi.json", title=f"{app_title} - ReDoc", redoc_favicon_url=FAVICON_URL)
 
 def remove_route_by_name(app, route_name: str):
     routes_to_remove = [route for route in app.routes if route.name == route_name]

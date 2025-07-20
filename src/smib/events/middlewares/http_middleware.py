@@ -46,7 +46,7 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def should_log_request(self, request: Request) -> bool:
-        all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'] + path for path in self.EXCLUDED_PATHS}
+        all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'].rstrip('/') + path for path in self.EXCLUDED_PATHS}
         return WEBSERVER_LOG_REQUEST_DETAILS and request.url.path not in all_excluded_paths
 
     async def dispatch(self, request: Request, call_next) -> Response:
