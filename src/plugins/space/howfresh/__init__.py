@@ -12,6 +12,7 @@ from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.web.async_slack_response import AsyncSlackResponse
 
 from smib.db.manager import DatabaseManager
+from smib.utilities import get_humanized_time
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
 from .config import HOW_FRESH_PROFILE
 
@@ -21,34 +22,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__display_name__)
 
 def register(slack: AsyncApp, database: DatabaseManager, schedule: ScheduledEventInterface):
-
-    def build_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorUnit") -> list[Block]:
-        blocks: list[Block] = [
-            SectionBlock(text=MarkdownTextObject(text=f"*Sensor Readings ({sensor_log.device}):*")),
-            DividerBlock(),
-        ]
-
-        sensor_data = sensor_log.data.model_dump()
-        units_data = units.sensors.model_dump()
-
-        for sensor_name, readings in sensor_data.items():
-            sensor_text = f"*{sensor_name}*\n"
-            readings_dict = readings
-
-            for measurement, value in readings_dict.items():
-                unit = units_data[sensor_name][measurement]
-                # Format float values to 2 decimal places
-                formatted_value = f"{value:.2f}" if isinstance(value, float) else str(value)
-                sensor_text += f"• {normalize_measurement_name(measurement)}: {formatted_value} {unit}\n"
-
-            blocks.append(SectionBlock(text=MarkdownTextObject(text=sensor_text)))
-            blocks.append(DividerBlock())
-
-        # Remove the last divider block for cleaner look
-        blocks.pop()
-
-        return blocks
-
     async def how_fresh_loading(ack: AsyncAck, client: AsyncWebClient, command: dict, context: dict):
         await ack()
 
@@ -116,5 +89,33 @@ def normalize_measurement_name(name: str) -> str:
         return special_cases[name.lower()]
 
     return ' '.join(word.capitalize() for word in name.split('_'))
+
+def build_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorUnit") -> list[Block]:
+    blocks: list[Block] = [
+        SectionBlock(text=MarkdownTextObject(text=f"*Sensor Readings ({sensor_log.device}):*\n"
+                                                  f"_Last updated {get_humanized_time(sensor_log.timestamp)}_")),
+        DividerBlock(),
+    ]
+
+    sensor_data = sensor_log.data.model_dump()
+    units_data = units.sensors.model_dump()
+
+    for sensor_name, readings in sensor_data.items():
+        sensor_text = f"*{sensor_name}*\n"
+        readings_dict = readings
+
+        for measurement, value in readings_dict.items():
+            unit = units_data[sensor_name][measurement]
+            # Format float values to 2 decimal places
+            formatted_value = f"{value:.2f}" if isinstance(value, float) else str(value)
+            sensor_text += f"• {normalize_measurement_name(measurement)}: {formatted_value} {unit}\n"
+
+        blocks.append(SectionBlock(text=MarkdownTextObject(text=sensor_text)))
+        blocks.append(DividerBlock())
+
+    # Remove the last divider block for cleaner look
+    blocks.pop()
+
+    return blocks
 
 
