@@ -1,12 +1,14 @@
 import logging
-from pprint import pformat, pprint
 import time
+from pprint import pformat
+
 from fastapi import Request, Response
+from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
-from starlette.concurrency import iterate_in_threadpool
 
 from smib.config import WEBSERVER_LOG_REQUEST_DETAILS
+from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):

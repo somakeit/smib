@@ -65,7 +65,6 @@ class HttpEventService:
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
         self.fastapi_app.add_middleware(HttpRequestLoggingMiddleware)
 
-
     async def start(self):
         # On start, force re-generate swagger docs
         self.fastapi_app.openapi_schema = None

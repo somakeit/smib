@@ -9,6 +9,7 @@ from slack_bolt.kwargs_injection.async_args import AsyncArgs
 from starlette.routing import Match, BaseRoute
 
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 from smib.events.services.http_event_service import HttpEventService
 
@@ -58,7 +59,7 @@ class HttpEventInterface:
             if funcs and (ack or lazy):
                 raise TypeError("Default decorator usage cannot be used at same time as Lazy listener")
 
-            func = funcs[0] or ack
+            func = ack or funcs[0]
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
 
             @makefun.with_signature(http_function_signature,
@@ -68,7 +69,14 @@ class HttpEventInterface:
                                     )
             @wraps(func)
             async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
-                request_value = extract_request_parameter_value(http_function_signature, wrapper_args, wrapper_kwargs)
+                request_value, request_parameter_name = extract_request_parameter(http_function_signature, wrapper_args,
+                                                                                  wrapper_kwargs)
+
+                # Enforce a copyable request object
+                # TODO - This needs proper testing
+                request_value = CopyableStarletteRequest(request_value)
+                wrapper_kwargs[request_parameter_name] = request_value
+
                 response, response_kwargs = await self.handler.handle(request_value, wrapper_kwargs)
                 wrapper_kwargs.update(response_kwargs)
                 return response
@@ -129,7 +137,7 @@ def generate_route_matcher(route: BaseRoute) -> callable:
     return matcher
 
 
-def extract_request_parameter_value(signature: Signature, args, kwargs) -> Request:
+def extract_request_parameter(signature: Signature, args, kwargs) -> tuple[Request, str]:
     bound = signature.bind(*args, **kwargs)
     bound.apply_defaults()
 
@@ -138,7 +146,7 @@ def extract_request_parameter_value(signature: Signature, args, kwargs) -> Reque
         None
     )
     request_value = bound.arguments.get(request_parameter.name) if request_parameter else None
-    return request_value
+    return request_value, request_parameter.name
 
 
 def clean_signature(signature: Signature) -> Signature:
