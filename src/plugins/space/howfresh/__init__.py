@@ -6,7 +6,7 @@ from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.context.ack.async_ack import AsyncAck
 from slack_sdk.web.async_client import AsyncWebClient
 
-from plugins.space.smibhid.models import SensorLog
+from plugins.space.smibhid.sensor.models import SensorLog
 from .config import HOW_FRESH_PROFILE
 
 def register(slack: AsyncApp):
