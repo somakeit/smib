@@ -50,7 +50,15 @@ class HttpEventInterface:
 
     # TODO - Add support for slack lazy listeners
     def __route_decorator(self, path: str, methods: list, *args, **kwargs):
-        def decorator(func: Callable):
+        def decorator(*funcs: list[Callable], ack: Callable | None = None, lazy: list[Callable] | None = None):
+            if funcs and len(funcs) > 1:
+                raise TypeError("Only 1 function may be passed to the decorator")
+            if not funcs and ((ack is None and lazy is None) or len(lazy) == 0):
+                raise TypeError("No callables provided to the decorator")
+            if funcs and (ack or lazy):
+                raise TypeError("Default decorator usage cannot be used at same time as Lazy listener")
+
+            func = funcs[0] or ack
             http_function_signature: Signature = clean_signature(Signature.from_callable(func))
 
             @makefun.with_signature(http_function_signature,
@@ -71,7 +79,15 @@ class HttpEventInterface:
             matcher: callable = generate_route_matcher(route)
             response_preserving_func = preserve_http_response(func)
 
-            self.bolt_app.event('http', matchers=[matcher])(response_preserving_func)
+            args_: list
+            lazy_kwargs: dict
+            if ack:
+                args_ = []
+                lazy_kwargs = {"ack": response_preserving_func, "lazy": lazy}
+            else:
+                args_ = [response_preserving_func]
+                lazy_kwargs = {}
+            self.bolt_app.event('http', matchers=[matcher])(*args_, **lazy_kwargs)
             return func
 
         return decorator
