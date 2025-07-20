@@ -60,6 +60,7 @@ class SensorLog(Document, SensorLogBase):
     id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
     timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
+    received_timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)], default_factory=lambda: datetime.now(UTC)), Indexed()]
 
     @classmethod
     def from_api(cls, api_model: SensorLogReading, device: str):
