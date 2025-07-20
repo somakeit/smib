@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import Header, HTTPException
 
-from .models import SensorLogReading, SensorLog, SensorLogRequest
+from .models import SensorLogReading, SensorLog, SensorLogRequest, SensorUnits
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from ..common import DeviceHostnameHeader
 
@@ -19,9 +19,14 @@ def register(http: HttpEventInterface):
         logger.debug(f"Logging {len(db_logs)} sensor log(s) from {x_smibhid_hostname} to database")
         await SensorLog.insert_many(db_logs)
 
+        await SensorUnits.upsert_from_api(data.units, x_smibhid_hostname)
+
     @http.post('/smib/event/smibhid_sensor_log', deprecated=True)
     async def log_sensor_from_smib_event(data: SensorLogRequest, device_hostname: DeviceHostnameHeader):
         """ Logs a sensor event to the database """
         db_logs = [SensorLog.from_api(log, device_hostname) for log in data.readings]
         logger.debug(f"Logging {len(db_logs)} sensor log(s) from {device_hostname} to database")
         await SensorLog.insert_many(db_logs)
+
+        await SensorUnits.upsert_from_api(data.units, device_hostname)
+
