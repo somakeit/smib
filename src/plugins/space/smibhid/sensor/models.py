@@ -1,6 +1,7 @@
 from datetime import datetime, UTC
-from typing import Annotated, Union
+from typing import Annotated, Union, Optional
 
+import pymongo
 from beanie import Document, PydanticObjectId, Indexed
 from beanie.odm.operators.update.general import Set
 from pydantic import BaseModel, Field, AfterValidator, RootModel, ConfigDict
@@ -16,11 +17,11 @@ class SensorReading(RootModel):
 class SensorDataMap(RootModel):
     root: dict[str, SensorReading]
 
-class SensorUnit(RootModel):
+class SensorUnit_(RootModel):
     root: dict[str, str]
 
 class SensorUnitMap(RootModel):
-    root: dict[str, SensorUnit]
+    root: dict[str, SensorUnit_]
 
 
 # --- Models ---
@@ -88,22 +89,44 @@ class SensorLog(Document, SensorLogBase):
             device=device
         )
 
+    @classmethod
+    async def get_latest_log(cls, /,device: str | None = None) -> Optional["SensorLog"]:
+        if device:
+            return await cls.find_one(cls.device == device, sort=[(cls.timestamp, pymongo.DESCENDING)])
+        return await cls.find_one(sort=[(cls.timestamp, pymongo.DESCENDING)])
+
     class Settings:
         name = "smibhid_sensor_log"
 
-class SensorUnits(Document):
+class SensorUnit(Document):
     id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname"), Indexed()]
-    sensors: Annotated[SensorUnitMap, Field(description="Sensor Units")]
+    sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", examples=[{
+        "SCD30": {
+            "co2": "ppm",
+            "temperature": "C",
+            "relative_humidity": "%"
+        },
+        "BME280": {
+            "pressure": "hPa",
+            "humidity": "%",
+            "temperature": "C"
+        }
+    }])]
+
     created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
     updated_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
 
     @classmethod
-    async def upsert_from_api(cls, data: SensorUnitMap, device: str) -> "SensorUnits":
-        return await SensorUnits.find_one({"device": device}).upsert(
-            Set({"sensors": data, "updated_at": datetime.now(UTC)}),
-            on_insert=SensorUnits(device=device, sensors=data, updated_at=datetime.now(UTC), created_at=datetime.now(UTC))
+    async def upsert_from_api(cls, data: SensorUnitMap, device: str) -> "SensorUnit":
+        return await cls.find_one(cls.device == device).upsert(
+            Set({cls.sensors: data, cls.updated_at: datetime.now(UTC)}),
+            on_insert=SensorUnit(device=device, sensors=data, updated_at=datetime.now(UTC), created_at=datetime.now(UTC))
         )
+
+    @classmethod
+    async def get_for_device(cls, /,device: str | None = None) -> Optional["SensorUnit"]:
+        return await cls.find_one(cls.device == device)
 
     class Settings:
         name = "smibhid_sensor_units"
