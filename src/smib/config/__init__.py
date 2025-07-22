@@ -16,6 +16,7 @@ _logger = logging_lib.getLogger(__name__)
 try:
     logging = LoggingSettings()
     initialise_logging(logging.log_level)
+
     project = ProjectSettings()
     general = GeneralSettings()
     slack = SlackSettings()

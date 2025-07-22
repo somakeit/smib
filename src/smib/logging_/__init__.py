@@ -31,9 +31,6 @@ def get_logging_config(log_level: str = "DEBUG") -> dict:
             "smib": {
                 "level": "DEBUG"
             },
-            "Config Init": {
-              "level": "DEBUG"
-            },
             "slack_bolt": {
                 "level": "WARNING",
                 "propagate": False
