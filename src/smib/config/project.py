@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import DEFAULT_VERSION
 
 from pydantic import computed_field
 from pydantic_settings import (
@@ -7,14 +8,14 @@ from pydantic_settings import (
     BaseSettings,
 )
 
-from smib.config._version_pydantic_annotation import _VersionPydanticAnnotation
 from smib.utilities.package import get_package_version, get_package_root
 
+DEFAULT_VERSION = "0.0.0"
 
 class _BaseProjectSettings(BaseSettings):
     name: str = ""
     description: str = ""
-    version: _VersionPydanticAnnotation = ""
+    version: str = DEFAULT_VERSION
 
     model_config = SettingsConfigDict(
         pyproject_toml_table_header=("project",),
@@ -58,7 +59,7 @@ class _ToolSmibSettings(BaseSettings):
 class ProjectSettings(BaseSettings):
     name: str = ""
     description: str = ""
-    version: str = ""
+    version: str = DEFAULT_VERSION
     display_name: str = ""
 
     model_config = SettingsConfigDict(extra="ignore")

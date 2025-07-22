@@ -1,6 +1,5 @@
 [project]
 name = "smib"
-version = "2.0.dev1"
 description = "The SoMakeIt Bot"
 requires-python = ">=3.13,<4.0.0"
 authors = [
@@ -23,12 +22,21 @@ dependencies = [
     "semver>=3.0.4",
 ]
 
+dynamic = ["version"]
+
 [tool.smib]
 display_name = "S.M.I.B."
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.vcs]
+tag-pattern = "v*"
+fallback-version = "0.0.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/smib"]

@@ -44,6 +44,9 @@ async def main():
     bolt_app.error(slack_bolt_error_handler)
 
     logger = logging.getLogger(__name__)
+
+    logger.info(f"Starting {project.display_name} v{project.version}")
+
     logger.info(f"Running in docker: {is_running_in_docker()}")
 
     # Most of the slack stuff is handled by the SlackBolt Framework

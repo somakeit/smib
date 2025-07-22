@@ -11,7 +11,7 @@ class BoltRequestMode(StrEnum):
     SCHEDULED = 'scheduled'
 
 def get_slack_signature_headers(body: str | bytes) -> dict[str, str]:
-    verifier = SignatureVerifier(slack.signing_secret)
+    verifier = SignatureVerifier(slack.signing_secret.get_secret_value())
     timestamp = str(int(verifier.clock.now()))
     headers = {
         "x-slack-request-timestamp": timestamp,
