@@ -4,7 +4,7 @@ from logging import Logger
 from typing import TypeVar, Any, Callable
 
 from beanie import init_beanie, Document
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from pymongo.errors import PyMongoError
 
 from smib.config import MONGO_DB_URL, MONGO_DB_NAME
@@ -26,7 +26,7 @@ def filter_not_beanie(model: type[Document]) -> bool:
 class DatabaseManager:
     def __init__(self, db_name: str = MONGO_DB_NAME) -> None:
         self.db_name: str = db_name
-        self.client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(MONGO_DB_URL)
+        self.client: AsyncMongoClient = AsyncMongoClient(MONGO_DB_URL)
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
         self._document_filters: list[Callable[[type[Document]], bool]] = []
 
