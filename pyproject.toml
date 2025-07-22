@@ -5,6 +5,11 @@ requires-python = ">=3.13,<4.0.0"
 authors = [
     { name = "Sam Cork", email = "sam57719@gmail.com" }
 ]
+license = "MIT"
+license-files = { type = "Apache-2.0", path = "LICENSE" }
+keywords = ["slack", "bot", "python"]
+readme = "README.md"
+
 dependencies = [
     "slack-bolt>=1.20.1,<2.0.0",
     "asyncio>=3.4.3,<4.0.0",

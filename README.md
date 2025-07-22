@@ -15,6 +15,8 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 
 ## Setup and Configuration
 
+For a comprehensive list of all configuration settings, see [SETTINGS.md](SETTINGS.md).
+
 ### Slack App Creation
 - If you don't already have a Slack Workspace, [create one](https://slack.com/get-started?entry_point=help_center#/createnew).
 - Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](slack-manifest.yaml) and install it into your workspace.
@@ -41,43 +43,25 @@ The easiest way to run SMIB is with Docker Compose:
     - e.g. `SMIB_BUILD_GIT_TAG=v2.0.0` or `SMIB_BUILD_GIT_TAG=master`
   - `docker compose up -d --build`
 
+#### Proxy Configuration
+SMIB includes a built-in Traefik reverse proxy that handles routing to the various services:
+- API endpoints (default: `/api`)
+- Static files (at `/static`)
+- MongoDB Express UI (at `/database/ui`)
+
+The proxy configuration can be customized with these environment variables:
+- `SMIB_PROXY_EXTERNAL_PORT`: The external port for the proxy (default: `80`)
+- `SMIB_PROXY_TRUSTED_PROXIES`: Trusted IPs for forwarded headers (important if behind another proxy)
+- `WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
+
+For more detailed proxy and webserver configuration options, see [SETTINGS.md](SETTINGS.md).
+
 > [!IMPORTANT]
 > If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
 > 
 > On a 64-bit Raspberry Pi its `4.4.18`, so the following environment variable will need to be set: `MONGO_DB_TAG=4.4.18`.
 > 
 > The easiest way to check is by starting up the MongoDB container and checking the logs.
-
-### Environment Variables
-Here are all the SMIB environment variables, along with some other ones that are used in the docker-compose files to make the stack work.
-
-| Variable | Description | Example                    | Default | Where Used |
-|----------|-------------|----------------------------|---------|------------|
-| **Slack Configuration** ||                            |||
-| `SLACK_BOT_TOKEN` | Slack Bot User OAuth Token | `xoxb-1234567890-...`      | *Required* | SMIB |
-| `SLACK_APP_TOKEN` | Slack App-Level Token | `xapp-1-A1234...`          | *Required* | SMIB |
-| `SLACK_SIGNING_SECRET` | Slack Signing Secret for Request Verification | `a123b456c789...`          | Auto-generated | SMIB |
-| **Webserver Configuration** ||                            |||
-| `WEBSERVER_HOST` | Host address for the web server | `0.0.0.0`                  | `127.0.0.1` | SMIB |
-| `WEBSERVER_PORT` | Port for the web server | `8000`                     | `80` | SMIB |
-| `WEBSERVER_PATH_PREFIX` | URL path prefix for all endpoints | `/api/v1`                  | `/` | SMIB |
-| `WEBSERVER_FORWARDED_ALLOW_IPS` | IPs allowed for proxy forwarding | `*` or `1.2.3.4,5.6.7.8`   | `*` | SMIB |
-| **MongoDB Configuration** ||                            |||
-| `MONGO_DB_HOST` | MongoDB server hostname | `mongodb.example.com`      | `localhost` | SMIB |
-| `MONGO_DB_PORT` | MongoDB server port | `27017`                    | `27017` | SMIB |
-| `MONGO_DB_NAME` | MongoDB database name | `smib_prod`                | `smib` | SMIB |
-| **Logging** ||                            |||
-| `ROOT_LOG_LEVEL` | Root logger level | `DEBUG`                    | `INFO` | SMIB |
-| **Docker Build Configuration** ||                            |||
-| `SMIB_BUILD_GIT_TAG` | Git tag/branch to build from | `master` or `v1.0.0`       | `.` | Docker Compose |
-| **Docker Service Configuration** ||                            |||
-| `SMIB_WEBSERVER_EXTERNAL_PORT` | External port mapping for the web server | `8080`                     | `80` | Docker Compose |
-| `SMIB_WEBSERVER_INTERNAL_PORT` | Internal container port for the web server | `8000`                     | `80` | Docker Compose |
-| **MongoDB Docker Configuration** ||                            |||
-| `MONGO_DB_TAG` | MongoDB Docker image tag | `6.0`                      | `latest` | Docker Compose |
-| **MongoDB Express UI Configuration** ||                            |||
-| `MONGO_DB_UI_PORT` | Port for MongoDB Express web interface | `8081`                     | `8081` | Docker Compose |
-| `ME_CONFIG_MONGODB_URL` | MongoDB connection URL for Express UI | `mongodb://smib-db:27017/` | `mongodb://smib-db:27017/` | Docker Compose |
 
 ## SMIBHID
 [SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
