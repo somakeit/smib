@@ -39,9 +39,5 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
-[tool.hatch.version.vcs]
-tag-pattern = "v*"
-fallback-version = "0.0.0"
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/smib"]
