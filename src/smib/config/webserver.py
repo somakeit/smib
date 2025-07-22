@@ -8,7 +8,7 @@ class WebserverSettings(EnvBaseSettings):
     host: str = "0.0.0.0"
     port: int = 80
     path_prefix: str = "/api"
-    forwarded_allow_ips: str = "*"
+    forwarded_allow_ips: list[str] = ["*",]
     log_request_details: bool = False
 
     model_config = {
