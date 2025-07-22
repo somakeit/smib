@@ -23,10 +23,10 @@ For a comprehensive list of all configuration settings, see [SETTINGS.md](SETTIN
 - Once created, go to your [installed apps list](https://api.slack.com/apps) and select the newly installed app.
   - Find the `App-Level Tokens` section of the page and click `Generate Token and Scopes`.
     - Create a token with the `connections:write` scope. This allows SMIB to establish a Websocket connection to Slack.
-    - Make sure to copy this token, as this will be used as your `SLACK_APP_TOKEN` environment variable. This should start with `xapp-`
+    - Make sure to copy this token, as this will be used as your `SMIB_SLACK_APP_TOKEN` environment variable. This should start with `xapp-`
   - On the side navigation panel, click the `OAuth and Permissions` button.
     - You should find a pre-generated `Bot User OAuth Token` under the `OAuth Tokens` section of this page.
-    - Make sure to copy this token, as this will be used as your `SLACK_BOT_TOKEN` environment variable. This should start with `xapp-`
+    - Make sure to copy this token, as this will be used as your `SMIB_SLACK_BOT_TOKEN` environment variable. This should start with `xoxb-`
 
 ### Running with Docker
 The easiest way to run SMIB is with Docker Compose:
@@ -52,14 +52,14 @@ SMIB includes a built-in Traefik reverse proxy that handles routing to the vario
 The proxy configuration can be customized with these environment variables:
 - `SMIB_PROXY_EXTERNAL_PORT`: The external port for the proxy (default: `80`)
 - `SMIB_PROXY_TRUSTED_PROXIES`: Trusted IPs for forwarded headers (important if behind another proxy)
-- `WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
+- `SMIB_WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
 
 For more detailed proxy and webserver configuration options, see [SETTINGS.md](SETTINGS.md).
 
 > [!IMPORTANT]
 > If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
 > 
-> On a 64-bit Raspberry Pi its `4.4.18`, so the following environment variable will need to be set: `MONGO_DB_TAG=4.4.18`.
+> On a 64-bit Raspberry Pi its `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
 > 
 > The easiest way to check is by starting up the MongoDB container and checking the logs.
 

@@ -34,6 +34,21 @@ This document provides a comprehensive overview of all configurable settings in 
 | SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all) | `[10.0.0.1, 192.168.1.1]` | `[*]` |
 | SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests | `true` | `false` |
 
+## Docker Compose Settings
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_BUILD_GIT_TAG | Git tag or branch to build from when using Docker Compose | `v2.0.0` or `master` | Current directory (`.`) |
+| SMIB_COMPOSE_MONGO_DB_TAG | MongoDB container version tag | `4.4.18` | `latest` |
+| SMIB_COMPOSE_ME_MONGO_DB_URL | MongoDB connection URL for Mongo Express | `mongodb://username:password@smib-db:27017/` | `mongodb://smib-db:27017/` |
+
+## Proxy Settings
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_PROXY_EXTERNAL_PORT | External port for the Traefik proxy | `8080` | `80` |
+| SMIB_PROXY_TRUSTED_PROXIES | Trusted IPs for forwarded headers in Traefik | `10.0.0.1,192.168.1.1` | None |
+
 ## Plugin Settings
 
 ### Space State Plugin
