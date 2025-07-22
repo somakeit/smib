@@ -1,5 +1,4 @@
 from pathlib import Path
-from zipfile import DEFAULT_VERSION
 
 from pydantic import computed_field
 from pydantic_settings import (

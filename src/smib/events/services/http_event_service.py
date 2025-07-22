@@ -5,9 +5,9 @@ from logging import Logger
 from fastapi import FastAPI
 from uvicorn import Config, Server
 
-from smib.config import webserver, project
+from smib.config import webserver, project, general
 from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, HttpRequestLoggingMiddleware
-from smib.logging_ import LOGGING_CONFIG
+from smib.logging_ import get_logging_config
 from smib.utilities.lazy_property import lazy_property
 
 
@@ -44,7 +44,7 @@ class HttpEventService:
             proxy_headers=True,
             forwarded_allow_ips=webserver.forwarded_allow_ips,
             headers=self.headers,
-            log_config=LOGGING_CONFIG,
+            log_config=get_logging_config(general.log_level),
             access_log=False,
         )
 

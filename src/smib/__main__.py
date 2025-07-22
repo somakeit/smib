@@ -6,7 +6,6 @@ from pprint import pprint
 from pymongo.errors import PyMongoError
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import project, slack
 from smib.db.manager import DatabaseManager
 from smib.error_handler import slack_bolt_error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
@@ -29,9 +28,10 @@ from smib.utilities.environment import is_running_in_docker
 
 
 async def main():
-    initialise_logging()
     register_signal_handlers()
     shutdown_event = get_shutdown_event()
+
+    from smib.config import project, slack
 
     bolt_app = AsyncApp(
         name=project.display_name,
