@@ -8,15 +8,18 @@ from pathlib import Path
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
-from smib.config import config
+from smib.config import EnvBaseSettings
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 
-STATIC_FILES_DIRECTORY: Path = config('STATIC_FILES_DIRECTORY', default='static', cast=Path)
+class StaticFilesPluginSettings(EnvBaseSettings):
+    static_files_directory: Path = "static"
+
+config = StaticFilesPluginSettings()
 
 logger = logging.getLogger(__display_name__)
 
 def register(http: HttpEventInterface):
-    resolved_static_directory_path: Path = STATIC_FILES_DIRECTORY.resolve()
+    resolved_static_directory_path: Path = config.static_files_directory.resolve()
     logger.info(f"Resolved static files directory to {resolved_static_directory_path}")
     if not resolved_static_directory_path.exists():
         logger.debug(f"Creating static files directory at {resolved_static_directory_path}")

@@ -1,3 +1,10 @@
-from smib.config import config
+from smib.config import EnvBaseSettings
 
-SPACE_OPEN_ANNOUNCE_CHANNEL_ID: str = config('SPACE_OPEN_ANNOUNCE_CHANNEL_ID', default='space-open-announce')
+class SpaceStatePluginConfig(EnvBaseSettings):
+    space_open_announce_channel_id: str = "space-open-announce"
+
+    model_config = {
+        "env_prefix": "SMIB_PLUGIN_SPACE_STATE_"
+    }
+
+config = SpaceStatePluginConfig()

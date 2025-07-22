@@ -1,11 +1,12 @@
 import asyncio
 import logging
 from asyncio import CancelledError
+from pprint import pprint
 
 from pymongo.errors import PyMongoError
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import SLACK_BOT_TOKEN, PACKAGE_DISPLAY_NAME, SIGNING_SECRET
+from smib.config import project, slack
 from smib.db.manager import DatabaseManager
 from smib.error_handler import slack_bolt_error_handler
 from smib.events.handlers.http_event_handler import HttpEventHandler
@@ -33,9 +34,9 @@ async def main():
     shutdown_event = get_shutdown_event()
 
     bolt_app = AsyncApp(
-        name=PACKAGE_DISPLAY_NAME,
-        token=SLACK_BOT_TOKEN,
-        signing_secret=SIGNING_SECRET,
+        name=project.display_name,
+        token=slack.bot_token.get_secret_value(),
+        signing_secret=slack.signing_secret.get_secret_value(),
         raise_error_for_unhandled_request=True,
         process_before_response=True,
         logger=logging.getLogger("slack_bolt.AsyncApp")

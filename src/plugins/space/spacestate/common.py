@@ -2,7 +2,7 @@ import logging
 
 from slack_bolt.context.say.async_say import AsyncSay
 
-from .config import SPACE_OPEN_ANNOUNCE_CHANNEL_ID
+from .config import config
 from .models import SpaceState, SpaceStateOpen, SpaceStateEnum, SpaceStateHistory
 
 logger = logging.getLogger("Space State Plugin - Common")
@@ -28,10 +28,10 @@ async def send_space_open_announcement(say: AsyncSay, space_open_params: SpaceSt
     if space_open_params.hours:
         message += f" (For about {space_open_params.hours}h)"
 
-    await say(message, channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    await say(message, channel=config.space_open_announce_channel_id)
 
 async def send_space_closed_announcement(say: AsyncSay) -> None:
-    await say("Space Closed!", channel=SPACE_OPEN_ANNOUNCE_CHANNEL_ID)
+    await say("Space Closed!", channel=config.space_open_announce_channel_id)
 
 async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
     new_state: SpaceStateEnum = SpaceStateEnum.OPEN

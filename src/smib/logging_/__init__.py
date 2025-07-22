@@ -1,7 +1,7 @@
 import logging
 import logging.config
 
-from smib.config import ROOT_LOG_LEVEL
+from smib.config import general
 from smib.utilities.environment import is_running_in_docker
 
 # Logger configuration in dictConfig format
@@ -22,12 +22,12 @@ LOGGING_CONFIG = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "docker" if is_running_in_docker() else "default",
-            "level": ROOT_LOG_LEVEL,
+            "level": general.log_level,
         },
     },
     "root": {
         "handlers": ["console"],
-        "level": ROOT_LOG_LEVEL,
+        "level": general.log_level,
     },
     "loggers": {
         "smib": {

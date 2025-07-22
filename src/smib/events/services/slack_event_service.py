@@ -6,7 +6,7 @@ from aiohttp import WSMessage
 from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import SLACK_APP_TOKEN
+from smib.config import slack
 from smib.utilities.lazy_property import lazy_property
 
 
@@ -19,7 +19,7 @@ class SlackEventService:
 
     @lazy_property
     def service(self) -> AsyncSocketModeHandler:
-        service = AsyncSocketModeHandler(self.bolt_app, app_token=SLACK_APP_TOKEN, logger=logging.getLogger("slack_bolt.AsyncSocketModeHandler"))
+        service = AsyncSocketModeHandler(self.bolt_app, app_token=slack.app_token.get_secret_value(), logger=logging.getLogger("slack_bolt.AsyncSocketModeHandler"))
         service.client.on_message_listeners.append(self.log_number_of_connections)
         return service
 

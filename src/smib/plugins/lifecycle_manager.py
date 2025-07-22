@@ -7,7 +7,7 @@ from typing import List, Optional, Union
 
 from slack_bolt.app.async_app import AsyncApp
 
-from smib.config import PLUGINS_DIRECTORY
+from smib.config import general
 from smib.plugins.plugin import Plugin
 from smib.plugins.loaders import PluginLoader, create_default_plugin_loader
 from smib.utilities.dynamic_caller import dynamic_caller
@@ -18,7 +18,7 @@ class PluginLifecycleManager:
     def __init__(self, bolt_app: AsyncApp, plugin_loader: Optional[PluginLoader] = None):
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
-        self.plugins_directory: Path = PLUGINS_DIRECTORY.resolve()
+        self.plugins_directory: Path = general.plugins_directory.resolve()
         self.plugin_loader: PluginLoader = plugin_loader or create_default_plugin_loader()
 
         self.plugins: List[Plugin] = []

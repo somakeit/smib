@@ -7,7 +7,7 @@ from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
-from smib.config import WEBSERVER_LOG_REQUEST_DETAILS
+from smib.config import webserver
 from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 
 
@@ -49,7 +49,7 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def should_log_request(self, request: Request) -> bool:
         all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'].rstrip('/') + path for path in self.EXCLUDED_PATHS}
-        return WEBSERVER_LOG_REQUEST_DETAILS and request.url.path not in all_excluded_paths
+        return webserver.log_request_details and request.url.path not in all_excluded_paths
 
     async def dispatch(self, request: Request, call_next) -> Response:
         should_log = self.should_log_request(request)

@@ -2,7 +2,7 @@ from enum import StrEnum
 
 from slack_sdk.signature import Clock, SignatureVerifier
 
-from smib.config import SIGNING_SECRET
+from smib.config import slack
 
 
 class BoltRequestMode(StrEnum):
@@ -11,7 +11,7 @@ class BoltRequestMode(StrEnum):
     SCHEDULED = 'scheduled'
 
 def get_slack_signature_headers(body: str | bytes) -> dict[str, str]:
-    verifier = SignatureVerifier(SIGNING_SECRET)
+    verifier = SignatureVerifier(slack.signing_secret)
     timestamp = str(int(verifier.clock.now()))
     headers = {
         "x-slack-request-timestamp": timestamp,

@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi.routing import Mount
 
-from smib.config import PLUGINS_DIRECTORY
+from smib.config import general
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 from smib.plugins.plugin import Plugin
 
@@ -55,7 +55,7 @@ class HttpPluginIntegration:
         router = self.http_event_interface.routers.get(plugin.unique_name)
         included_routes = any(route for route in router.routes if route.include_in_schema)
         if len(router.routes) == 0:
-            self.logger.debug(f"Removing unused router for {plugin.path.relative_to(PLUGINS_DIRECTORY)}")
+            self.logger.debug(f"Removing unused router for {plugin.path.relative_to(general.plugins_directory)}")
             self.http_event_interface.routers.pop(plugin.unique_name)
         if not included_routes:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
