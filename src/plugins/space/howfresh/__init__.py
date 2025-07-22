@@ -75,12 +75,7 @@ def register(slack: AsyncApp, database: DatabaseManager, schedule: ScheduledEven
     slack.command("/howfresh")(ack=how_fresh_loading, lazy=[how_fresh])
 
 def normalize_measurement_name(name: str) -> str:
-    """Convert measurement names to readable format.
-    Examples:
-        relative_humidity -> Relative Humidity
-        co2 -> CO2
-        temperature -> Temperature
-    """
+
     special_cases = {
         'co2': 'CO2',
     }
