@@ -7,12 +7,20 @@ from pathlib import Path
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
+from pydantic import Field
 
 from smib.config import EnvBaseSettings
 from smib.events.interfaces.http_event_interface import HttpEventInterface
 
 class StaticFilesPluginSettings(EnvBaseSettings):
-    static_files_directory: Path = "static"
+    static_files_directory: Path = Field(
+        default="static",
+        description="Directory where static files are stored and served from"
+    )
+
+    model_config = {
+        "env_prefix": "SMIB_PLUGIN_STATIC_FILES_"
+    }
 
 config = StaticFilesPluginSettings()
 

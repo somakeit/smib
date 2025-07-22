@@ -4,9 +4,18 @@ from ._env_base_settings import EnvBaseSettings
 from .project import ProjectSettings
 
 class DatabaseSettings(EnvBaseSettings):
-    mongo_db_host: str = "localhost"
-    mongo_db_port: int = 27017
-    mongo_db_name: str = Field(default_factory=lambda: ProjectSettings().name)
+    mongo_db_host: str = Field(
+        default="localhost",
+        description="MongoDB server hostname or IP address"
+    )
+    mongo_db_port: int = Field(
+        default=27017,
+        description="MongoDB server port number"
+    )
+    mongo_db_name: str = Field(
+        default_factory=lambda: ProjectSettings().name,
+        description="MongoDB database name, defaults to the project name"
+    )
 
     @computed_field
     @property

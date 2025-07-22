@@ -5,11 +5,26 @@ from pydantic import computed_field, SecretStr, Field
 from ._env_base_settings import EnvBaseSettings
 
 class WebserverSettings(EnvBaseSettings):
-    host: str = "0.0.0.0"
-    port: int = 80
-    path_prefix: str = "/api"
-    forwarded_allow_ips: list[str] = ["*",]
-    log_request_details: bool = False
+    host: str = Field(
+        default="0.0.0.0",
+        description="Host address to bind the webserver to (0.0.0.0 for all interfaces)"
+    )
+    port: int = Field(
+        default=80,
+        description="Port number for the webserver to listen on"
+    )
+    path_prefix: str = Field(
+        default="/api",
+        description="URL path prefix for the API endpoints"
+    )
+    forwarded_allow_ips: list[str] = Field(
+        default=["*",],
+        description="List of IPs allowed for X-Forwarded-For headers (* for all)"
+    )
+    log_request_details: bool = Field(
+        default=False,
+        description="Whether to log detailed information about HTTP requests"
+    )
 
     model_config = {
         "env_prefix": "SMIB_WEBSERVER_"
