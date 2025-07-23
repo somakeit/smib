@@ -2,12 +2,6 @@
 
 This document provides a comprehensive overview of all configurable settings in S.M.I.B.
 
-## General Settings
-
-| Environment Variable | Description | Example | Default |
-|---------------------|-------------|---------|---------|
-| SMIB_LOG_LEVEL | Logging level for the application (DEBUG, INFO, WARNING, ERROR, CRITICAL) | `DEBUG` | `INFO` |
-
 ## Slack Settings
 
 | Environment Variable | Description | Example | Default |
