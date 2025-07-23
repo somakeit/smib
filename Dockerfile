@@ -14,12 +14,19 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy entire directory - so we can calculate the GIT version
+# Copy bare minimum for requirements install
+COPY pyproject.toml README.md ./
+
+# Override to dummy version when installing dependancies only
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
+RUN uv sync --no-install-project --no-install-workspace
+
+# Copy entire context - so we can caculate the git revision
 COPY . .
 
-RUN uv sync --no-install-project --no-build 
+# Unset version so actual version number can be used 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
-
 
 ## ------------------------------- Production Stage ------------------------------ ##
 FROM python:3.13-slim-bookworm AS runtime
@@ -36,7 +43,7 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 
 # Set up environment variables for production
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
+ENV PYTHONPATH="/app/src"
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
   CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"

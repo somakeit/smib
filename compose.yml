@@ -81,7 +81,7 @@ services:
       - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
       - --providers.docker.exposedbydefault=true
       - --entrypoints.web.address=:80
-      - --entrypoints.web.forwardedHeaders.trustedIPs=${SMIB_PROXY_TRUSTED_PROXIES}
+      - --entrypoints.web.forwardedHeaders.trustedIPs=${SMIB_PROXY_TRUSTED_PROXIES:-""}
       - --providers.docker.network=smib-bridge-network
       - --api.dashboard=false
       - --api.debug=false
