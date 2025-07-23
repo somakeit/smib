@@ -28,6 +28,11 @@ This document provides a comprehensive overview of all configurable settings in 
 | SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all) | `[10.0.0.1, 192.168.1.1]` | `[*]` |
 | SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests | `true` | `false` |
 
+## Logging Settings
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_LOGGING_LOG_LEVEL | Logging level for the application (DEBUG, INFO, WARNING, ERROR) | `DEBUG` | `INFO` |
+
 ## Docker Compose Settings
 
 | Environment Variable | Description | Example | Default |
