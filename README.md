@@ -49,22 +49,28 @@ SMIB includes a built-in Traefik reverse proxy that handles routing to the vario
 - Static files (at `/static`)
 - MongoDB Express UI (at `/database/ui`)
 
-The proxy configuration can be customized with these environment variables:
+The proxy configuration can be customised with these environment variables:
 - `SMIB_PROXY_EXTERNAL_PORT`: The external port for the proxy (default: `80`)
 - `SMIB_PROXY_TRUSTED_PROXIES`: Trusted IPs for forwarded headers (important if behind another proxy)
 - `SMIB_WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
 
-For more detailed proxy and webserver configuration options, see [SETTINGS.md](SETTINGS.md).
+#### Other Configuration/Documentation
+- [Database](https://hub.docker.com/_/mongo)
+- [Database Web UI](https://github.com/mongo-express/mongo-express)
+- [Proxy](https://doc.traefik.io/traefik/)
+- [Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy)
+
+For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md).
 
 > [!IMPORTANT]
 > If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
 > 
-> On a 64-bit Raspberry Pi its `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
+> On a 64-bit Raspberry Pi it's 4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
 > 
-> The easiest way to check is by starting up the MongoDB container and checking the logs.
+The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
 
 ## SMIBHID
-[SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
+[SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activities of the Jupiter Mining Core.
 
 This device runs on a Raspberry Pi Pico W and provides physical input and output to humans for the SMIB project; Buttons, LEDs, that sort of thing.
 
