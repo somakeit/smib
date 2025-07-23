@@ -49,7 +49,8 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def should_log_request(self, request: Request) -> bool:
         all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'].rstrip('/') + path for path in self.EXCLUDED_PATHS}
-        return webserver.log_request_details and request.url.path not in all_excluded_paths
+        return (webserver.log_request_details and request.url.path not in all_excluded_paths
+                and not request.url.path.startswith(('/static', request.scope['root_path'].rstrip('/') + '/static')))
 
     async def dispatch(self, request: Request, call_next) -> Response:
         should_log = self.should_log_request(request)
