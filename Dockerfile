@@ -7,25 +7,25 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Download the latest installer, install it and then remove it
 ADD https://astral.sh/uv/install.sh /install.sh
-RUN chmod -R 655 /install.sh && /install.sh && rm /install.sh
+RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
 # Set up the UV environment path correctly
 ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-COPY pyproject.toml pyproject.toml
-COPY README.md README.md
-COPY uv.lock uv.lock
-COPY .git .git
+# Copy everything except .git first
+COPY pyproject.toml README.md uv.lock ./
+COPY src/ src/
 
-# Create venv and install dependencies
-RUN uv sync
+# Add .git so setuptools-scm/hatch-vcs can detect version correctly
+COPY .git/ .git/
 
-COPY src/ src
-RUN uv pip install -e .
+RUN git describe --tags
 
-RUN rm -r .git
+
+RUN uv sync --no-install-project --no-build && \
+    uv pip install -e .
 
 
 ## ------------------------------- Production Stage ------------------------------ ##
@@ -45,7 +45,7 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-HEALTHCHECK \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"
 
 CMD ["python", "-m", "smib"]
