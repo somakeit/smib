@@ -16,16 +16,13 @@ WORKDIR /app
 
 # Copy everything except .git first
 COPY pyproject.toml README.md uv.lock ./
-COPY src/ src/
-
-# Add .git so setuptools-scm/hatch-vcs can detect version correctly
-COPY .git/ .git/
+COPY . .
 
 RUN git describe --tags
 
+RUN uv sync --no-install-project --no-build 
 
-RUN uv sync --no-install-project --no-build && \
-    uv pip install -e .
+RUN uv pip install -e .
 
 
 ## ------------------------------- Production Stage ------------------------------ ##
