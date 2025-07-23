@@ -12,8 +12,8 @@ from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.web.async_slack_response import AsyncSlackResponse
 
 from smib.db.manager import DatabaseManager
-from smib.utilities import get_humanized_time
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
+from smib.utilities import get_humanized_time
 from .config import HOW_FRESH_PROFILE
 
 if TYPE_CHECKING:
