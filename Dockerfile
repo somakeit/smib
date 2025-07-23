@@ -14,14 +14,10 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy everything except .git first
-COPY pyproject.toml README.md uv.lock ./
+# Copy entire directory - so we can calculate the GIT version
 COPY . .
 
-RUN git describe --tags
-
 RUN uv sync --no-install-project --no-build 
-
 RUN uv pip install -e .
 
 
@@ -42,7 +38,7 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
   CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"
 
 CMD ["python", "-m", "smib"]
