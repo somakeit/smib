@@ -54,7 +54,7 @@ class Plugin(ABC, metaclass=ABCMeta):
     def __lt__(self, other: "Plugin") -> bool:
         if not isinstance(other, Plugin):
             return NotImplemented
-        return f"{self.category}\\{self.name}" < f"{other.category}\\{other.name}"
+        return f"{self.category}/{self.name}" < f"{other.category}/{other.name}"
 
 
 class PythonModulePlugin(Plugin):
