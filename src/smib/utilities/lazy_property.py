@@ -21,7 +21,7 @@ class lazy_property(Generic[T]):
             cached_value: T = instance.__dict__[self.__name__]  # Retrieve the cached value
             return cached_value
 
-        return calculated_value  # Return the computed value
+        return calculated_value  # Return the computed value only if not cached
 
     def __set__(self, instance: Any, value: T) -> None:
         instance.__dict__[self.__name__] = value
