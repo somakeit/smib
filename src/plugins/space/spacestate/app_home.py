@@ -1,6 +1,4 @@
 import asyncio
-from unittest import case
-
 from slack_sdk.models.blocks import PlainTextObject, HeaderBlock, MarkdownTextObject, SectionBlock, ButtonElement, \
     ActionsBlock, DividerBlock, Block, BlockElement, StaticSelectElement, Option
 from slack_sdk.models.views import View
