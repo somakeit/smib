@@ -35,9 +35,9 @@ def register(http: HttpEventInterface):
 
     logger.info(f"Mounting static files directory at /static")
 
-    # TODO (eventually): Replace this with normal StaticFiles mounting
-    #  That method doesn't currently work due to https://github.com/fastapi/fastapi/issues/10180
-    #  More info: https://github.com/fastapi/fastapi/discussions/9070
+    # TODO (eventually): Replace this with normal StaticFiles mounting.
+    #  This is a workaround for FastAPI issue #10180 (https://github.com/fastapi/fastapi/issues/10180).
+    #  For additional context, see the related discussion: https://github.com/fastapi/fastapi/discussions/9070.
     @http.get("/static/{rest_of_path:path}", include_in_schema=False)
     async def static_files(rest_of_path: str):
         file_path = resolved_static_directory_path / rest_of_path
