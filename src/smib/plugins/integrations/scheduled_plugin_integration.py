@@ -20,7 +20,7 @@ class ScheduledPluginIntegration:
     def disconnect_plugin(self, plugin: Plugin):
         self.logger.info(f"Locating and removing scheduled jobs in {plugin.unique_name} ({plugin.name})")
 
-        module_path = Path(plugin._module.__file__)
+        module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
             module_path = module_path.parent
 

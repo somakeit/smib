@@ -24,7 +24,7 @@ class SlackPluginIntegration:
     def disconnect_listeners(self, plugin: Plugin):
         self.logger.info(f"Locating and removing slack listeners in {plugin.unique_name} ({plugin.name})")
 
-        module_path = Path(plugin._module.__file__)
+        module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
             module_path = module_path.parent
 
@@ -38,7 +38,7 @@ class SlackPluginIntegration:
     def disconnect_middlewares(self, plugin: Plugin):
         self.logger.info(f"Locating and removing slack middleware in {plugin.unique_name} ({plugin.name})")
 
-        module_path = Path(plugin._module.__file__)
+        module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
             module_path = module_path.parent
 

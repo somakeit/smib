@@ -16,7 +16,7 @@ class DatabasePluginIntegration:
 
         for plugin in self.plugin_lifecycle_manager.plugins:
 
-            module_path = Path(plugin._module.__file__)
+            module_path = Path(plugin.module.__file__)
             if module_path.name == "__init__.py":
                 module_path = module_path.parent
 

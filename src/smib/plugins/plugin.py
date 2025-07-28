@@ -85,6 +85,10 @@ class PythonModulePlugin(Plugin):
     @property
     def category(self) -> str:
         return self._path.parent.name
+
+    @property
+    def module(self) -> ModuleType:
+        return self._module
     
     def register(self, **kwargs: Any) -> None:
         """Register the plugin by calling its register function."""
