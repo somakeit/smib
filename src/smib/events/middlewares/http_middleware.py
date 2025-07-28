@@ -1,5 +1,7 @@
+import json
 import logging
 import time
+from functools import lru_cache
 from pprint import pformat
 
 from fastapi import Request, Response
@@ -15,20 +17,38 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.request: Request | None = None
 
     async def dispatch(self, request: Request, call_next):
+        self.request = request
         response: Response = await call_next(request)
 
         if self.uses_deprecated_route(request):
             self.logger.warning(f"Deprecated endpoint used: {request.method} {request.url.path}; IP: {request.client.host}")
             response.headers.append("Deprecation", "true")
 
+        self.request = None
+
         return response
 
-    @staticmethod
-    def uses_deprecated_route(request: Request) -> bool:
-        for route in request.app.routes:
-            match, _ = route.matches(request.scope)
+    def uses_deprecated_route(self, request: Request) -> bool:
+        scope = {
+            "type": request.scope["type"],
+            "method": request.scope["method"],
+            "path": request.scope["path"],
+            "path_params": request.scope["path_params"],
+            "root_path": request.scope["root_path"],
+        }
+
+        # Convert to string to allow for caching
+        scope_str = json.dumps(scope)
+        return self._uses_deprecated_route(scope_str)
+
+    @lru_cache
+    def _uses_deprecated_route(self, scope_str: str) -> bool:
+        scope = json.loads(scope_str)
+        for route in self.request.app.routes:
+            match, _ = route.matches(scope)
             if match == Match.FULL and getattr(route, "deprecated", False):
                 return True
         return False
