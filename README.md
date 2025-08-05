@@ -65,7 +65,7 @@ For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md)
 > 
 > On a 64-bit Raspberry Pi it's `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
 > 
-The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
+> The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
 
 ## SMIBHID
 [SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activities of the Jupiter Mining Core.
