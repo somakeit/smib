@@ -24,15 +24,10 @@ RUN uv sync --no-install-project --no-install-workspace
 # Copy entire context - so we can caculate the git revision
 COPY . .
 
-# Set version to Git Tag if provided, otherwise actual version number can be used 
-ARG SMIB_BUILD_GIT_TAG
+# Unset version so actual version number can be used 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=
+RUN uv pip install -e .
 
-# Conditionally set version override for setuptools-scm if tag is provided
-RUN if [ -n "$SMIB_BUILD_GIT_TAG" ]; then \
-      echo "Using SMIB_BUILD_GIT_TAG=$SMIB_BUILD_GIT_TAG"; \
-      export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SMIB=$SMIB_BUILD_GIT_TAG; \
-    fi && \
-    uv pip install -e .
 ## ------------------------------- Production Stage ------------------------------ ##
 FROM python:3.13-slim-bookworm AS runtime
 

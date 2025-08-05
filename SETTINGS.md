@@ -37,7 +37,6 @@ This document provides a comprehensive overview of all configurable settings in 
 
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|
-| SMIB_BUILD_GIT_TAG | Git tag or branch to build from when using Docker Compose | `v2.0.0` or `master` | Current directory (`.`) |
 | SMIB_COMPOSE_MONGO_DB_TAG | MongoDB container version tag | `4.4.18` | `latest` |
 | SMIB_COMPOSE_ME_MONGO_DB_URL | MongoDB connection URL for Mongo Express | `mongodb://username:password@smib-db:27017/` | `mongodb://smib-db:27017/` |
 
