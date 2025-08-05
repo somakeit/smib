@@ -76,17 +76,21 @@ services:
     hostname: smib-proxy
     image: traefik:3
     command:
-      - --log.level=DEBUG
       - --providers.docker=true
       - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
       - --providers.docker.exposedbydefault=true
+      - --providers.docker.network=smib-bridge-network
+      - --providers.docker.constraints=Label("com.docker.compose.project", "smib") && Label(`traefik.group`, `smib`)
+
+      - --serversTransport.insecureSkipVerify=true
+
       - --entrypoints.web.address=:80
       - --entrypoints.web.asDefault=true
       - --entrypoints.web.forwardedHeaders.trustedIPs=${SMIB_PROXY_TRUSTED_PROXIES:-0.0.0.0/0}
-      - --providers.docker.network=smib-bridge-network
+
       - --api.dashboard=false
       - --api.debug=false
-      - --providers.docker.constraints=Label("com.docker.compose.project", "smib") && Label(`traefik.group`, `smib`)
+
       - --ping=true
     healthcheck:
       test: traefik healthcheck --ping
