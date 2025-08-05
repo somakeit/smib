@@ -12,7 +12,7 @@ services:
     container_name: smib
     hostname: smib
     image: smib
-    build: ${SMIB_BUILD_GIT_TAG:+https://github.com/somakeit/smib.git#}${SMIB_BUILD_GIT_TAG:-.}
+    build: .
     environment:
       SMIB_DB_MONGO_DB_HOST: ${SMIB_DB_MONGO_DB_HOST:-smib-db}
     volumes:

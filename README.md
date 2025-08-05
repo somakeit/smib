@@ -37,11 +37,9 @@ The easiest way to run SMIB is with Docker Compose:
 - Set the environment variables (minimum of the slack tokens). See [template.env](template.env) for all possible environment variables.
   - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
-- Issue the following command to build and run the local copy of the code: `docker compose up -d --build`
 - To build a specific version/tag:
-  - Set the `SMIB_BUILD_GIT_TAG` environment variable in the `.env` file to the branch/tag name.
-    - e.g. `SMIB_BUILD_GIT_TAG=v2.0.0` or `SMIB_BUILD_GIT_TAG=master`
-  - `docker compose up -d --build`
+  - Use git to checkout the specific branch/tag; e.g. `git checkout v2.0.0`
+- Issue the following command to build and run the local copy of the code: `docker compose up -d --build`
 
 #### Proxy Configuration
 SMIB includes a built-in Traefik reverse proxy that handles routing to the various services:
