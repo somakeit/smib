@@ -63,7 +63,7 @@ For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md)
 > [!IMPORTANT]
 > If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
 > 
-> On a 64-bit Raspberry Pi it's 4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
+> On a 64-bit Raspberry Pi it's `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
 > 
 The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
 
