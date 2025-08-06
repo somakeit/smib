@@ -1,4 +1,5 @@
 {
-  "extends": ["config:base"],
-  "onboarding": true
+  "extends": [
+    "config:recommended"
+  ]
 }
