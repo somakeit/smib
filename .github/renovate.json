@@ -1,5 +1,23 @@
 {
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "schedule": ["every weekend"],
+  "stabilityDays": 1,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["every weekend"]
+  },
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 2,
+  "dependencyDashboard": true,
+  "prCreation": "not-pending",
+  "autoclose": true,
+  "assignees": ["sam57719"],
+  "reviewers": ["sam57719"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["asyncio"],
+      "enabled": false
+    }
   ]
 }
+
