@@ -1,0 +1,31 @@
+from datetime import datetime, UTC
+from enum import StrEnum
+from typing import Annotated
+
+from beanie import Document, PydanticObjectId, Indexed
+from pydantic import BaseModel, Field
+
+
+class SpaceStateEnum(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class SpaceState(Document):
+    # Redefine mongodb default 'id' field to be excluded from the swagger schema
+    id: Annotated[PydanticObjectId | None, Field(default=None, description="MongoDB document ObjectID", exclude=True)]
+    open: Annotated[bool | None, Field(default=None, description="Whether the space is open")]
+
+    class Settings:
+        name = "space_state"
+
+class SpaceStateHistory(Document):
+    timestamp: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC)), Indexed()]
+    open: Annotated[bool, Field(description="Whether the space is open")]
+
+    class Settings:
+        name = "space_state_history"
+
+
+class SpaceStateOpen(BaseModel):
+    hours: Annotated[int | None, Field(gt=-1, default=None, description="How many hours the space is open for?")]

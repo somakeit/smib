@@ -1,0 +1,4 @@
+db/
+static/
+.venv/
+.env

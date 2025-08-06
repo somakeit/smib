@@ -1,47 +1,51 @@
-# Use an official Python 3.11 runtime as a base image
-FROM python:3.12.3-bullseye AS builder
+## ------------------------------- Builder Stage ------------------------------ ##
+FROM python:3.13-bookworm AS builder
 
-RUN pip install poetry==2
+RUN apt-get update && apt-get install --no-install-recommends -y \
+        build-essential && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Download the latest installer, install it and then remove it
+ADD https://astral.sh/uv/install.sh /install.sh
+RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
-# Set the working directory in the container to /smib
-WORKDIR /app
-
-# Copy the entire smib package into the container at /smib
-COPY smib ./smib
-COPY pyproject.toml poetry.lock README.md ./
-
-# Install all dependencies without the source code first (caches dependencies)
-RUN poetry install --no-root --no-directory && rm -rf $POETRY_CACHE_DIR
-
-# Re-run poetry install to install the `smib` module itself in editable mode
-RUN poetry install --only-root
-
-
-# The runtime image, used to just run the code provided its virtual environment
-FROM python:3.12.3-slim-bullseye AS runtime
-
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
-
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-# Set timezone - can still be overridden in the docker-compose file
-COPY --from=builder /etc/environment /etc/environment
-COPY --from=builder /etc/localtime /etc/localtime
+# Set up the UV environment path correctly
+ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
-COPY smib ./smib
 
-# Remove logging.json from container
-RUN rm ./smib/logging.json
+# Copy bare minimum for requirements install
+COPY pyproject.toml README.md ./
 
-# Copy logging.json into correct container location
-COPY smib/logging.json /app/config/logging.json
+# Override to dummy version when installing dependancies only
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
+RUN uv sync --no-install-project --no-install-workspace
 
-# Copy .env if it exists
-COPY .env* /app/config/
+# Copy entire context - so we can caculate the git revision
+COPY . .
+
+# Unset version so actual version number can be used 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=
+RUN uv pip install -e .
+
+## ------------------------------- Production Stage ------------------------------ ##
+FROM python:3.13-slim-bookworm AS runtime
+
+RUN useradd smibuser
+USER smibuser
+
+WORKDIR /app
+
+# Copy the entire source directory and virtual environment
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/.venv ./.venv
+COPY --from=builder /app/pyproject.toml ./pyproject.toml
+
+# Set up environment variables for production
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src"
+
+HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
+  CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"
+
+CMD ["python", "-m", "smib"]

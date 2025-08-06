@@ -1,132 +1,81 @@
 # SMIB (So Make It Bot)
+
 ## Introduction
-SMIB is the So Make It Bot. The architecture is a set of docker containers configured to work together, that can run on a pi4 or similar and provide slack bot interactivity with a maker space (or any space).
+SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It maker space. It is built on the [slack-bolt](https://github.com/slackapi/bolt-python) framework with a flexible plugin system, integrated database, HTTP API capabilities, and scheduled task support.
 
-### Features
-- A socket mode slack bot server that requires no port forwarding or firewall config to get going on your network.
-- Web server with plugin architecture providing a REST API with swagger API documentation, so you can write your own plugins that can be called by REST API and executed by the slack bot - allows creating web pages or local devices (such as SMIBHID) that drive the slack bot without the need for leaving the local network.
-- Stateful database storage for storing information like space state for coordination among multiple bots/endpoints.
-- SMIBHID (SMIB Human Interface Device) - A Pi Pico based interface device that provides buttons, displays and any other human interface to the slack bot via the REST API. See the [SMIBHID repo](https://github.com/somakeit/smibhid/) for more information.
+## Features
+- **Socket Mode Slack Bot**: Requires no port forwarding or firewall configuration to run on your network
+- **Flexible Plugin System** with multiple interfaces:
+  - **Slack Integration**: Define your own event listeners to act on Slack events (full [slack-bolt](https://github.com/slackapi/bolt-python) feature set supported)
+  - **HTTP API**: Create self-documenting API endpoints using FastAPI (webpages, REST, etc...)
+  - **Scheduled Tasks**: Define jobs that run on a schedule using APScheduler
+  - **Database Integration**: Store and retrieve data using MongoDB and Beanie ODM
+- **Docker Support**: Easy deployment with Docker and Docker Compose
+- **Extensible Architecture**: Designed to be easily extended with new plugins and features
 
-## Slack App Creation
+## Setup and Configuration
+
+For a comprehensive list of all configuration settings, see [SETTINGS.md](SETTINGS.md).
+
+### Slack App Creation
 - If you don't already have a Slack Workspace, [create one](https://slack.com/get-started?entry_point=help_center#/createnew).
-- Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](manifest.yaml) and install it into your workspace.
+- Follow the [Creating apps using manifests](https://api.slack.com/reference/manifests#creating_apps) instructions to create a Slack App from the included [manifest](slack-manifest.yaml) and install it into your workspace.
 - Once created, go to your [installed apps list](https://api.slack.com/apps) and select the newly installed app.
   - Find the `App-Level Tokens` section of the page and click `Generate Token and Scopes`.
     - Create a token with the `connections:write` scope. This allows SMIB to establish a Websocket connection to Slack.
-    - Make sure to copy this token, as this will be used as your `SLACK_APP_TOKEN` environment variable. This should start with `xapp-`
+    - Make sure to copy this token, as this will be used as your `SMIB_SLACK_APP_TOKEN` environment variable. This should start with `xapp-`
   - On the side navigation panel, click the `OAuth and Permissions` button.
     - You should find a pre-generated `Bot User OAuth Token` under the `OAuth Tokens` section of this page.
-    - Make sure to copy this token, as this will be used as your `SLACK_BOT_TOKEN` environment variable. This should start with `xapp-`
+    - Make sure to copy this token, as this will be used as your `SMIB_SLACK_BOT_TOKEN` environment variable. This should start with `xoxb-`
 
-## Docker deployment
-### Supported Python Version
-Python 3.12.3
+### Running with Docker
+The easiest way to run SMIB is with Docker Compose:
 
-### Installation
 - Clone the repository to your target server host
 - Install docker if not already present
   - If installing on a Raspberry Pi (recommend a pi4), ensure you use a 64 bit OS and follow the [Debian install instructions from Docker](https://docs.docker.com/engine/install/debian/).
-- Set the environment variables (minimum of the slack tokens) using either method below. See [template.env](template.env) for all possible environment variables.
-  - `docker-compose` File - **Highest Precedence**
-    - Set the variables in your docker-compose file
+- Set the environment variables (minimum of the slack tokens). See [template.env](template.env) for all possible environment variables.
   - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
-- Issue one of the following commands:
-  - Local Build: `docker compose up -d --build`
-  - Branch Build (default master): `docker compose -f docker-compose-branch.yml up -d --build`
-    - To specify the branch, do one of the following:
-      - Prefix the command with `SMIB_BRANCH=<branch>`
-        - e.g `SMIB_BRANCH=master docker compose -f docker-compose-branch.yml up -d --build`
-      - Set environment variable in a `.env` file thats alongside the `docker-compose-branch.yml` file
+- To build a specific version/tag:
+  - Use git to checkout the specific branch/tag; e.g. `git checkout v2.0.0`
+- Issue the following command to build and run the local copy of the code: `docker compose up -d --build`
 
+#### Proxy Configuration
+SMIB includes a built-in Traefik reverse proxy that handles routing to the various services:
+- API endpoints (default: `/api`)
+- Static files (at `/static`)
+- MongoDB Express UI (at `/database/ui`)
 
-### SMIB Slack/Webserver Configuration
+The proxy configuration can be customised with these environment variables:
+- `SMIB_PROXY_EXTERNAL_PORT`: The external port for the proxy (default: `80`)
+- `SMIB_PROXY_TRUSTED_PROXIES`: Trusted IPs for forwarded headers (important if behind another proxy)
+- `SMIB_WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
 
-#### Network Ports
-The host ports mapped for the slack server and webserver should be configured in the docker compose file, however it is also possible to override the ports in the server configs directly if you are not using docker.
+#### Other Configuration/Documentation
+- [Database](https://hub.docker.com/_/mongo)
+- [Database Web UI](https://github.com/mongo-express/mongo-express)
+- [Proxy](https://doc.traefik.io/traefik/)
+- [Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy)
 
-#### External Config Files
-Current files:
-- `logging.json` (located at [smib/logging.json](smib/logging.json) in the repo)
-- `.env`
-
-This is mapped to `/app/config` in the container
+For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md).
 
 > [!IMPORTANT]
-> If you map `/app/config` to a host directory, then you *MUST* add the 2 external files to this location.
-
-You can make this location accessible by Mapping the internal directory to a volume or bind mount in the docker compose file.
-
-Linux:
-```yaml
-volumes:
-  - /etc/smib/:/app/config/
-```
-
-Windows:
-```yaml
-volumes:
-  - C:/smib/config:/app/config/
-```
-
-Local Development:
-- Set the `_EXTERNAL_CONFIG_LOCATION` environment variable to the directory containing the External Config Files
-
-#### Logging
-Map the internal /app/logs directory to a volume or bind mount in the docker compose to store the logs outside the containers
-
-Linux:
-```yaml
-volumes:
-  - /var/log/smib/slack/:/app/logs/
-```
-
-Windows:
-```yaml
-volumes:
-  - C:/smib/slack/logs:/app/logs/
-```
-
-### Database and Database Web UI Configuration
-To set environment varaibles for the `smib-db` and `smib-db-ui` containers, you must do one of the following:
-  - `docker-compose` File - **Highest Precedence**
-    - Set the variables in your docker-compose file
-  - `.env` File
-    - Create a file called `.env` alongside the docker-compose.yml file. See links below for possible values
-      - [Database Web UI Configuration](https://github.com/mongo-express/mongo-express)
-      - [Database Configuration](https://hub.docker.com/_/mongo)
+> If you are running MongoDB on an older device or raspberry pi, check what the highest compatible MongoDB version is.
+> 
+> On a 64-bit Raspberry Pi it's `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
+> 
+> The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
 
 ## SMIBHID
-[SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activites of the Jupiter Mining Core.
+[SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activities of the Jupiter Mining Core.
 
 This device runs on a Raspberry Pi Pico W and provides physical input and output to humans for the SMIB project; Buttons, LEDs, that sort of thing.
 
 Further documentation can be found [in the smibhid repo](https://github.com/somakeit/smibhid/).
 
-### SMIBHID APIs
+## Contributing
+Contributions are welcome! Please see the [contributing page](https://github.com/somakeit/smib/contribute) for more information.
 
-> [!IMPORTANT]  
-> The `device-hostname` header is a mandatory field for the SMIBHID APIs
-
-#### Pushing Sensor Log Data to SMIB DB
-
-The following us a CURL command that "posts" the provided sensor data to SMIB.
-
-```bash
-curl -X POST http://localhost/smib/event/smibhid_sensor_log ^
- -H "Content-Type: application/json" ^
- -H "device-hostname: smibhid-example" ^
- -d "[{\"human_timestamp\": \"2025-04-03T21:42:58Z\", \"data\": {\"SCD30\": {\"relative_humidity\": 0, \"temperature\": 0, \"co2\": 0}, \"BME280\": {\"pressure\": 1019.3, \"humidity\": 48.7, \"temperature\": 20.03}}, \"timestamp\": 1743716578}, {\"timestamp\": 1743791084, \"data\": {\"SCD30\": {\"co2\": 1548.1, \"temperature\": 26.3, \"relative_humidity\": 52.9}, \"BME280\": {\"pressure\": 632, \"humidity\": 57.64, \"temperature\": 23.05}}, \"human_timestamp\": \"2025-04-04T18:24:44Z\"}]"
-```
-
-## Legacy SMIB Commands
-Currently, the old [SMIB Commands](https://github.com/somakeit/smib-commands) do not work with the new SMIB.
-
-The old [SMIB](https://github.com/somakeit/smib-old) worked using the Slack RTM API. This API has been replaced with the Events API. 
-
-Previously, SMIB Commands were created as the only way to interact with SMIB.
-
-I think some form of backwards compatibility or similar functionality would be good. Work on a `ShellPluginLoader` was started but parked as it was not the main focus of the new amped up SMIB [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)
-
-An [issue](https://github.com/somakeit/smib/issues/83) has been created to track the progress and gather ideas.
+## License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
