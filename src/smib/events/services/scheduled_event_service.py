@@ -4,14 +4,12 @@ from typing import cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from smib.utilities.lazy_property import lazy_property
-
 
 class ScheduledEventService:
     def __init__(self) -> None:
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
-    @lazy_property
+    @property
     def scheduler(self) -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         return scheduler

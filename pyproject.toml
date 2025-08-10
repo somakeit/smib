@@ -23,7 +23,6 @@ dependencies = [
     "beanie>=2.0.0",
     "fastapi>=0.116.1",
     "pydantic-settings>=2.10.1",
-    "semver>=3.0.4",
 ]
 
 dynamic = ["version"]
