@@ -10,9 +10,9 @@
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
   "prCreation": "not-pending",
-  "autoclose": true,
   "assignees": ["sam57719"],
   "reviewers": ["sam57719"],
+  "pruneStaleBranches": true,
   "packageRules": [
     {
       "matchPackageNames": ["asyncio"],
@@ -20,4 +20,3 @@
     }
   ]
 }
-
