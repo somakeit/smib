@@ -17,7 +17,7 @@ class HttpEventService:
         self.openapi_tags: list[dict] = []
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=1)
     def fastapi_app(self) -> FastAPI:
         root_path = webserver.path_prefix.rstrip('/')
         return FastAPI(
@@ -29,7 +29,7 @@ class HttpEventService:
         )
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=1)
     def uvicorn_config(self) -> Config:
         return Config(self.fastapi_app,
             host=webserver.host,
@@ -42,12 +42,12 @@ class HttpEventService:
         )
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=1)
     def uvicorn_server(self) -> Server:
         return Server(config=self.uvicorn_config)
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=1)
     def headers(self) -> list[tuple[str, str]] | None:
         return [
             ("server", f"{socket.gethostname()}"),

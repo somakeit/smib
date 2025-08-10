@@ -16,7 +16,7 @@ class SlackEventService:
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
     @property
-    @lru_cache
+    @lru_cache(maxsize=1)
     def service(self) -> AsyncSocketModeHandler:
         service = AsyncSocketModeHandler(self.bolt_app, app_token=slack.app_token.get_secret_value(), logger=logging.getLogger("slack_bolt.AsyncSocketModeHandler"))
         service.client.on_message_listeners.append(self.log_number_of_connections)
