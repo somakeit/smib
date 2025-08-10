@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from logging import Logger
 from typing import cast
 
@@ -10,6 +11,7 @@ class ScheduledEventService:
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
     @property
+    @lru_cache(maxsize=1)
     def scheduler(self) -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         return scheduler
