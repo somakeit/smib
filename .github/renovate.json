@@ -1,21 +1,33 @@
 {
-  "extends": ["config:recommended"],
-  "schedule": ["every weekend"],
-  "stabilityDays": 1,
+  "extends": [
+    "config:recommended"
+  ],
+  "schedule": [
+    "every weekend"
+  ],
+  "minimumReleaseAge": "1 day",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["every weekend"]
+    "schedule": [
+      "every weekend"
+    ]
   },
   "prHourlyLimit": 2,
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
   "prCreation": "not-pending",
-  "assignees": ["sam57719"],
-  "reviewers": ["sam57719"],
+  "assignees": [
+    "sam57719"
+  ],
+  "reviewers": [
+    "sam57719"
+  ],
   "pruneStaleBranches": true,
   "packageRules": [
     {
-      "matchPackageNames": ["asyncio"],
+      "matchPackageNames": [
+        "asyncio"
+      ],
       "enabled": false
     }
   ]
