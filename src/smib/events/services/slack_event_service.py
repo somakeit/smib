@@ -1,5 +1,6 @@
 import json
 import logging
+from functools import lru_cache
 from logging import Logger
 
 from aiohttp import WSMessage
@@ -7,17 +8,15 @@ from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import slack
-from smib.utilities.lazy_property import lazy_property
 
 
 class SlackEventService:
-    service: AsyncSocketModeHandler
-
     def __init__(self, bolt_app: AsyncApp):
         self.bolt_app: AsyncApp = bolt_app
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
 
-    @lazy_property
+    @property
+    @lru_cache(maxsize=1)
     def service(self) -> AsyncSocketModeHandler:
         service = AsyncSocketModeHandler(self.bolt_app, app_token=slack.app_token.get_secret_value(), logger=logging.getLogger("slack_bolt.AsyncSocketModeHandler"))
         service.client.on_message_listeners.append(self.log_number_of_connections)

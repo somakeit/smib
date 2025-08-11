@@ -1,5 +1,6 @@
 import logging
 import socket
+from functools import lru_cache
 from logging import Logger
 
 from fastapi import FastAPI
@@ -8,24 +9,15 @@ from uvicorn import Config, Server
 from smib.config import webserver, project, logging as logging_config
 from smib.events.middlewares.http_middleware import DeprecatedRouteMiddleware, HttpRequestLoggingMiddleware
 from smib.logging_ import get_logging_config
-from smib.utilities.lazy_property import lazy_property
 
 
 class HttpEventService:
-    fastapi_app: FastAPI
-    uvicorn_config: Config
-    uvicorn_server: Server
-    openapi_tags: list[dict]
-    headers: list[tuple[str, str]] | None
-
     def __init__(self):
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
+        self.openapi_tags: list[dict] = []
 
-    @lazy_property
-    def openapi_tags(self) -> list[dict]:
-        return []
-
-    @lazy_property
+    @property
+    @lru_cache(maxsize=1)
     def fastapi_app(self) -> FastAPI:
         root_path = webserver.path_prefix.rstrip('/')
         return FastAPI(
@@ -36,7 +28,8 @@ class HttpEventService:
             root_path_in_servers=bool(root_path),
         )
 
-    @lazy_property
+    @property
+    @lru_cache(maxsize=1)
     def uvicorn_config(self) -> Config:
         return Config(self.fastapi_app,
             host=webserver.host,
@@ -48,11 +41,13 @@ class HttpEventService:
             access_log=False,
         )
 
-    @lazy_property
+    @property
+    @lru_cache(maxsize=1)
     def uvicorn_server(self) -> Server:
         return Server(config=self.uvicorn_config)
 
-    @lazy_property
+    @property
+    @lru_cache(maxsize=1)
     def headers(self) -> list[tuple[str, str]] | None:
         return [
             ("server", f"{socket.gethostname()}"),
