@@ -29,3 +29,6 @@ class SpaceStateHistory(Document):
 
 class SpaceStateOpen(BaseModel):
     hours: Annotated[int | None, Field(gt=-1, default=None, description="How many hours the space is open for?")]
+
+class SpaceStateClosed(BaseModel):
+    minutes: Annotated[int | None, Field(gt=-1, default=None, description="How many minutes the space is temporarily closed for?")]
