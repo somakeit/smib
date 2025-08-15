@@ -47,7 +47,12 @@ def _get_space_close_actions_block_elements() -> ActionsBlock:
         action_id="space_closed_button",
         style="danger"
     )
-    action_block = ActionsBlock(block_id="space_closed_block", elements=[closed_button])
+    minutes_static_select = StaticSelectElement(
+        action_id="space_closed_minutes_select",
+        placeholder=PlainTextObject(text="Select minutes (optional)", emoji=True),
+        options=[Option(value=f"{i}", text=f"{i}m") for i in range(0, 70, 10)],
+    )
+    action_block = ActionsBlock(block_id="space_closed_block", elements=[closed_button, minutes_static_select])
     return action_block
 
 
@@ -148,5 +153,11 @@ def _get_info_blocks() -> list[Block]:
 def extract_selected_hours_from_state(state: dict) -> int:
     try:
         return int(state["values"]["space_open_block"]["space_open_hours_select"]["selected_option"]["value"])
+    except (KeyError, TypeError, ValueError):
+        return 0
+
+def extract_selected_minutes_from_state(state: dict) -> int:
+    try:
+        return int(state["values"]["space_closed_block"]["space_closed_minutes_select"]["selected_option"]["value"])
     except (KeyError, TypeError, ValueError):
         return 0
