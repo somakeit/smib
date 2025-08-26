@@ -21,12 +21,3 @@ def register(http: HttpEventInterface):
         await SensorLog.insert_many(db_logs)
 
         await SensorUnit.upsert_from_api(data.units, x_smibhid_hostname)
-
-    @http.post('/smib/event/smibhid_sensor_log', deprecated=True)
-    async def log_sensor_from_smib_event(data: SensorLogRequest, device_hostname: DeviceHostnameHeader):
-        """ Logs a sensor event to the database """
-        db_logs = [SensorLog.from_api(log, device_hostname) for log in data.readings]
-        logger.debug(f"Logging {len(db_logs)} sensor log(s) from {device_hostname} to database")
-        await SensorLog.insert_many(db_logs)
-
-        await SensorUnit.upsert_from_api(data.units, device_hostname)

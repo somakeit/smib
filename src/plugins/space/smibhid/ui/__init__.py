@@ -18,10 +18,3 @@ def register(http: HttpEventInterface):
         db_logs = [UILog.from_api(log, x_smibhid_hostname) for log in ui_logs]
         logger.debug(f"Logging {len(db_logs)} UI event(s) from {x_smibhid_hostname} to database")
         await UILog.insert_many(db_logs)
-
-    @http.post('/smib/event/smibhid_ui_log', deprecated=True)
-    async def log_ui_from_smib_event(ui_logs: list[UILogCreate], device_hostname: DeviceHostnameHeader):
-        """ Logs a UI event to the database """
-        db_logs = [UILog.from_api(log, device_hostname) for log in ui_logs]
-        logger.debug(f"Logging {len(db_logs)} UI event(s) from {device_hostname} to database")
-        await UILog.insert_many(db_logs)

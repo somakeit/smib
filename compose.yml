@@ -30,9 +30,6 @@ services:
       # Static files router
       - "traefik.http.routers.smib-static.rule=PathPrefix(`/static`)"
       - "traefik.http.routers.smib-static.priority=10"
-      # Legacy (deprecated) HTTP Endpoints (for SMIBHID use) 
-      - "traefik.http.routers.smib-legacy.rule=PathPrefix(`/smib/event`)"
-      - "traefik.http.routers.smib-legacy.priority=10"
 
   smib-db:
     <<: *common
