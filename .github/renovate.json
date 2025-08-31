@@ -30,5 +30,6 @@
       ],
       "enabled": false
     }
-  ]
+  ],
+  "enabledManagers": ["pep621", "dockerfile", "docker-compose"]
 }
