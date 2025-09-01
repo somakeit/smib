@@ -73,6 +73,9 @@ For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md)
 This device runs on a Raspberry Pi Pico W and provides physical input and output to humans for the SMIB project; Buttons, LEDs, that sort of thing.
 
 Further documentation can be found [in the smibhid repo](https://github.com/somakeit/smibhid/).
+### Compatibility
+> [!IMPORTANT]
+> [SMIBHID v2.1.0](https://github.com/somakeit/smibhid/releases/tag/v2.1.0) is required for compatibility with [SMIB v2.1.0](https://github.com/somakeit/smib/releases/tag/v2.1.0) and later. SMIB v2.1.0 no longer supports the deprecated v1 endpoints, which have been updated in SMIBHID v2.1.0.
 
 ## Contributing
 Contributions are welcome! Please see the [contributing page](https://github.com/somakeit/smib/contribute) for more information.
