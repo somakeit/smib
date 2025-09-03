@@ -1,17 +1,13 @@
 {
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":maintainLockFilesWeekly",
+    ":label(dependencies)"
   ],
   "schedule": [
     "every weekend"
   ],
   "minimumReleaseAge": "1 day",
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": [
-      "every weekend"
-    ]
-  },
   "prHourlyLimit": 2,
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
@@ -29,7 +25,25 @@
         "asyncio"
       ],
       "enabled": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major updates"
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "matchUpdateTypes": ["digest", "patch", "minor", "major"],
+      "matchManagers": ["pep621", "dockerfile", "docker-compose"],
+      "matchConfidence": "high",
+      "labels": ["security"],
+      "schedule": null
     }
   ],
-  "enabledManagers": ["pep621", "dockerfile", "docker-compose"]
+  "enabledManagers": ["pep621", "dockerfile", "docker-compose"],
+  "pre-commit": {
+    "enabled": true
+  }
 }
