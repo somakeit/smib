@@ -42,7 +42,7 @@
       "schedule": null
     }
   ],
-  "enabledManagers": ["pep621", "dockerfile", "docker-compose"],
+  "enabledManagers": ["pep621", "dockerfile", "docker-compose" ],
   "pre-commit": {
     "enabled": true
   }
