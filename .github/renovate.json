@@ -37,7 +37,6 @@
     {
       "matchUpdateTypes": ["digest", "patch", "minor", "major"],
       "matchManagers": ["pep621", "dockerfile", "docker-compose"],
-      "matchConfidence": "high",
       "labels": ["security"],
       "schedule": null
     }
