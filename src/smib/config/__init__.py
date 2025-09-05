@@ -65,7 +65,7 @@ def _format_validation_errors(collected: list[tuple[BaseModel, ValidationError]]
 
 # Attempt to initialise all settings immediately (import-time), but with
 # clear, user-friendly validation reporting and fail-fast behaviour.
-_collected_errors: List[Tuple[type[BaseModel] | None, ValidationError]] = []
+_collected_errors: list[tuple[BaseModel, ValidationError]] = []
 
 logging: LoggingSettings | None = None
 try:
