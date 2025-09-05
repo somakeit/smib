@@ -36,12 +36,12 @@
     },
     {
       "matchUpdateTypes": ["digest", "patch", "minor", "major"],
-      "matchManagers": ["pep621", "dockerfile", "docker-compose"],
+      "matchManagers": ["pep621", "dockerfile", "docker-compose", "regex"],
       "labels": ["security"],
       "schedule": null
     }
   ],
-  "enabledManagers": ["pep621", "dockerfile", "docker-compose"],
+  "enabledManagers": ["pep621", "dockerfile", "docker-compose", "regex"],
   "pre-commit": {
     "enabled": true
   },
@@ -52,6 +52,15 @@
       "matchStrings": ["ENV UV_VERSION=(?<currentValue>.*?)\\n"],
       "depNameTemplate": "astral-sh/uv",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^compose.yml$/"],
+      "matchStrings": [
+        "image:\\s*mongo:\\${SMIB_COMPOSE_MONGO_DB_TAG:-?(?<currentValue>[^\\s]+)}"
+      ],
+      "depNameTemplate": "mongo",
+      "datasourceTemplate": "docker"
     }
   ]
 }
