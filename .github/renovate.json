@@ -41,8 +41,18 @@
       "schedule": null
     }
   ],
-  "enabledManagers": ["pep621", "dockerfile", "docker-compose" ],
+  "enabledManagers": ["pep621", "dockerfile", "docker-compose"],
   "pre-commit": {
     "enabled": true
-  }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^Dockerfile$"],
+      "matchStrings": ["ENV UV_VERSION=(?<currentValue>.*?)"],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    }
+  ]
 }
