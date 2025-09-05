@@ -1,6 +1,5 @@
 import logging as logging_lib
 import sys
-from ftplib import error_temp
 from typing import Any, Dict, List, Tuple
 
 from pydantic import BaseModel
