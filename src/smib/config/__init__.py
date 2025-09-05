@@ -1,5 +1,6 @@
 import logging as logging_lib
 import sys
+from ftplib import error_temp
 from typing import Any, Dict, List, Tuple
 
 from pydantic import BaseModel
@@ -42,13 +43,15 @@ def _format_validation_errors(collected: list[tuple[BaseModel, ValidationError]]
             field_name = error["loc"][0]
             field: FieldInfo = model.model_fields[field_name]
             error_message = error["msg"]
+            error_type = error["type"]
             provided_value = error["input"]
 
             message_lines.append(f"\t• {field_name}:")
 
             spacing = 30
             message_lines.append(f"\t\t{"Error:":<{spacing}} {error_message}")
-            message_lines.append(f"\t\t{"Provided Value:":<{spacing}} {provided_value}")
+            if error_type != 'missing' and provided_value != PydanticUndefined:
+                message_lines.append(f"\t\t{"Provided Value:":<{spacing}} {provided_value}")
 
             if field.description:
                 message_lines.append(f"\t\t{"Setting Description:":<{spacing}} {field.description}")
