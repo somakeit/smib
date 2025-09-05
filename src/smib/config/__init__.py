@@ -57,7 +57,7 @@ def _format_validation_errors(collected: list[tuple[BaseModel, ValidationError]]
 
             message_lines.append(f"\t\t{"Setting Environment Variable:":<{spacing}} {env_var_prefix}{field_name.upper()}")
 
-            message_lines.append(f"\t\t{"Setting Type:":<{spacing}} {field.annotation.__name__}")
+            message_lines.append(f"\t\t{"Setting Type:":<{spacing}} {getattr(field.annotation, '__name__', str(field.annotation))}")
             if field.default != PydanticUndefined:
                 message_lines.append(f"\t\t{"Setting Default:":<{spacing}} {field.default}")
 
