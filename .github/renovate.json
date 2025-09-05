@@ -48,11 +48,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["^Dockerfile$"],
-      "matchStrings": ["ENV UV_VERSION=(?<currentValue>.*?)"],
+      "managerFilePatterns": ["/^Dockerfile$/"],
+      "matchStrings": ["ENV UV_VERSION=(?<currentValue>.*?)\\n"],
       "depNameTemplate": "astral-sh/uv",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
+      "datasourceTemplate": "github-releases"
     }
   ]
 }
