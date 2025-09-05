@@ -1,0 +1,84 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "🎉 Welcome to SoMakeIt!"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Hi there! Welcome to the SoMakeIt Slack workspace — the makerspace community in Southampton where you can explore, create, and learn. Here's a quick guide to get started:"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*📚 Wiki*\nFind detailed info on space, tools, safety rules, and policies."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Open Wiki"
+      },
+      "url": "https://wiki.somakeit.org.uk/index.php/Main_Page",
+      "action_id": "welcome_message_url_wiki_button"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*🧑‍🤝‍🧑 Members Area*\nManage your membership, access resources, and stay up to date."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Members Area"
+      },
+      "url": "https://members.somakeit.org.uk/",
+      "action_id": "welcome_message_url_members_button"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*🕒 Official Opening Hours*\nTues: 18:00–22:00\nFri: 10:00–13:00\nSat: 10:00–13:00\n(See Visit Us page for updates)"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Visit Us"
+      },
+      "url": "https://somakeit.org.uk/visit-us/",
+      "action_id": "welcome_message_url_visit_button"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*💬 Useful Channels*\n#general — For general announcements and discussion\n#space-open-announce — Updates on space availability and events"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "If you have any questions or need help, feel free to reach out in the channels or ask any of our members. Enjoy making!"
+    }
+  }
+]

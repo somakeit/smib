@@ -14,6 +14,9 @@ features:
     - command: /howfresh
       description: How fresh is the space?
       should_escape: false
+    - command: /welcome
+      description: Welcome new users
+      should_escape: false
 oauth_config:
   scopes:
     bot:
@@ -21,6 +24,7 @@ oauth_config:
       - chat:write.public
       - chat:write.customize
       - commands
+      - users:read
 settings:
   event_subscriptions:
     bot_events:
