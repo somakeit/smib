@@ -11,7 +11,7 @@
   "prHourlyLimit": 2,
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
-  "prCreation": "not-pending",
+  "prCreation": "immediate",
   "assignees": [
     "sam57719"
   ],
