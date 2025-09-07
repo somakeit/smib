@@ -13,6 +13,22 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 - **Docker Support**: Easy deployment with Docker and Docker Compose
 - **Extensible Architecture**: Designed to be easily extended with new plugins and features
 
+## Current Plugins
+- **Space State** (`space/spacestate`)
+  - API Endpoints for setting and retrieving the current space state
+  - Slack integration for posting the current space state to a channel
+- **S.M.I.B.H.I.D.** (`space/smibhid`)
+  - API Endpoints for receiving data from a [SMIBHID device](https://github.com/somakeit/smibhid)
+    - Sensor readings
+    - Button press log
+- **How Fresh?** (`space/howfresh`)
+  - Slack command `/howfresh`
+    - Responds in Slack with the latest sensor readings received from any SMIBHID.
+- **Space Welcome** (`space/welcome`)
+  - Automatic welcome message for new users when they join the Slack workspace
+  - Slack command `/welcome`
+    - Sends the welcome message in Slack to the requesting user
+
 ## Setup and Configuration
 
 For a comprehensive list of all configuration settings, see [SETTINGS.md](SETTINGS.md).
