@@ -18,6 +18,7 @@
   "reviewers": [
     "sam57719"
   ],
+  "labels": ["dependencies"],
   "pruneStaleBranches": true,
   "packageRules": [
     {
@@ -38,25 +39,13 @@
         "dockerfile",
         "docker-compose"
       ],
-      "minimumReleaseAge": "3 days"
+      "minimumReleaseAge": "3 days",
+      "addLabels": ["dependencies/docker"]
     },
     {
-      "matchUpdateTypes": [
-        "digest",
-        "patch",
-        "minor",
-        "major"
-      ],
       "matchManagers": [
-        "pep621",
-        "dockerfile",
-        "docker-compose",
-        "custom.regex"
-      ],
-      "labels": [
-        "security"
-      ],
-      "schedule": null
+        "pep621"
+      ]
     }
   ],
   "enabledManagers": [
