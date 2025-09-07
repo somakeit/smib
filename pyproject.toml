@@ -30,7 +30,10 @@ dynamic = ["version"]
 display_name = "S.M.I.B."
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = [
+    "hatchling (>=1.14.0,<2.0.0)",
+    "hatch-vcs (>=0.4.0,<1.0.0)"
+]
 build-backend = "hatchling.build"
 
 [dependency-groups]
