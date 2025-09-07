@@ -27,22 +27,69 @@
       "enabled": false
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "groupName": "all non-major updates"
     },
     {
-      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
       "minimumReleaseAge": "3 days"
     },
     {
-      "matchUpdateTypes": ["digest", "patch", "minor", "major"],
-      "matchManagers": ["pep621", "dockerfile", "docker-compose"],
-      "labels": ["security"],
+      "matchUpdateTypes": [
+        "digest",
+        "patch",
+        "minor",
+        "major"
+      ],
+      "matchManagers": [
+        "pep621",
+        "dockerfile",
+        "docker-compose",
+        "custom.regex"
+      ],
+      "labels": [
+        "security"
+      ],
       "schedule": null
     }
   ],
-  "enabledManagers": ["pep621", "dockerfile", "docker-compose" ],
+  "enabledManagers": [
+    "pep621",
+    "dockerfile",
+    "docker-compose",
+    "custom.regex"
+  ],
   "pre-commit": {
     "enabled": true
-  }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ENV UV_VERSION=(?<currentValue>.*?)\\n"
+      ],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^compose.yml$/"
+      ],
+      "matchStrings": [
+        "image:\\s*mongo:\\${SMIB_COMPOSE_MONGO_DB_TAG:-?(?<currentValue>[^\\s]+)}"
+      ],
+      "depNameTemplate": "mongo",
+      "datasourceTemplate": "docker"
+    }
+  ]
 }
