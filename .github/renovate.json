@@ -12,7 +12,6 @@
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
   "prCreation": "immediate",
-  "packageConcurrentLimit": 1,
   "assignees": [
     "sam57719"
   ],
