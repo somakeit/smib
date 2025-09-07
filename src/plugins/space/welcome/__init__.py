@@ -42,7 +42,7 @@ def register(slack: AsyncApp):
             await client.chat_postEphemeral(
                 channel=command["channel_id"],
                 user=command["user_id"],
-                text=f"Check your messages from <@{context["bot_user_id"]}>!"
+                text=f"Check your DMs from <@{context['bot_user_id']}>!"
             )
 
         await send_welcome_message(say, command["user_id"])
