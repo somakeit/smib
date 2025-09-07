@@ -51,6 +51,3 @@ def register(slack: AsyncApp):
     async def handle_welcome_message_url_clicks(ack: AsyncAck):
         await ack()
 
-
-
-
