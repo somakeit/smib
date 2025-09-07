@@ -28,6 +28,7 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
   - Automatic welcome message for new users when they join the Slack workspace
   - Slack command `/welcome`
     - Sends the welcome message in Slack to the requesting user
+  - Read [this](src/plugins/space/welcome/README.md) for information on how the welcome message is built.
 
 ## Setup and Configuration
 
