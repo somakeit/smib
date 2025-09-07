@@ -52,17 +52,117 @@
     "type": "section",
     "text": {
       "type": "mrkdwn",
-      "text": "*🕒 Official Opening Hours*\nTues: 18:00–22:00\nFri: 10:00–13:00\nSat: 10:00–13:00\n(See Visit Us page for updates)"
-    },
-    "accessory": {
-      "type": "button",
-      "text": {
-        "type": "plain_text",
-        "text": "Visit Us"
-      },
-      "url": "https://somakeit.org.uk/visit-us/",
-      "action_id": "welcome_message_url_visit_button"
+      "text": "*🕒 Official Opening Hours*"
     }
+  },
+  {
+    "type": "table",
+    "rows": [
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                { "type": "text", "text": "Day", "style": { "bold": true } }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                { "type": "text", "text": "Time", "style": { "bold": true } }
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "Tuesday Morning" }]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "9:30 AM – 12:30 PM" }]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "Tuesday Evening" }]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "7:30 PM – 10:00 PM (Main open evening for new members)" }]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "Thursday Evening" }]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "7:30 PM – 10:00 PM" }]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "Friday Morning" }]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [{ "type": "text", "text": "9:30 AM – 12:30 PM" }]
+            }
+          ]
+        }
+      ]
+    ]
   },
   {
     "type": "section",

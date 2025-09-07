@@ -15,7 +15,7 @@ features:
       description: How fresh is the space?
       should_escape: false
     - command: /welcome
-      description: Welcome new users
+      description: Receive a welcome message!
       should_escape: false
 oauth_config:
   scopes:
@@ -23,12 +23,13 @@ oauth_config:
       - chat:write
       - chat:write.public
       - chat:write.customize
-      - commands
       - users:read
+      - commands
 settings:
   event_subscriptions:
     bot_events:
       - app_home_opened
+      - team_join
   interactivity:
     is_enabled: true
   org_deploy_enabled: false
