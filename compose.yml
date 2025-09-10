@@ -99,7 +99,7 @@ services:
   smib-socket-proxy:
     <<: *common
     container_name: smib-socket-proxy
-    image: tecnativa/docker-socket-proxy:v0.4.0
+    image: tecnativa/docker-socket-proxy:v0.4.1
     healthcheck:
       test: wget --spider http://localhost:2375/version || exit 1
     environment:
