@@ -20,7 +20,23 @@
     "type": "section",
     "text": {
       "type": "mrkdwn",
-      "text": "*📚 Wiki*\nFind detailed info on space, tools, safety rules, and policies."
+      "text": "*🌐 Website*\nFind information on policies and safety documents."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Open Website"
+      },
+      "url": "https://somakeit.org.uk/",
+      "action_id": "welcome_message_url_website"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*📚 Wiki*\nFind detailed info on the space and its tools."
     },
     "accessory": {
       "type": "button",
@@ -36,13 +52,13 @@
     "type": "section",
     "text": {
       "type": "mrkdwn",
-      "text": "*🧑‍🤝‍🧑 Members Area*\nManage your membership, access resources, and stay up to date."
+      "text": "*🧑‍🤝‍🧑 Members Area*\nManage your membership and your details."
     },
     "accessory": {
       "type": "button",
       "text": {
         "type": "plain_text",
-        "text": "Members Area"
+        "text": "Open Members Area"
       },
       "url": "https://members.somakeit.org.uk/",
       "action_id": "welcome_message_url_members_button"
@@ -65,7 +81,13 @@
             {
               "type": "rich_text_section",
               "elements": [
-                { "type": "text", "text": "Day", "style": { "bold": true } }
+                {
+                  "type": "text",
+                  "text": "Day",
+                  "style": {
+                    "bold": true
+                  }
+                }
               ]
             }
           ]
@@ -76,7 +98,13 @@
             {
               "type": "rich_text_section",
               "elements": [
-                { "type": "text", "text": "Time", "style": { "bold": true } }
+                {
+                  "type": "text",
+                  "text": "Time",
+                  "style": {
+                    "bold": true
+                  }
+                }
               ]
             }
           ]
@@ -88,7 +116,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "Tuesday Morning" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Tuesday Morning"
+                }
+              ]
             }
           ]
         },
@@ -97,7 +130,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "9:30 AM – 12:30 PM" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "9:30 AM – 12:30 PM"
+                }
+              ]
             }
           ]
         }
@@ -108,7 +146,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "Tuesday Evening" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Tuesday Evening"
+                }
+              ]
             }
           ]
         },
@@ -117,7 +160,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "7:30 PM – 10:00 PM (Main open evening for new members)" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "7:30 PM – 10:00 PM (Main open evening for new members)"
+                }
+              ]
             }
           ]
         }
@@ -128,7 +176,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "Thursday Evening" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Thursday Evening"
+                }
+              ]
             }
           ]
         },
@@ -137,7 +190,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "7:30 PM – 10:00 PM" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "7:30 PM – 10:00 PM"
+                }
+              ]
             }
           ]
         }
@@ -148,7 +206,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "Friday Morning" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Friday Morning"
+                }
+              ]
             }
           ]
         },
@@ -157,7 +220,12 @@
           "elements": [
             {
               "type": "rich_text_section",
-              "elements": [{ "type": "text", "text": "9:30 AM – 12:30 PM" }]
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "9:30 AM – 12:30 PM"
+                }
+              ]
             }
           ]
         }
