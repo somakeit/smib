@@ -1,19 +1,19 @@
 import logging
 from http import HTTPStatus
 from typing import Annotated
-from fastapi import Request, Body
+
+from fastapi import Body
 from slack_bolt.context.say.async_say import AsyncSay
 
-from smib.events.interfaces.http_event_interface import HttpEventInterface
-from ..common import set_space_state_in_db, send_space_open_announcement, send_space_closed_announcement, \
-    get_space_state_from_db, open_space, close_space
+from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
+from ..common import get_space_state_from_db, open_space, close_space
 from ..models import SpaceState, SpaceStateEnum, SpaceStateOpen, SpaceStateClosed
 
 logger = logging.getLogger("Space State Plugin - HTTP")
 
-def register(http: HttpEventInterface):
+def register(api: ApiEventInterface):
 
-    @http.put("/space/state/open", status_code=HTTPStatus.NO_CONTENT)
+    @api.put("/space/state/open", status_code=HTTPStatus.NO_CONTENT)
     async def set_space_open(
         say: AsyncSay, 
         space_open_params: Annotated[SpaceStateOpen | None, Body()] = None
@@ -23,7 +23,7 @@ def register(http: HttpEventInterface):
         logger.info(f"Received space open request with {space_open_params.hours}h selected.")
         await open_space(space_open_params, say)
 
-    @http.put("/space/state/closed", status_code=HTTPStatus.NO_CONTENT)
+    @api.put("/space/state/closed", status_code=HTTPStatus.NO_CONTENT)
     async def set_space_closed(
         say: AsyncSay, 
         space_closed_params: Annotated[SpaceStateClosed | None, Body()] = None
@@ -34,7 +34,7 @@ def register(http: HttpEventInterface):
         await close_space(space_closed_params, say)
 
 
-    @http.get("/space/state", response_model=SpaceState)
+    @api.get("/space/state", response_model=SpaceState)
     async def get_space_state() -> SpaceState:
         """ Get the space state """
         logger.info("Received space state request.")

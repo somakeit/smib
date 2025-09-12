@@ -4,10 +4,9 @@ from logging import Logger
 from pathlib import Path
 
 from fastapi import APIRouter
-from fastapi.routing import Mount
 
 from smib.config import general
-from smib.events.interfaces.http_event_interface import HttpEventInterface
+from smib.events.interfaces.http import HttpEventInterface
 from smib.plugins.plugin import Plugin
 
 
@@ -48,7 +47,7 @@ class HttpPluginIntegration:
         unique_name = plugin.unique_name
         tags = self.get_plugin_tags(plugin)
         self.tag_metadata.append(tags)
-        self.http_event_interface.current_router = APIRouter(tags=[tags["name"]])
+        self.http_event_interface.current_router = APIRouter(tags=[tags["name"]], prefix=self.http_event_interface.path_prefix)
         self.http_event_interface.routers[unique_name] = self.http_event_interface.current_router
 
     def remove_router_if_unused(self, plugin: Plugin):
@@ -72,5 +71,6 @@ class HttpPluginIntegration:
         all_tags = self.tag_metadata + self.http_event_interface.service.openapi_tags
         self.http_event_interface.service.openapi_tags = [tag for tag in all_tags if tag["name"] in active_tags]
 
+        include_router_options = self.http_event_interface.include_router_options
         for router in self.http_event_interface.routers.values():
-            self.fastapi_app.include_router(router)
+            self.fastapi_app.include_router(router, **include_router_options)

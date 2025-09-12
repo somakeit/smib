@@ -1,8 +1,10 @@
-import secrets
-
-from pydantic import computed_field, SecretStr, Field
+from pydantic import Field
 
 from ._env_base_settings import EnvBaseSettings
+from pydantic import Field
+
+from ._env_base_settings import EnvBaseSettings
+
 
 class WebserverSettings(EnvBaseSettings):
     host: str = Field(
@@ -14,7 +16,7 @@ class WebserverSettings(EnvBaseSettings):
         description="Port number for the webserver to listen on"
     )
     path_prefix: str = Field(
-        default="/api",
+        default="/",
         description="URL path prefix for the API endpoints"
     )
     forwarded_allow_ips: list[str] = Field(

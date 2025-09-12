@@ -22,14 +22,11 @@ services:
     labels:
       - "traefik.group=smib"
       # API router
-      - "traefik.http.routers.smib.rule=PathPrefix(`${SMIB_WEBSERVER_PATH_PREFIX:-/api}`)"
+      - "traefik.http.routers.smib.rule=PathPrefix(`${SMIB_WEBSERVER_PATH_PREFIX:-/}`)"
       - "traefik.http.services.smib.loadbalancer.server.port=${SMIB_WEBSERVER_PORT:-80}"
-      - "traefik.http.middlewares.smib-stripprefix.stripprefix.prefixes=${SMIB_WEBSERVER_PATH_PREFIX:-/api}"
+      - "traefik.http.middlewares.smib-stripprefix.stripprefix.prefixes=${SMIB_WEBSERVER_PATH_PREFIX:-/}"
       - "traefik.http.routers.smib.middlewares=smib-stripprefix@docker"
       - "traefik.http.routers.smib.priority=5"
-      # Static files router
-      - "traefik.http.routers.smib-static.rule=PathPrefix(`/static`)"
-      - "traefik.http.routers.smib-static.priority=10"
 
   smib-db:
     <<: *common
