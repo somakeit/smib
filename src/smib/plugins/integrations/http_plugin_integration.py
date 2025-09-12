@@ -69,7 +69,7 @@ class HttpPluginIntegration:
                     active_tags.update(route.tags)
 
         all_tags = self.tag_metadata + self.http_event_interface.service.openapi_tags
-        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags if tag["name"] in active_tags]
+        self.http_event_interface.service.openapi_tags += [tag for tag in all_tags if tag["name"] in active_tags]
 
         include_router_options = self.http_event_interface.include_router_options
         for router in self.http_event_interface.routers.values():

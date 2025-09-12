@@ -56,9 +56,9 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
 class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
     EXCLUDED_PATHS = {
         "/openapi.json",
-        "/docs",
-        "/docs/oauth2-redirect",
-        "/redoc",
+        "/api/docs",
+        "/api/docs/oauth2-redirect",
+        "/api/redoc",
         "/favicon.ico"
     }
 

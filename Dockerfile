@@ -47,6 +47,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
-  CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"
+  CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/api/ping').status == 200 else exit(1)"
 
 CMD ["python", "-m", "smib"]
