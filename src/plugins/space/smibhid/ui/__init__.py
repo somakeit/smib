@@ -1,18 +1,15 @@
 import logging
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import Header
-
+from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
 from .models import UILogCreate, UILog
-from smib.events.interfaces.http_event_interface import HttpEventInterface
 from ..common import DeviceHostnameHeader
 
 logger = logging.getLogger("S.M.I.B.H.I.D. - UI Logs")
 
-def register(http: HttpEventInterface):
+def register(api: ApiEventInterface):
 
-    @http.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
+    @api.post('/smibhid/log/ui', status_code=HTTPStatus.CREATED)
     async def log_ui(ui_logs: list[UILogCreate], x_smibhid_hostname: DeviceHostnameHeader):
         """ Logs a UI event to the database """
         db_logs = [UILog.from_api(log, x_smibhid_hostname) for log in ui_logs]

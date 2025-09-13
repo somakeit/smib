@@ -1,19 +1,15 @@
 import logging
 from http import HTTPStatus
-from typing import Annotated
 
-import pymongo
-from fastapi import Header, HTTPException, Query
-
+from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
 from .models import SensorLogReading, SensorLog, SensorLogRequest, SensorUnit
-from smib.events.interfaces.http_event_interface import HttpEventInterface
 from ..common import DeviceHostnameHeader
 
 logger = logging.getLogger("S.M.I.B.H.I.D. - Sensor Logs")
 
-def register(http: HttpEventInterface):
+def register(api: ApiEventInterface):
 
-    @http.post('/smibhid/log/sensor', status_code=HTTPStatus.CREATED)
+    @api.post('/smibhid/log/sensor', status_code=HTTPStatus.CREATED)
     async def log_sensor(data: SensorLogRequest, x_smibhid_hostname: DeviceHostnameHeader):
         """ Logs a sensor event to the database """
         db_logs = [SensorLog.from_api(log, x_smibhid_hostname) for log in data.readings]

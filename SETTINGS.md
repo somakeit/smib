@@ -20,13 +20,13 @@ This document provides a comprehensive overview of all configurable settings in 
 
 ## Webserver Settings
 
-| Environment Variable | Description | Example | Default |
-|---------------------|-------------|---------|---------|
+| Environment Variable | Description                                                        | Example | Default |
+|---------------------|--------------------------------------------------------------------|---------|---------|
 | SMIB_WEBSERVER_HOST | Host address to bind the webserver to (0.0.0.0 for all interfaces) | `127.0.0.1` | `0.0.0.0` |
-| SMIB_WEBSERVER_PORT | Port number for the webserver to listen on | `8080` | `80` |
-| SMIB_WEBSERVER_PATH_PREFIX | URL path prefix for the API endpoints | `/smib/api` | `/api` |
-| SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all) | `[10.0.0.1, 192.168.1.1]` | `[*]` |
-| SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests | `true` | `false` |
+| SMIB_WEBSERVER_PORT | Port number for the webserver to listen on                         | `8080` | `80` |
+| SMIB_WEBSERVER_PATH_PREFIX | URL path prefix for the webserver endpoints                        | `/smib/` | `/` |
+| SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all)        | `[10.0.0.1, 192.168.1.1]` | `[*]` |
+| SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests            | `true` | `false` |
 
 ## Logging Settings
 | Environment Variable | Description | Example | Default |

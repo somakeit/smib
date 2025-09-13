@@ -5,26 +5,26 @@ __author__ = "Sam Cork"
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
-from smib.events.interfaces.http_event_interface import HttpEventInterface
+from smib.events.interfaces.http.http_web_event_interface import WebEventInterface
 
 FAVICON_URL = "https://members.somakeit.org.uk/images/somakeit/favicon.ico"
 
-def register(http: HttpEventInterface):
-    fastapi_app: FastAPI = http.service.fastapi_app
+def register(web: WebEventInterface):
+    fastapi_app: FastAPI = web.service.fastapi_app
     app_title = fastapi_app.title
 
-    http.service.fastapi_app.redoc_url = None
-    http.service.fastapi_app.docs_url = None
+    web.service.fastapi_app.redoc_url = None
+    web.service.fastapi_app.docs_url = None
 
     remove_route_by_name(fastapi_app, "swagger_ui_html")
     remove_route_by_name(fastapi_app, "swagger_ui_redirect")
     remove_route_by_name(fastapi_app, "redoc_html")
 
-    @http.get("/docs", include_in_schema=False)
+    @web.get("/api/docs", include_in_schema=False)
     async def overridden_swagger():
         return get_swagger_ui_html(openapi_url=fastapi_app.root_path.rstrip('/') + "/openapi.json", title=f"{app_title} - Swagger UI", swagger_favicon_url=FAVICON_URL)
 
-    @http.get("/redoc", include_in_schema=False)
+    @web.get("/api/redoc", include_in_schema=False)
     async def overridden_redoc():
         return get_redoc_html(openapi_url=fastapi_app.root_path.rstrip('/') + "/openapi.json", title=f"{app_title} - ReDoc", redoc_favicon_url=FAVICON_URL)
 
