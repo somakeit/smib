@@ -10,7 +10,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
 from smib.config import webserver
-from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
@@ -36,7 +35,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
             "type": request.scope["type"],
             "method": request.scope["method"],
             "path": request.scope["path"],
-            "path_params": request.scope["path_params"],
+            "path_params": request.scope.get("path_params", {}),
             "root_path": request.scope["root_path"],
         }
 
@@ -57,9 +56,9 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
 class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
     EXCLUDED_PATHS = {
         "/openapi.json",
-        "/docs",
-        "/docs/oauth2-redirect",
-        "/redoc",
+        "/api/docs",
+        "/api/docs/oauth2-redirect",
+        "/api/redoc",
         "/favicon.ico"
     }
 
