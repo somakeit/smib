@@ -1,8 +1,6 @@
 from pydantic import Field
 
 from ._env_base_settings import EnvBaseSettings
-from pydantic import Field
-
 from ._env_base_settings import EnvBaseSettings
 
 
