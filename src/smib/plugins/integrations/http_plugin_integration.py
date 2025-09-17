@@ -2,6 +2,7 @@ import logging
 import sys
 from logging import Logger
 from pathlib import Path
+from pprint import pformat
 
 from fastapi import APIRouter
 
@@ -68,8 +69,10 @@ class HttpPluginIntegration:
                 if hasattr(route, 'tags'):
                     active_tags.update(route.tags)
 
-        all_tags = self.tag_metadata + self.http_event_interface.service.openapi_tags
-        self.http_event_interface.service.openapi_tags += [tag for tag in all_tags if tag["name"] in active_tags]
+        all_tags = {tag["name"]: tag for tag in (self.tag_metadata + self.http_event_interface.service.openapi_tags)}
+        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags.values() if
+                                                          tag["name"] in active_tags]
+        self.logger.debug(f"OpenAPI Tags:\n{pformat(self.http_event_interface.service.openapi_tags)}")
 
         include_router_options = self.http_event_interface.include_router_options
         for router in self.http_event_interface.routers.values():
