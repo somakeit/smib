@@ -1,6 +1,6 @@
 import logging as logging_lib
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Sequence
 
 from pydantic import BaseModel
 
@@ -26,12 +26,13 @@ __all__ = [
     "database",
     "webserver",
     "EnvBaseSettings",
+    "format_validation_errors"
 ]
 
 _logger = logging_lib.getLogger(__name__)
 
 
-def _format_validation_errors(collected: list[tuple[BaseModel, ValidationError]]) -> str:
+def format_validation_errors(collected: list[tuple[type[BaseModel], ValidationError]]) -> str:
     message_lines: list[str] = []
     for model, validation_errors in collected:
         model_config = model.model_config
@@ -108,7 +109,7 @@ except ValidationError as ve:
 
 if _collected_errors:
     # Prefer printing to stderr to ensure visibility even if logging isn't configured yet
-    msg = _format_validation_errors(_collected_errors)
+    msg = format_validation_errors(_collected_errors)
     # Print to stderr only to avoid duplicate outputs (some environments route logs to stderr too)
     _logger.error(msg)
     # Exit early so the application clearly stops on config errors
