@@ -7,9 +7,9 @@ from smib.config import EnvBaseSettings
 from smib.config import format_validation_errors
 
 class SmibhidSensorPluginConfig(EnvBaseSettings):
-    monitor_interval: timedelta = Field(
+    monitor_interval: timedelta | None = Field(
         default=timedelta(minutes=1),
-        description="Interval between sensor log monitor checks. Accepts seconds (int), 'HH:MM:SS', or ISO8601 durations like 'PT10M'."
+        description="Interval between sensor log monitor checks. Accepts seconds (int), 'HH:MM:SS', or ISO8601 durations like 'PT10M'. If None, no monitoring is performed."
     )
 
     monitor_alert_threshold: timedelta = Field(
@@ -30,7 +30,6 @@ class SmibhidSensorPluginConfig(EnvBaseSettings):
     model_config = {
         "env_prefix": "SMIB_PLUGIN_SMIBHID_SENSOR_"
     }
-    SettingsConfigDict()
 
 
 _logger = logging.getLogger("S.M.I.B.H.I.D. Sensor Plugin Config")
