@@ -49,8 +49,11 @@ def register(api: ApiEventInterface, schedule: ScheduledEventInterface):
 
             sensor_monitor_state: SensorLogMonitorState = await SensorLogMonitorState.find_one() or SensorLogMonitorState()
             over_alert_threshold: bool = (datetime.now(UTC) - latest_log.received_timestamp) > config.monitor_alert_threshold
-            over_alert_resend_threshold: bool = (config.monitor_alert_resend_interval is not None and
-                                                 (datetime.now(UTC) - sensor_monitor_state.last_alert_sent) > config.monitor_alert_resend_interval)
+            over_alert_resend_threshold: bool = (
+                config.monitor_alert_resend_interval is not None
+                and sensor_monitor_state.last_alert_sent is not None
+                and (datetime.now(UTC) - sensor_monitor_state.last_alert_sent) > config.monitor_alert_resend_interval
+            )
 
             logger.debug(f"Sensor log monitor state: {pformat(sensor_monitor_state.model_dump())}")
 
