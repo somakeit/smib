@@ -76,8 +76,3 @@ def register(api: ApiEventInterface, schedule: ScheduledEventInterface):
             await sensor_monitor_state.save()
     else:
         logger.info("Sensor log monitoring disabled. Skipping.")
-
-
-
-
-
