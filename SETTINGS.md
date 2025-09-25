@@ -67,4 +67,4 @@ This document provides a comprehensive overview of all configurable settings in 
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_INTERVAL | Interval between sensor log monitor checks. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations like `PT10M`. Set to `None` to disable monitoring. | `PT1M` or `0:01:00` or `60` | `0:01:00` |
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD | Time since the last received sensor log after which an alert should be sent. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. | `PT1H` or `1:00:00` or `3600` | `1:00:00` |
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_RESEND_INTERVAL | Interval to resend alerts while the issue persists. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. Set to `None` to only alert once per issue. | `PT10M` or `0:10:00` or `600` | `None` |
-| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_CHANNEL_ID | Slack channel ID where sensor log monitor alerts are posted | `C0123456789` | `code` |
+| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_CHANNEL_ID | Slack channel ID where sensor log monitor alerts are posted | `C1234567890` | `code` |
