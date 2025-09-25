@@ -57,7 +57,9 @@ def register(api: ApiEventInterface, schedule: ScheduledEventInterface):
 
             logger.debug(f"Sensor log monitor state: {pformat(sensor_monitor_state.model_dump())}")
 
-            alert_now = over_alert_threshold and not sensor_monitor_state.alert_active or over_alert_threshold and sensor_monitor_state.alert_active and over_alert_resend_threshold
+            first_alert = over_alert_threshold and not sensor_monitor_state.alert_active
+            resend_alert = over_alert_threshold and sensor_monitor_state.alert_active and over_alert_resend_threshold
+            alert_now = first_alert or resend_alert
             if alert_now:
                 logger.info(f"No sensor logs received within {get_humanized_timedelta(config.monitor_alert_threshold)}. Alerting.")
                 await client.chat_postMessage(
