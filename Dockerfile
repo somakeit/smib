@@ -46,7 +46,9 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
 
+COPY docker/healthcheck.py /usr/local/bin/healthcheck.py
+
 HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
-  CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/api/ping').status == 200 else exit(1)"
+ CMD ["python", "/usr/local/bin/healthcheck.py"]
 
 CMD ["python", "-m", "smib"]
