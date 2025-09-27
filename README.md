@@ -20,6 +20,7 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 - **S.M.I.B.H.I.D.** (`space/smibhid`)
   - API Endpoints for receiving data from a [SMIBHID device](https://github.com/somakeit/smibhid)
     - Sensor readings
+      - Configurable sensor log monitor to alert when no logs are received within a specified timeframe
     - Button press log
 - **How Fresh?** (`space/howfresh`)
   - Slack command `/howfresh`

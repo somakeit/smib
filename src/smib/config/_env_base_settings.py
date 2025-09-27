@@ -7,7 +7,9 @@ class EnvBaseSettings(BaseSettings):
         "env_prefix": "SMIB_",
         "env_file": ".env",
         "env_file_encoding": "utf-8",
-        "extra": "ignore"
+        "extra": "ignore",
+        "env_parse_enum": True,
+        "env_parse_none_str": "None",
     }
     @classmethod
     def settings_customise_sources(
