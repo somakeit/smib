@@ -46,9 +46,9 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
 
-COPY docker/healthcheck.py /usr/local/bin/healthcheck.py
+COPY docker/healthcheck.py ./healthcheck.py
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
- CMD ["python", "/usr/local/bin/healthcheck.py"]
+ CMD ["python", "/app/healthcheck.py"]
 
 CMD ["python", "-m", "smib"]
