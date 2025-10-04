@@ -26,7 +26,7 @@ def filter_not_beanie(model: type[Document]) -> bool:
 class DatabaseManager:
     def __init__(self, db_name: str = database.mongo_db_name) -> None:
         self.db_name: str = db_name
-        self.client: AsyncMongoClient = AsyncMongoClient(database.mongo_db_uri)
+        self.client: AsyncMongoClient = AsyncMongoClient(database.mongo_db_uri, tz_aware=True)
         self.logger: Logger = logging.getLogger(self.__class__.__name__)
         self._document_filters: list[Callable[[type[Document]], bool]] = []
 
