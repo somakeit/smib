@@ -75,7 +75,11 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
         if not route_loggable:
             return False
 
-        if request.client.host in self.LOCAL_HOSTS and request.headers.get('x-skip-logging', 'false').lower() == 'true':
+        if (
+            request.client is not None
+            and request.client.host in self.LOCAL_HOSTS
+            and request.headers.get('x-skip-logging', 'false').lower() == 'true'
+        ):
             return False
 
         return True
