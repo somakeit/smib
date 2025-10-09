@@ -1,4 +1,4 @@
-from humanize import naturaltime, naturaldelta
+from humanize import naturaltime, naturaldelta, precisedelta
 from datetime import datetime, UTC, timedelta
 import pytz
 
@@ -19,11 +19,11 @@ def get_humanized_time(timestamp: datetime) -> str:
 
     return naturaltime(now - timestamp)
 
-def get_humanized_timedelta(timedelta: timedelta) -> str:
+def get_humanized_timedelta(delta: timedelta) -> str:
     """Convert timedelta to human-readable format.
     Example: "2 minutes", "5 hours", etc.
 
     Args:
         timedelta: The timedelta to humanize
     """
-    return naturaldelta(timedelta)
+    return precisedelta(delta)

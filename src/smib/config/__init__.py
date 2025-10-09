@@ -15,6 +15,7 @@ from smib.config.slack import SlackSettings
 from smib.config.database import DatabaseSettings
 from smib.config.webserver import WebserverSettings
 from smib.config._env_base_settings import EnvBaseSettings
+from smib.config._types import IntervalField
 
 from smib.logging_ import initialise_logging
 
@@ -26,6 +27,7 @@ __all__ = [
     "database",
     "webserver",
     "EnvBaseSettings",
+    "IntervalField",
     "format_validation_errors"
 ]
 
