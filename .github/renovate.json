@@ -35,17 +35,20 @@
       "groupName": "all non-major updates"
     },
     {
+      "matchPackageNames": ["python"],
+      "matchManagers": ["pep621", "dockerfile"],
+      "groupName": "Python version",
+      "addLabels": ["dependencies/python"],
+      "rangeStrategy": "bump"
+    },
+    {
       "matchManagers": [
         "dockerfile",
         "docker-compose"
       ],
+      "matchPackageNames": ["*", "!python"],
       "minimumReleaseAge": "3 days",
       "addLabels": ["dependencies/docker"]
-    },
-    {
-      "matchManagers": [
-        "pep621"
-      ]
     }
   ],
   "enabledManagers": [
