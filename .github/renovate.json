@@ -35,17 +35,21 @@
       "groupName": "all non-major updates"
     },
     {
+      "matchPackageNames": ["python"],
+      "matchManagers": ["pep621", "dockerfile"],
+      "groupName": "Python version",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchFilePatterns": ["Dockerfile", "pyproject.toml"],
+      "addLabels": ["dependencies/python"]
+    },
+    {
       "matchManagers": [
         "dockerfile",
         "docker-compose"
       ],
       "minimumReleaseAge": "3 days",
-      "addLabels": ["dependencies/docker"]
-    },
-    {
-      "matchManagers": [
-        "pep621"
-      ]
+      "addLabels": ["dependencies/docker"],
+      "excludePackageNames": ["python"]
     }
   ],
   "enabledManagers": [
