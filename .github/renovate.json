@@ -39,7 +39,6 @@
       "matchManagers": ["pep621", "dockerfile"],
       "groupName": "Python version",
       "matchUpdateTypes": ["minor", "patch"],
-      "matchFilePatterns": ["Dockerfile", "pyproject.toml"],
       "addLabels": ["dependencies/python"]
     },
     {
@@ -48,8 +47,7 @@
         "docker-compose"
       ],
       "minimumReleaseAge": "3 days",
-      "addLabels": ["dependencies/docker"],
-      "excludePackageNames": ["python"]
+      "addLabels": ["dependencies/docker"]
     }
   ],
   "enabledManagers": [
