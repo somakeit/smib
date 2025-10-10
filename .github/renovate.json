@@ -46,6 +46,7 @@
         "dockerfile",
         "docker-compose"
       ],
+      "matchPackageNames": ["*", "!python"],
       "minimumReleaseAge": "3 days",
       "addLabels": ["dependencies/docker"]
     }
