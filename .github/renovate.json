@@ -39,7 +39,8 @@
       "matchManagers": ["pep621", "dockerfile"],
       "groupName": "Python version",
       "matchUpdateTypes": ["minor", "patch"],
-      "addLabels": ["dependencies/python"]
+      "addLabels": ["dependencies/python"],
+      "rangeStrategy": "bump"
     },
     {
       "matchManagers": [
