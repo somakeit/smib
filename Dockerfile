@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Download the latest installer, install it and then remove it
 ADD https://astral.sh/uv/install.sh /install.sh
-ENV UV_VERSION=0.8.23
+ENV UV_VERSION=0.9.1
 RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
 # Set up the UV environment path correctly
