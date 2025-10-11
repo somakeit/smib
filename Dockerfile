@@ -1,5 +1,5 @@
 ## ------------------------------- Builder Stage ------------------------------ ##
-FROM python:3.13-bookworm AS builder
+FROM python:3.14-bookworm AS builder
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         build-essential && \
@@ -30,7 +30,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.13-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 
 RUN useradd smibuser
 USER smibuser
