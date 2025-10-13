@@ -49,6 +49,12 @@
       "matchPackageNames": ["*", "!python"],
       "minimumReleaseAge": "3 days",
       "addLabels": ["dependencies/docker"]
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchPackagePatterns": [".*"],
+      "rangeStrategy": "bump",
+      "skipArtifactsUpdate": false
     }
   ],
   "enabledManagers": [
