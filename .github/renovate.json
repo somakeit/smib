@@ -52,7 +52,7 @@
     },
     {
       "matchManagers": ["pep621"],
-      "matchPackagePatterns": [".*"],
+      "matchPackageNames": ["*"],
       "rangeStrategy": "bump",
       "skipArtifactsUpdate": false
     }
