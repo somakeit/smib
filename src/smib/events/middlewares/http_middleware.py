@@ -62,14 +62,27 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
         "/favicon.ico"
     }
 
+    LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
     def __init__(self, app):
         super().__init__(app)
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def should_log_request(self, request: Request) -> bool:
         all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'].rstrip('/') + path for path in self.EXCLUDED_PATHS}
-        return (webserver.log_request_details and request.url.path not in all_excluded_paths
+        route_loggable: bool = (webserver.log_request_details and request.url.path not in all_excluded_paths
                 and not request.url.path.startswith(('/static', request.scope['root_path'].rstrip('/') + '/static')))
+        if not route_loggable:
+            return False
+
+        if (
+            request.client is not None
+            and request.client.host in self.LOCAL_HOSTS
+            and request.headers.get('x-skip-logging', 'false').lower() == 'true'
+        ):
+            return False
+
+        return True
 
     async def dispatch(self, request: Request, call_next) -> Response:
         should_log = self.should_log_request(request)
