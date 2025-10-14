@@ -95,6 +95,10 @@ class SensorLog(Document, SensorLogBase):
             return await cls.find_one(cls.device == device, sort=[(cls.timestamp, pymongo.DESCENDING)])
         return await cls.find_one(sort=[(cls.timestamp, pymongo.DESCENDING)])
 
+    @classmethod
+    async def get_latest_log_received(cls) -> Optional["SensorLog"]:
+        return await cls.find_one(sort=[(cls.received_timestamp, pymongo.DESCENDING)])
+
     class Settings:
         name = "smibhid_sensor_log"
 
@@ -130,3 +134,13 @@ class SensorUnit(Document):
 
     class Settings:
         name = "smibhid_sensor_units"
+
+class SensorLogMonitorState(Document):
+    last_log_received: Annotated[datetime | None, Field(default=None, examples=[datetime.now(UTC)])]
+    last_check: Annotated[datetime | None, Field(default=None, examples=[datetime.now(UTC)])]
+    last_alert_sent: Annotated[datetime | None, Field(default=None, examples=[datetime.now(UTC)])]
+    alert_active: Annotated[bool, Field(default=False)]
+
+    class Settings:
+        name = "smibhid_sensor_log_monitor_state"
+

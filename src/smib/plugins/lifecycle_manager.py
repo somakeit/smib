@@ -52,6 +52,10 @@ class PluginLifecycleManager:
                 self.postregister_plugin(plugin)
 
                 self.logger.info(f"Registered plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)})")
+            except AssertionError as e:
+                self.logger.error(f"Failed to register plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)}): {e}")
+                self.unregister_plugin(plugin)
+                continue
             except Exception as e:
                 self.logger.exception(f"Failed to register plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)}): {e}", exc_info=e)
                 self.unregister_plugin(plugin)
