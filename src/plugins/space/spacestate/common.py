@@ -1,9 +1,11 @@
 import logging
+from datetime import timedelta
 
 from slack_bolt.context.say.async_say import AsyncSay
 
 from .config import config
-from .models import SpaceState, SpaceStateOpen, SpaceStateEnum, SpaceStateHistory, SpaceStateClosed
+from .models import SpaceState, SpaceStateOpen, SpaceStateEnum, SpaceStateHistory, SpaceStateClosed, SpaceStateSource, \
+    SpaceStateEventHistory
 
 logger = logging.getLogger("Space State Plugin - Common")
 
@@ -23,6 +25,9 @@ async def get_space_state_enum_from_db() -> SpaceStateEnum | None:
 async def log_to_space_state_history(state: SpaceStateEnum) -> None:
     await SpaceStateHistory(open=state == SpaceStateEnum.OPEN).save()
 
+async def log_to_space_state_event_history(source: SpaceStateSource, requested_state: SpaceStateEnum, requested_duration_seconds: int | None, previous_state: SpaceStateEnum | None, new_state: SpaceStateEnum) -> None:
+    await SpaceStateEventHistory(source=source, requested_state=requested_state, requested_duration_seconds=requested_duration_seconds, previous_state=previous_state, new_state=new_state).save()
+
 async def send_space_open_announcement(say: AsyncSay, space_open_params: SpaceStateOpen) -> None:
     message = "Space Open!"
     if space_open_params.hours:
@@ -37,7 +42,7 @@ async def send_space_closed_announcement(say: AsyncSay, space_closed_params: Spa
 
     await say(message, channel=config.space_open_announce_channel_id)
 
-async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
+async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay, /, source: SpaceStateSource) -> None:
     new_state: SpaceStateEnum = SpaceStateEnum.OPEN
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
@@ -48,7 +53,10 @@ async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
 
     await send_space_open_announcement(say, space_open_params)
 
-async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay) -> None:
+    duration_seconds = timedelta(hours=space_open_params.hours).total_seconds() if space_open_params.hours else None
+    await log_to_space_state_event_history(source, new_state, duration_seconds, old_state, new_state)
+
+async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay, /, source: SpaceStateSource) -> None:
     new_state: SpaceStateEnum = SpaceStateEnum.CLOSED
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
@@ -58,3 +66,6 @@ async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay) -> N
         await log_to_space_state_history(new_state)
 
     await send_space_closed_announcement(say, space_closed_params)
+
+    duration_seconds = timedelta(minutes=space_closed_params.minutes).total_seconds() if space_closed_params.minutes else None
+    await log_to_space_state_event_history(source, new_state, duration_seconds, old_state, new_state)
