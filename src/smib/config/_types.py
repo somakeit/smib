@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, TypeVar
 from pydantic import BaseModel, Field, AfterValidator
 
 def _ensure_timedelta(value: int | timedelta) -> timedelta:
@@ -15,3 +15,5 @@ IntervalField = Annotated[
     int | timedelta,
     AfterValidator(_ensure_timedelta),
 ]
+
+BaseModel_T = TypeVar("BaseModel_T", bound=BaseModel)
