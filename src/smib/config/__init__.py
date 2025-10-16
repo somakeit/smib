@@ -2,7 +2,7 @@ import logging as logging_lib
 
 from smib.config._env_base_settings import EnvBaseSettings
 from smib.config._types import IntervalField, BaseSettings_T, CollectedErrors_T
-from smib.config._utils import format_validation_errors, init_settings
+from smib.config.utils import format_validation_errors, init_settings
 from smib.config.database import DatabaseSettings
 from smib.config.general import GeneralSettings
 from smib.config.logging_ import LoggingSettings

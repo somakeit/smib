@@ -1,8 +1,9 @@
 import logging
 
-from pydantic import Field, ValidationError
-from smib.config import EnvBaseSettings, format_validation_errors
-from smib.config._utils import init_plugin_settings
+from pydantic import Field
+
+from smib.config import EnvBaseSettings
+from smib.config.utils import init_plugin_settings
 
 
 class SpaceStatePluginConfig(EnvBaseSettings):
