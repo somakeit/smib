@@ -43,14 +43,9 @@ slack: SlackSettings | None = init_settings(SlackSettings, _collected_errors)
 database: DatabaseSettings | None = init_settings(DatabaseSettings, _collected_errors)
 webserver: WebserverSettings | None = init_settings(WebserverSettings, _collected_errors)
 
-print(_collected_errors)
-print(logging, project, general, slack, database, webserver)
-
 if _collected_errors:
-    msg = format_validation_errors(_collected_errors)
-
-    # Print to stderr only to avoid duplicate outputs (some environments route logs to stderr too)
-    _logger.error(msg)
+    # Log to stderr only to avoid duplicate outputs (some environments route logs to stderr too)
+    _logger.error(format_validation_errors(_collected_errors))
 
     # Exit early so the application clearly stops on config errors
     raise SystemExit(1)

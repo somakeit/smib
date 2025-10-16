@@ -4,13 +4,12 @@ from typing import Optional
 from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
-from pydantic_settings import BaseSettings
 
-from smib.config._types import BaseSettings_T
+from smib.config._types import BaseSettings_T, CollectedErrors_T
 from smib.utilities import split_camel_case
 
 
-def format_validation_errors(collected: list[tuple[type[BaseSettings], ValidationError]]) -> str:
+def format_validation_errors(collected: CollectedErrors_T) -> str:
     message_lines: list[str] = []
     for model, validation_errors in collected:
         model_config = model.model_config
@@ -44,7 +43,7 @@ def format_validation_errors(collected: list[tuple[type[BaseSettings], Validatio
 
 def init_settings(
         settings_cls: type[BaseSettings_T],
-        collect_errors: list[tuple[type[BaseSettings], ValidationError]] | None = None,
+        collect_errors: CollectedErrors_T | None = None,
 ) -> Optional[BaseSettings_T]:
     """
     Try to initialise a Pydantic settings class.
