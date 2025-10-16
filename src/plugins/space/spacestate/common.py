@@ -53,7 +53,7 @@ async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay, /, source
 
     await send_space_open_announcement(say, space_open_params)
 
-    duration_seconds = timedelta(hours=space_open_params.hours).total_seconds() if space_open_params.hours else None
+    duration_seconds = int(timedelta(hours=space_open_params.hours).total_seconds()) if space_open_params.hours else None
     await log_to_space_state_event_history(source, new_state, duration_seconds, old_state, new_state)
 
 async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay, /, source: SpaceStateSource) -> None:
@@ -67,5 +67,5 @@ async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay, /, s
 
     await send_space_closed_announcement(say, space_closed_params)
 
-    duration_seconds = timedelta(minutes=space_closed_params.minutes).total_seconds() if space_closed_params.minutes else None
+    duration_seconds = int(timedelta(minutes=space_closed_params.minutes).total_seconds()) if space_closed_params.minutes else None
     await log_to_space_state_event_history(source, new_state, duration_seconds, old_state, new_state)
