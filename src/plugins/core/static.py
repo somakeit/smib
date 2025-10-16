@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from pydantic import Field
 from pydantic_core._pydantic_core import ValidationError
 
-from smib.config import EnvBaseSettings, init_settings, BaseModel_T, format_validation_errors
+from smib.config import EnvBaseSettings, init_settings, BaseSettings_T, format_validation_errors
 from smib.config._utils import init_plugin_settings
 from smib.events.interfaces.http.http_web_event_interface import WebEventInterface
 

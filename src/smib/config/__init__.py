@@ -1,25 +1,16 @@
 import logging as logging_lib
-import sys
-from typing import Any, Dict, List, Tuple, Sequence, TypeVar
 
-from pydantic import BaseModel
-
-from pydantic import ValidationError
-from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
-
+from smib.config._env_base_settings import EnvBaseSettings
+from smib.config._types import IntervalField, BaseSettings_T, CollectedErrors_T
+from smib.config._utils import format_validation_errors, init_settings
+from smib.config.database import DatabaseSettings
 from smib.config.general import GeneralSettings
 from smib.config.logging_ import LoggingSettings
 from smib.config.project import ProjectSettings
 from smib.config.slack import SlackSettings
-from smib.config.database import DatabaseSettings
 from smib.config.webserver import WebserverSettings
-from smib.config._env_base_settings import EnvBaseSettings
-from smib.config._types import IntervalField, BaseModel_T
-from smib.config._utils import format_validation_errors, init_settings
-from smib.utilities import split_camel_case
-
 from smib.logging_ import initialise_logging
+from smib.utilities import split_camel_case
 
 __all__ = [
     "logging",
@@ -32,12 +23,13 @@ __all__ = [
     "IntervalField",
     "format_validation_errors",
     "init_settings",
-    "BaseModel_T"
+    "BaseSettings_T",
+    "CollectedErrors_T"
 ]
 
 # Attempt to initialise all settings immediately (import-time), but with
 # clear, user-friendly validation reporting and fail-fast behaviour.
-_collected_errors: list[tuple[type[BaseModel_T], ValidationError]] = []
+_collected_errors: CollectedErrors_T = []
 _logger = logging_lib.getLogger(__name__)
 
 logging: LoggingSettings | None = init_settings(LoggingSettings, _collected_errors)

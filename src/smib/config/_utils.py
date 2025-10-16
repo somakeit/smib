@@ -1,19 +1,16 @@
 import logging as logging_lib
+from typing import Optional
 
-from pydantic import BaseModel
 from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
+from pydantic_settings import BaseSettings
 
-
-from typing import Optional, TypeVar
-from pydantic import BaseModel, ValidationError
-
-from smib.config._types import BaseModel_T
+from smib.config._types import BaseSettings_T
 from smib.utilities import split_camel_case
 
 
-def format_validation_errors(collected: list[tuple[type[BaseModel_T], ValidationError]]) -> str:
+def format_validation_errors(collected: list[tuple[type[BaseSettings], ValidationError]]) -> str:
     message_lines: list[str] = []
     for model, validation_errors in collected:
         model_config = model.model_config
@@ -46,9 +43,9 @@ def format_validation_errors(collected: list[tuple[type[BaseModel_T], Validation
     return "\n".join(["He's dead, Jim 🖖"] + message_lines)
 
 def init_settings(
-        settings_cls: type[BaseModel_T],
-        collect_errors: list[tuple[type[BaseModel_T], ValidationError]] | None = None,
-) -> Optional[BaseModel_T]:
+        settings_cls: type[BaseSettings_T],
+        collect_errors: list[tuple[type[BaseSettings], ValidationError]] | None = None,
+) -> Optional[BaseSettings_T]:
     """
     Try to initialise a Pydantic settings class.
 
@@ -62,8 +59,8 @@ def init_settings(
             collect_errors.append((settings_cls, ve))
         return None
 
-def init_plugin_settings(settings_cls: type[BaseModel_T], logger: logging_lib.Logger) -> Optional[BaseModel_T]:
-    errors: list[tuple[type[BaseModel_T], ValidationError]] = []
+def init_plugin_settings(settings_cls: type[BaseSettings_T], logger: logging_lib.Logger) -> Optional[BaseSettings_T]:
+    errors: list[tuple[type[BaseSettings_T], ValidationError]] = []
     settings = init_settings(settings_cls, errors)
     if settings is None:
         logger.error(format_validation_errors(errors))
