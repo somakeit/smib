@@ -38,6 +38,8 @@ async def send_space_closed_announcement(say: AsyncSay, space_closed_params: Spa
     await say(message, channel=config.space_open_announce_channel_id)
 
 async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
+    from .listeners.websocket import inform_websocket_clients_of_space_state_change
+
     new_state: SpaceStateEnum = SpaceStateEnum.OPEN
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
@@ -45,10 +47,13 @@ async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay) -> None:
     if old_state is not new_state:
         await set_space_state_in_db(new_state)
         await log_to_space_state_history(new_state)
+        await inform_websocket_clients_of_space_state_change(new_state)
 
     await send_space_open_announcement(say, space_open_params)
 
 async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay) -> None:
+    from .listeners.websocket import inform_websocket_clients_of_space_state_change
+
     new_state: SpaceStateEnum = SpaceStateEnum.CLOSED
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
@@ -56,5 +61,6 @@ async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay) -> N
     if old_state is not new_state:
         await set_space_state_in_db(new_state)
         await log_to_space_state_history(new_state)
+        await inform_websocket_clients_of_space_state_change(new_state)
 
     await send_space_closed_announcement(say, space_closed_params)
