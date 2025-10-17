@@ -42,7 +42,7 @@ async def send_space_closed_announcement(say: AsyncSay, space_closed_params: Spa
 
     await say(message, channel=config.space_open_announce_channel_id)
 
-async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay, /, source: SpaceStateSource) -> None:
+async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay, *, source: SpaceStateSource) -> None:
     new_state: SpaceStateEnum = SpaceStateEnum.OPEN
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
@@ -56,7 +56,7 @@ async def open_space(space_open_params: SpaceStateOpen, say: AsyncSay, /, source
     duration_seconds = int(timedelta(hours=space_open_params.hours).total_seconds()) if space_open_params.hours else None
     await log_to_space_state_event_history(source, new_state, duration_seconds, old_state, new_state)
 
-async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay, /, source: SpaceStateSource) -> None:
+async def close_space(space_closed_params: SpaceStateClosed, say: AsyncSay, *, source: SpaceStateSource) -> None:
     new_state: SpaceStateEnum = SpaceStateEnum.CLOSED
     old_state: SpaceStateEnum = await get_space_state_enum_from_db()
 
