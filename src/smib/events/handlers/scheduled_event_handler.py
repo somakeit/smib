@@ -5,6 +5,7 @@ from slack_bolt import BoltResponse
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.request.async_request import AsyncBoltRequest
 
+from smib.events import BoltEventType
 from smib.events.handlers import BoltRequestMode, get_slack_signature_headers
 
 
@@ -21,7 +22,7 @@ async def to_async_bolt_request(job: Job) -> AsyncBoltRequest:
     body = {
         "type": "event_callback",
         "event": {
-            "type": "scheduled_job",
+            "type": BoltEventType.SCHEDULED,
             "job": {
                 "id": job.id,
                 "name": job.name,

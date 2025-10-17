@@ -61,7 +61,7 @@ class HttpPluginIntegration:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
 
 
-    def finalise_http_setup(self):
+    def finalise_router_setup(self):
         # Filter out tags that don't have corresponding routes in any router
         active_tags = set()
         for router in self.http_event_interface.routers.values():
