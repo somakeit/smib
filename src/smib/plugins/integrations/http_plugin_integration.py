@@ -16,7 +16,7 @@ class HttpPluginIntegration:
         self.http_event_interface: HttpEventInterface = http_event_interface
 
         self.fastapi_app = self.http_event_interface.service.fastapi_app
-        self.logger: Logger = logging.getLogger(self.__class__.__name__)
+        self.logger: Logger = logging.getLogger(f"{self.__class__.__name__}/{self.http_event_interface.__class__.__name__}")
 
         self.tag_metadata: list[dict] = []
 

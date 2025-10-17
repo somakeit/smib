@@ -9,10 +9,10 @@ from fastapi import Request
 from fastapi.routing import APIRouter
 from makefun import remove_signature_parameters, add_signature_parameters
 from slack_bolt.app.async_app import AsyncApp
-from slack_bolt.kwargs_injection.async_args import AsyncArgs
 from starlette.routing import Match, BaseRoute
 
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.interfaces import get_reserved_parameter_names
 from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 from smib.events.services.http_event_service import HttpEventService
@@ -149,6 +149,3 @@ def clean_signature(signature: Signature) -> Signature:
 
     return cleaned_signature
 
-
-def get_reserved_parameter_names() -> set[str]:
-    return set(AsyncArgs.__annotations__.keys())
