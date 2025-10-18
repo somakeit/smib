@@ -1,6 +1,9 @@
 from datetime import timedelta
-from typing import Annotated
-from pydantic import BaseModel, Field, AfterValidator
+from typing import Annotated, TypeVar
+
+from pydantic import AfterValidator, ValidationError
+from pydantic_settings import BaseSettings
+
 
 def _ensure_timedelta(value: int | timedelta) -> timedelta:
     """Normalize int or timedelta to timedelta with optional validation."""
@@ -15,3 +18,6 @@ IntervalField = Annotated[
     int | timedelta,
     AfterValidator(_ensure_timedelta),
 ]
+
+BaseSettings_T = TypeVar("BaseSettings_T", bound=BaseSettings)
+CollectedErrors_T = list[tuple[type[BaseSettings], ValidationError]]

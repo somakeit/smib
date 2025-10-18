@@ -1,3 +1,5 @@
+import re
+
 from humanize import naturaltime, naturaldelta, precisedelta
 from datetime import datetime, UTC, timedelta
 import pytz
@@ -27,3 +29,11 @@ def get_humanized_timedelta(delta: timedelta) -> str:
         timedelta: The timedelta to humanize
     """
     return precisedelta(delta)
+
+def split_camel_case(text: str) -> list[str]:
+    """Split a CamelCase string into words, handling consecutive capitals."""
+    # Insert space before uppercase letters that follow lowercase letters
+    text = re.sub('([a-z])([A-Z])', r'\1 \2', text)
+    # Insert space before uppercase letter followed by lowercase (for acronyms)
+    text = re.sub('([A-Z]+)([A-Z][a-z])', r'\1 \2', text)
+    return text.split()
