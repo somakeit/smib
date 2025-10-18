@@ -10,6 +10,9 @@ class SpaceStateEnum(StrEnum):
     OPEN = "open"
     CLOSED = "closed"
 
+class SpaceStateSource(StrEnum):
+    HTTP = "http"
+    SLACK = "slack"
 
 class SpaceState(Document):
     # Redefine mongodb default 'id' field to be excluded from the swagger schema
@@ -25,6 +28,17 @@ class SpaceStateHistory(Document):
 
     class Settings:
         name = "space_state_history"
+
+class SpaceStateEventHistory(Document):
+    timestamp: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC)), Indexed()]
+    source: Annotated[SpaceStateSource, Field(description="The source of the event")]
+    requested_state: Annotated[SpaceStateEnum, Field(description="The requested state")]
+    requested_duration_seconds: Annotated[int | None, Field(default=None, description="The requested duration (in seconds)")]
+    previous_state: Annotated[SpaceStateEnum | None, Field(default=None, description="The previous state")]
+    new_state: Annotated[SpaceStateEnum, Field(description="The new state")]
+
+    class Settings:
+        name = "space_state_event_history"
 
 
 class SpaceStateOpen(BaseModel):
