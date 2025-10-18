@@ -16,7 +16,7 @@ class HttpPluginIntegration:
         self.http_event_interface: HttpEventInterface = http_event_interface
 
         self.fastapi_app = self.http_event_interface.service.fastapi_app
-        self.logger: Logger = logging.getLogger(self.__class__.__name__)
+        self.logger: Logger = logging.getLogger(f"{self.__class__.__name__}/{self.http_event_interface.__class__.__name__}")
 
         self.tag_metadata: list[dict] = []
 
@@ -61,7 +61,7 @@ class HttpPluginIntegration:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
 
 
-    def finalise_http_setup(self):
+    def finalise_router_setup(self):
         # Filter out tags that don't have corresponding routes in any router
         active_tags = set()
         for router in self.http_event_interface.routers.values():

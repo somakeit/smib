@@ -9,10 +9,11 @@ from fastapi import Request
 from fastapi.routing import APIRouter
 from makefun import remove_signature_parameters, add_signature_parameters
 from slack_bolt.app.async_app import AsyncApp
-from slack_bolt.kwargs_injection.async_args import AsyncArgs
 from starlette.routing import Match, BaseRoute
 
+from smib.events import BoltEventType
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.interfaces import get_reserved_parameter_names, extract_parameter_and_value
 from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 from smib.events.services.http_event_service import HttpEventService
@@ -76,7 +77,7 @@ class HttpEventInterface:
                                     module_name=func.__module__
                                     )
             @wraps(func)
-            async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
+            async def wrapper(*wrapper_args: list[Any], **wrapper_kwargs: dict[str, Any]):
                 request_value, request_parameter_name = extract_request_parameter(http_function_signature, wrapper_args,
                                                                                   wrapper_kwargs)
 
@@ -103,7 +104,7 @@ class HttpEventInterface:
             else:
                 args_ = [response_preserving_func]
                 lazy_kwargs = {}
-            self.bolt_app.event('http', matchers=[matcher])(*args_, **lazy_kwargs)
+            self.bolt_app.event(BoltEventType.HTTP, matchers=[matcher])(*args_, **lazy_kwargs)
             return func
 
         return decorator
@@ -127,15 +128,7 @@ def generate_route_matcher(route: BaseRoute) -> callable:
 
 
 def extract_request_parameter(signature: Signature, args, kwargs) -> tuple[Request, str]:
-    bound = signature.bind(*args, **kwargs)
-    bound.apply_defaults()
-
-    request_parameter = next(
-        (param for param in signature.parameters.values() if param.annotation == Request),
-        None
-    )
-    request_value = bound.arguments.get(request_parameter.name) if request_parameter else None
-    return request_value, request_parameter.name
+    return extract_parameter_and_value(Request, signature, args, kwargs)
 
 
 def clean_signature(signature: Signature) -> Signature:
@@ -149,6 +142,3 @@ def clean_signature(signature: Signature) -> Signature:
 
     return cleaned_signature
 
-
-def get_reserved_parameter_names() -> set[str]:
-    return set(AsyncArgs.__annotations__.keys())

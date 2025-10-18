@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from slack_sdk.signature import Clock, SignatureVerifier
+from slack_sdk.signature import SignatureVerifier
 
 from smib.config import slack
 
@@ -9,6 +9,7 @@ class BoltRequestMode(StrEnum):
     SOCKET_MODE = 'socket_mode'
     HTTP = 'http_request'
     SCHEDULED = 'scheduled'
+    WEBSOCKET = 'websocket'
 
 def get_slack_signature_headers(body: str | bytes) -> dict[str, str]:
     verifier = SignatureVerifier(slack.signing_secret.get_secret_value())
