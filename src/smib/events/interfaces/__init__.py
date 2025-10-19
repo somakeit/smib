@@ -9,8 +9,8 @@ def get_reserved_parameter_names() -> set[str]:
 
 ParameterType_ = TypeVar("ParameterType_")
 
-def extract_parameter_and_value(parameter_annotation: type[ParameterType_], signature: Signature, args, kwawgs) -> tuple[ParameterType_, str]:
-    bound = signature.bind(*args, **kwawgs)
+def extract_parameter_and_value(parameter_annotation: type[ParameterType_], signature: Signature, args, kwargs) -> tuple[ParameterType_, str]:
+    bound = signature.bind(*args, **kwargs)
     bound.apply_defaults()
 
     parameter = next(
