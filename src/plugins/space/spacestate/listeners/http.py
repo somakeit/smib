@@ -7,7 +7,7 @@ from slack_bolt.context.say.async_say import AsyncSay
 
 from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
 from ..common import get_space_state_from_db, open_space, close_space
-from ..models import SpaceState, SpaceStateEnum, SpaceStateOpen, SpaceStateClosed, SpaceStateSource
+from ..models import SpaceStateResponse, SpaceState, SpaceStateEnum, SpaceStateOpen, SpaceStateClosed, SpaceStateSource
 
 logger = logging.getLogger("Space State Plugin - HTTP")
 
@@ -34,7 +34,7 @@ def register(api: ApiEventInterface):
         await close_space(space_closed_params, say, source=SpaceStateSource.HTTP)
 
 
-    @api.get("/space/state", response_model=SpaceState)
+    @api.get("/space/state", response_model=SpaceStateResponse)
     async def get_space_state() -> SpaceState:
         """ Get the space state """
         logger.info("Received space state request.")

@@ -1,10 +1,10 @@
 from datetime import datetime, UTC
-from typing import Annotated, Union, Optional
+from typing import Annotated, Optional
 
 import pymongo
-from beanie import Document, PydanticObjectId, Indexed
+from beanie import Document, Indexed
 from beanie.odm.operators.update.general import Set
-from pydantic import BaseModel, Field, AfterValidator, RootModel, ConfigDict
+from pydantic import BaseModel, Field, AfterValidator, RootModel
 
 from ..common import validate_timestamp
 
@@ -76,7 +76,6 @@ class SensorLogRequest(BaseModel):
     ]
 
 class SensorLog(Document, SensorLogBase):
-    id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
     timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
     received_timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)], default_factory=lambda: datetime.now(UTC)), Indexed()]
@@ -103,7 +102,6 @@ class SensorLog(Document, SensorLogBase):
         name = "smibhid_sensor_log"
 
 class SensorUnit(Document):
-    id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname"), Indexed()]
     sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", examples=[{
         "SCD30": {
@@ -118,8 +116,8 @@ class SensorUnit(Document):
         }
     }])]
 
-    created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
-    updated_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
+    created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
+    updated_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
 
     @classmethod
     async def upsert_from_api(cls, data: SensorUnitMap, device: str) -> "SensorUnit":
