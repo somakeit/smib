@@ -1,28 +1,41 @@
-__display_name__ = "Database Docs"
-__description__ = "Plugin to provide database docs"
-__author__ = "Sam Cork"
-
-import logging
+from functools import cache
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
 from starlette.responses import JSONResponse
 
+from smib.config import project
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.http.http_web_event_interface import WebEventInterface
 from smib.utilities import split_camel_case
+from . import FAVICON_URL, LOGO_URL
 
-logger = logging.getLogger(__display_name__)
 
 def register(database: DatabaseManager, web: WebEventInterface):
 
+    cached_openapi_schema: dict | None = None
+
     @web.get("/database/docs")
     async def get_database_docs():
-        return get_redoc_html(openapi_url="/database/openapi.json", title="Database Docs")
+        return get_redoc_html(openapi_url="/database/openapi.json", title=f"{project.display_name} - Database Docs", redoc_favicon_url=FAVICON_URL)
 
     @web.get("/database/openapi.json", response_class=JSONResponse)
     async def get_database_schema():
-        dummy_app = FastAPI()
+        nonlocal cached_openapi_schema
+        if not cached_openapi_schema:
+            cached_openapi_schema = get_openapi_schema()
+        return JSONResponse(cached_openapi_schema)
+
+    @cache
+    def get_openapi_schema():
+        dummy_app = FastAPI(
+            title=f"{project.display_name} - Database Docs",
+            version=project.version,
+            description="This is the database schema documentation. Database is a Mongo DB instance.",
+            openapi_url="/database/openapi.json",
+            docs_url=None,
+            redoc_url=None,
+        )
 
         # Get all database models
         models = database.get_all_document_models()
@@ -53,6 +66,9 @@ def register(database: DatabaseManager, web: WebEventInterface):
 
         openapi['tags'] = tags
         openapi['x-tagGroups'] = x_tag_groups
+        openapi["info"]["x-logo"] = {
+            "url": LOGO_URL
+        }
 
-        return JSONResponse(openapi)
+        return openapi
 

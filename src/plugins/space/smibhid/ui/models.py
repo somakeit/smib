@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from enum import StrEnum
 from typing import Annotated
 
-from beanie import Document, PydanticObjectId, Indexed
+from beanie import Document, Indexed
 from pydantic import BaseModel, Field, AfterValidator
 
 from ..common import validate_timestamp
@@ -27,7 +27,6 @@ class UILogCreate(BaseModel):
 
 
 class UILog(Document, UILogCreate):
-    id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
     device: Annotated[str, Field(description="Device hostname")]
 
     timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
