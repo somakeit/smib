@@ -22,7 +22,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         self.request = request
         response: Response = await call_next(request)
 
-        if self.uses_deprecated_route(request):
+        if self.uses_deprecated_route(self.request):
             self.logger.warning(f"Deprecated endpoint used: {request.method} {request.url.path}; IP: {request.client.host}")
             response.headers.append("Deprecation", "true")
 
