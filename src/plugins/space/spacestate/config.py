@@ -1,7 +1,9 @@
 import logging
 
-from pydantic import Field, ValidationError
-from smib.config import EnvBaseSettings, format_validation_errors
+from pydantic import Field
+
+from smib.config import EnvBaseSettings
+from smib.config.utils import init_plugin_settings
 
 
 class SpaceStatePluginConfig(EnvBaseSettings):
@@ -14,17 +16,6 @@ class SpaceStatePluginConfig(EnvBaseSettings):
         "env_prefix": "SMIB_PLUGIN_SPACE_STATE_"
     }
 
-config = SpaceStatePluginConfig()
-
 _logger = logging.getLogger("Space State Plugin Config")
-
-try:
-    config = SpaceStatePluginConfig()
-except ValidationError as ve:
-    errors = [(SpaceStatePluginConfig, ve),]
-    msg = format_validation_errors(errors)
-    _logger.error(msg)
-    raise AssertionError('Invalid configuration') from ve
-
-_logger.debug(f"\n{config.model_dump_json(indent=2)}")
+config = init_plugin_settings(SpaceStatePluginConfig, _logger)
 
