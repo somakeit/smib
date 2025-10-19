@@ -9,7 +9,7 @@ from slack_sdk.web.async_client import AsyncWebClient
 from ..app_home import get_app_home, extract_selected_hours_from_state, extract_selected_minutes_from_state
 from ..common import open_space, \
     close_space
-from ..models import SpaceStateOpen, SpaceStateClosed
+from ..models import SpaceStateOpen, SpaceStateClosed, SpaceStateSource
 
 logger = logging.getLogger("Space State Plugin - Slack")
 
@@ -26,7 +26,7 @@ def register(slack: AsyncApp):
 
         logger.info(f"Space Open Button clicked by {body['user']['name']} ({body['user']['id']}) with {params.hours}h selected.")
 
-        await open_space(params, say)
+        await open_space(params, say, source=SpaceStateSource.SLACK)
         await client.views_publish(user_id=context['user_id'], view=await get_app_home())
 
     @slack.action("space_closed_button")
@@ -37,7 +37,7 @@ def register(slack: AsyncApp):
 
         logger.info(f"Space Closed Button clicked by {body['user']['name']} ({body['user']['id']})")
 
-        await close_space(params, say)
+        await close_space(params, say, source=SpaceStateSource.SLACK)
         await client.views_publish(user_id=context['user_id'], view=await get_app_home())
 
     @slack.action("space_open_hours_select")
