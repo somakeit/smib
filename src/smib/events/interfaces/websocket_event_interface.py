@@ -44,7 +44,7 @@ class WebsocketEventInterface:
             @wraps(func)
             async def wrapper(*wrapper_args: list[Any], **wrapper_kwargs: dict[str, Any]):
                 websocket_parameter_value, websocket_parameter_name = extract_websocket_parameter(websocket_function_signature, wrapper_args, wrapper_kwargs)
-                self.logger.debug(f"Handling WebSocket connection from {websocket_parameter_value.client} on path {websocket_parameter_value.scope["path"]}")
+                self.logger.debug(f"Handling WebSocket connection from {websocket_parameter_value.client} on path {websocket_parameter_value.scope['path']}")
                 await self.handler.handle(websocket_parameter_value, wrapper_kwargs)
 
             self.current_router.add_api_websocket_route(path, wrapper, name, **kwargs)
