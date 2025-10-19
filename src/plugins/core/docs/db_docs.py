@@ -31,7 +31,7 @@ def register(database: DatabaseManager, web: WebEventInterface):
         dummy_app = FastAPI(
             title=f"{project.display_name} - Database Docs",
             version=project.version,
-            description="This is the database schema documentation. Database is a Mongo DB instance.",
+            description="This is the database schema documentation. The database is a Mongo DB instance.",
             openapi_url="/database/openapi.json",
             docs_url=None,
             redoc_url=None,
@@ -52,7 +52,7 @@ def register(database: DatabaseManager, web: WebEventInterface):
                 "name": " ".join(split_camel_case(model.__name__)),
                 "x-displayName": " ".join(split_camel_case(model.__name__)),
                 "description": f"<div class=\"collection\"><strong>Mongo DB Collection:</strong> {model.get_collection_name()}</div>\n"
-                               f"<SchemaDefinition schemaRef=\"#/components/schemas/{model.__name__}\"/>"
+                               f"<SchemaDefinition schemaRef=\"#/components/schemas/{model.__name__}\" />"
             }
             for model in sorted(models, key=lambda m: m.__name__)
         ]
@@ -70,5 +70,34 @@ def register(database: DatabaseManager, web: WebEventInterface):
             "url": LOGO_URL
         }
 
+        openapi["externalDocs"] = {
+            "description": f"{project.display_name} - API Docs",
+            "url": "/api/docs",
+        }
+
+        # Remove 'required' keys from all schemas (not needed for DB docs)
+        openapi = remove_required(openapi)
+
         return openapi
 
+
+import copy
+
+def remove_required(schema: dict) -> dict:
+    """
+    Recursively remove all 'required' keys from an OpenAPI schema dict.
+    Returns a new dict, does not modify in-place.
+    """
+    schema = copy.deepcopy(schema)
+
+    def recurse(obj):
+        if isinstance(obj, dict):
+            obj.pop("required", None)  # remove required if present
+            for k, v in obj.items():
+                recurse(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                recurse(item)
+
+    recurse(schema)
+    return schema

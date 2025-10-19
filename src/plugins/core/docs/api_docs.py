@@ -34,9 +34,14 @@ def register(web: WebEventInterface):
             version=project.version,
             description=project.description,
             routes=fastapi_app.routes,
+            tags=fastapi_app.openapi_tags
         )
         openapi_schema["info"]["x-logo"] = {
             "url": LOGO_URL
+        }
+        openapi_schema["externalDocs"] = {
+            "description": f"{project.display_name} - Database Docs",
+            "url": "/database/docs",
         }
         fastapi_app.openapi_schema = openapi_schema
         return fastapi_app.openapi_schema
