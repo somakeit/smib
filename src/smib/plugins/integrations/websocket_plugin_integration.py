@@ -19,7 +19,6 @@ class WebsocketPluginIntegration:
 
     def disconnect_plugin(self, plugin: Plugin):
         self.logger.info(f"Locating and removing websocket routes in {plugin.unique_name} ({plugin.name})")
-        plugin_path = plugin.path
 
         module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
