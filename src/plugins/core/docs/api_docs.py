@@ -41,7 +41,7 @@ def register(web: WebEventInterface):
         }
         openapi_schema["externalDocs"] = {
             "description": f"{project.display_name} - Database Docs",
-            "url": "/database/docs",
+            "url": fastapi_app.root_path.rstrip('/') + "/database/docs",
         }
         fastapi_app.openapi_schema = openapi_schema
         return fastapi_app.openapi_schema

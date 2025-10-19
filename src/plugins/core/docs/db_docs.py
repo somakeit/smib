@@ -72,7 +72,7 @@ def register(database: DatabaseManager, web: WebEventInterface):
 
         openapi["externalDocs"] = {
             "description": f"{project.display_name} - API Docs",
-            "url": "/api/docs",
+            "url": web.service.fastapi_app.root_path.rstrip('/') + "/api/docs",
         }
 
         # Remove 'required' keys from all schemas (not needed for DB docs)
