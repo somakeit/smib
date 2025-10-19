@@ -34,7 +34,7 @@ class WebsocketPluginIntegration:
 
     def initialise_plugin_router(self, plugin: Plugin):
         unique_name = plugin.unique_name
-        self.websocket_event_interface.current_router = APIRouter(prefix=self.websocket_event_interface.path_prefix)
+        self.websocket_event_interface.current_router = APIRouter(prefix=self.websocket_event_interface.path_prefix, include_in_schema=False)
         self.websocket_event_interface.routers[unique_name] = self.websocket_event_interface.current_router
 
     def remove_router_if_unused(self, plugin: Plugin):
@@ -46,4 +46,4 @@ class WebsocketPluginIntegration:
 
     def finalise_router_setup(self):
         for router in self.websocket_event_interface.routers.values():
-            self.fastapi_app.include_router(router, include_in_schema=False)
+            self.fastapi_app.include_router(router)
