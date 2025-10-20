@@ -1,0 +1,3 @@
+<strong>MongoDB Collection:</strong> {{ collection }}
+{% if description %}<p><em>{{ description.split('\n') | join('<br>') | safe }}</em></p>{% endif %}
+<SchemaDefinition schemaRef="#/components/schemas/{{ schema_ref_name }}"/>

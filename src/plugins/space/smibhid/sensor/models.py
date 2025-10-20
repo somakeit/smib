@@ -76,6 +76,9 @@ class SensorLogRequest(BaseModel):
     ]
 
 class SensorLog(Document, SensorLogBase):
+    """
+    Stores recorded sensor readings from a S.M.I.B.H.I.D. device.
+    """
     device: Annotated[str, Field(description="Device hostname")]
     timestamp: Annotated[datetime, Field(description="Timestamp of the sensor reading on the device", examples=[datetime.now(UTC)]), Indexed()]
     received_timestamp: Annotated[datetime, Field(description="Timestamp of when the sensor reading was received by S.M.I.B.",examples=[datetime.now(UTC)], default_factory=lambda: datetime.now(UTC)), Indexed()]
@@ -122,6 +125,9 @@ class SensorLog(Document, SensorLogBase):
         name = "smibhid_sensor_log"
 
 class SensorUnit(Document):
+    """
+    Stores sensor unit information for a S.M.I.B.H.I.D. device.
+    """
     device: Annotated[str, Field(description="Device hostname"), Indexed()]
     sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", )]
 
@@ -162,6 +168,9 @@ class SensorUnit(Document):
         name = "smibhid_sensor_units"
 
 class SensorLogMonitorState(Document):
+    """
+    Stores sensor log monitor state information.
+    """
     last_log_received: Annotated[datetime | None, Field(description="Timestamp of the last sensor log received by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]
     last_check: Annotated[datetime | None, Field(description="Timestamp of the last check for sensor logs by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]
     last_alert_sent: Annotated[datetime | None, Field(description="Timestamp of the last alert sent by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]

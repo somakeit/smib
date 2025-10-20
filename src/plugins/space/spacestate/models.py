@@ -19,6 +19,10 @@ class SpaceStateBase(BaseModel):
     open: Annotated[bool, Field(description="Whether the space is open")]
 
 class SpaceState(Document, SpaceStateBase):
+    """
+    Stores the current space state.
+    This collection should only ever have 1 document in it.
+    """
     class Settings:
         name = "space_state"
 
@@ -26,6 +30,9 @@ class SpaceStateResponse(SpaceStateBase):
     pass
 
 class SpaceStateHistory(Document):
+    """
+    Stores the history of space state changes.
+    """
     timestamp: Annotated[datetime, Field(description="Timestamp of when the space state change was recorded", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)]), Indexed()]
     open: Annotated[bool, Field(description="Whether the space is open")]
 
@@ -33,6 +40,9 @@ class SpaceStateHistory(Document):
         name = "space_state_history"
 
 class SpaceStateEventHistory(Document):
+    """
+    Stores the history of space state events.
+    """
     timestamp: Annotated[datetime, Field(description="Timestamp of when the space state event was recorded", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)]), Indexed()]
     source: Annotated[SpaceStateSource, Field(description="The source of the event")]
     requested_state: Annotated[SpaceStateEnum, Field(description="The requested state")]

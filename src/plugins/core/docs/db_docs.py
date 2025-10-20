@@ -1,7 +1,9 @@
 from functools import cache
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
+from fastapi.templating import Jinja2Templates
 from starlette.responses import JSONResponse
 
 from smib.config import project
@@ -14,6 +16,7 @@ from . import FAVICON_URL, LOGO_URL
 def register(database: DatabaseManager, web: WebEventInterface):
 
     cached_openapi_schema: dict | None = None
+    templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
     @web.get("/database/docs")
     async def get_database_docs():
@@ -47,15 +50,21 @@ def register(database: DatabaseManager, web: WebEventInterface):
 
         openapi['paths'] = {}
 
-        tags = [
-            {
+        description_template = templates.get_template("database_schema.html")
+        tags = []
+
+        for model in sorted(models, key=lambda m: m.__name__):
+            html = description_template.render(
+                collection=model.get_collection_name(),
+                description=model.__doc__,
+                schema_ref_name=model.__name__
+            )
+            tag = {
                 "name": " ".join(split_camel_case(model.__name__)),
                 "x-displayName": " ".join(split_camel_case(model.__name__)),
-                "description": f"<div class=\"collection\"><strong>Mongo DB Collection:</strong> {model.get_collection_name()}</div>\n"
-                               f"<SchemaDefinition schemaRef=\"#/components/schemas/{model.__name__}\" />"
+                "description": html
             }
-            for model in sorted(models, key=lambda m: m.__name__)
-        ]
+            tags.append(tag)
 
         x_tag_groups = [
             {

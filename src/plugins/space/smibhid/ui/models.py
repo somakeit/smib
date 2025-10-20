@@ -27,6 +27,9 @@ class UILogCreate(BaseModel):
 
 
 class UILog(Document, UILogCreate):
+    """
+    Stores recorded UI events from a S.M.I.B.H.I.D. device.
+    """
     device: Annotated[str, Field(description="Device hostname")]
 
     timestamp: Annotated[datetime, Field(description="Timestamp of the UI action on the device", examples=[datetime.now(UTC)]), Indexed()]
