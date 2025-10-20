@@ -50,7 +50,7 @@ def register(database: DatabaseManager, web: WebEventInterface):
 
         openapi['paths'] = {}
 
-        description_template = templates.get_template("database_schema.html")
+        description_template = templates.get_template("database_collection_schema.html")
         tags = []
 
         for model in sorted(models, key=lambda m: m.__name__):
@@ -76,7 +76,9 @@ def register(database: DatabaseManager, web: WebEventInterface):
         openapi['tags'] = tags
         openapi['x-tagGroups'] = x_tag_groups
         openapi["info"]["x-logo"] = {
-            "url": LOGO_URL
+            "url": LOGO_URL,
+            "altText": "So Make It Logo",
+            "href": "https://github.com/somakeit/smib"
         }
 
         openapi["externalDocs"] = {

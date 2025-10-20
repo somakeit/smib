@@ -37,7 +37,9 @@ def register(web: WebEventInterface):
             tags=fastapi_app.openapi_tags
         )
         openapi_schema["info"]["x-logo"] = {
-            "url": LOGO_URL
+            "url": LOGO_URL,
+            "altText": "So Make It Logo",
+            "href": "https://github.com/somakeit/smib"
         }
         openapi_schema["externalDocs"] = {
             "description": f"{project.display_name} - Database Docs",
