@@ -51,7 +51,7 @@ class DatabaseManager:
         try:
             await init_beanie(database=self.client[self.db_name], document_models=all_documents)
         except PyMongoError as e:
-            self.logger.error(f"Failed to initialise database '{self.db_name}'")
+            self.logger.error(f"Failed to initialise database '{self.db_name}'", exc_info=e)
             raise e
 
     def find_model_by_name(self, model_name: str, plugin_name: str | None = None) -> type[Document] | None:

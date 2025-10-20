@@ -128,7 +128,7 @@ class SensorUnit(Document):
     """
     Stores sensor unit information for a S.M.I.B.H.I.D. device.
     """
-    device: Annotated[str, Field(description="Device hostname"), Indexed()]
+    device: Annotated[str, Field(description="Device hostname"), Indexed(unique=True, name="device_unique")]
     sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", )]
 
     created_at: Annotated[datetime, Field(description="Timestamp of when the sensor unit document was created", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
