@@ -59,7 +59,9 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
         "/api/docs",
         "/api/docs/oauth2-redirect",
         "/api/redoc",
-        "/favicon.ico"
+        "/favicon.ico",
+        "/database/docs",
+        "/database/openapi.json",
     }
 
     LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
