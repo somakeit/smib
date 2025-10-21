@@ -66,6 +66,9 @@ SMIB uses [traefik](https://github.com/traefik/traefik) as a reverse proxy to ro
 - MongoDB Express web interface is accessible at `/database/ui`
 - SMIB webserver handles all other routes:
     - `/api` - REST API endpoints
+    - `/api/docs` - Interactive API documentation (Swagger UI)
+    - `/api/redoc` - Alternative API documentation (ReDoc)
+    - `/database/docs` - Database schema documentation showing all MongoDB collections and their structure
     - `/ws` - WebSocket connections
     - `/static` - Static files (e.g., images, CSS, JavaScript)
     - `/` - Web pages and application content
@@ -89,6 +92,29 @@ For more detailed S.M.I.B. configuration options, see [SETTINGS.md](SETTINGS.md)
 > On a 64-bit Raspberry Pi it's `4.4.18`, so the following environment variable will need to be set: `SMIB_COMPOSE_MONGO_DB_TAG=4.4.18`.
 > 
 > The easiest way to check is to start up the MongoDB (`smib-db`) container and review the logs.
+
+## Documentation
+
+Once SMIB is running, you can access comprehensive auto-generated documentation at the following endpoints:
+
+### API Documentation
+- **`/api/docs`** - Interactive API documentation (Swagger UI)
+    - Explore and test all REST API endpoints directly in your browser
+    - View request/response schemas and authentication requirements
+    - Try out API calls with live data
+- **`/api/redoc`** - Alternative API documentation (ReDoc)
+    - Clean, readable format optimised for browsing
+    - Same OpenAPI specification as Swagger UI with a different layout
+
+### Database Documentation
+- **`/database/docs`** - Database schema documentation
+    - View all MongoDB collections and their structure
+    - See field definitions, data types, and constraints
+    - Review indexes configured on each collection
+    - Automatically generated from Beanie ODM models
+
+All documentation is automatically updated when new plugins add API endpoints or database models.
+
 
 ## SMIBHID
 [SMIBHID](https://github.com/somakeit/smibhid/) is the So Make It Bot Human Interface Device and definitely not a mispronunciation of any insults from a popular 90s documentary detailing the activities of the Jupiter Mining Core.
