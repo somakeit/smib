@@ -135,7 +135,6 @@ def generate_tag_groups(tags: list) -> list:
 def remove_required(schema: dict):
     """
     Recursively remove all 'required' keys from an OpenAPI schema dict.
-    Returns a new dict, does not modify in-place.
     """
 
     def recurse(obj):

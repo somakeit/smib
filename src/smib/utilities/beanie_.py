@@ -1,5 +1,6 @@
 from beanie.odm.fields import IndexedAnnotation
 from pydantic import BaseModel
+from pymongo import IndexModel
 
 
 class IndexInfo(BaseModel):
@@ -28,20 +29,39 @@ def get_model_indexes(model: type[BaseModel]) -> list[IndexInfo]:
                 ))
 
     # Indexes from Settings.indexes
-    for idx in getattr(model.Settings, "indexes", []):
-        for field, direction_or_opts in idx:
-            if isinstance(direction_or_opts, dict):
-                direction = direction_or_opts.get("direction", 1)
-                options = direction_or_opts
-            else:
-                direction = direction_or_opts
-                options = {}
+    settings_indexes = getattr(getattr(model, "Settings", None), "indexes", [])
+    for idx in settings_indexes:
+        # Format 1: Single string (field name)
+        if isinstance(idx, str):
             indexes.append(IndexInfo(
-                field=field,
-                direction=direction,
-                unique=options.get("unique", False),
-                sparse=options.get("sparse", False)
+                field=idx,
+                direction=1,
+                unique=False,
+                sparse=False
             ))
+        # Format 3: pymongo.IndexModel
+        elif isinstance(idx, IndexModel):
+            # IndexModel has .document attribute with the keys
+            keys = idx.document.get("key", {})
+            kwargs = idx.document.get("unique", False)
+            for field, direction in keys.items():
+                indexes.append(IndexInfo(
+                    field=field,
+                    direction=direction,
+                    unique=kwargs,
+                    sparse=idx.document.get("sparse", False)
+                ))
+        # Format 2: List of (field, direction) tuples
+        elif isinstance(idx, list):
+            for item in idx:
+                if isinstance(item, tuple) and len(item) >= 2:
+                    field, direction = item[0], item[1]
+                    indexes.append(IndexInfo(
+                        field=field,
+                        direction=direction,
+                        unique=False,
+                        sparse=False
+                    ))
 
     # Remove duplicates (keep first occurrence)
     seen = set()
