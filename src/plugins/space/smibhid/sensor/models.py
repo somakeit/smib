@@ -105,7 +105,8 @@ class SensorLog(Document, SensorLogBase):
         json_schema_extra = {
             "example": {
                 "device": "SMIBHID-DUMMY",
-                "timestamp": int(datetime.now(UTC).timestamp()),
+                "timestamp": datetime.now(UTC),
+                "received_timestamp": datetime.now(UTC),
                 "data": {
                     "SCD30": {
                         "co2": 1548.1,
@@ -149,6 +150,8 @@ class SensorUnit(Document):
         json_schema_extra = {
             "example": {
                 "device": "SMIBHID-DUMMY",
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
                 "sensors": {
                     "SCD30": {
                         "co2": "ppm",
