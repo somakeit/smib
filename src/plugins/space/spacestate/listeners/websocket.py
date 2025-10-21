@@ -4,7 +4,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from smib.events.interfaces.websocket_event_interface import WebsocketEventInterface
 from ..common import get_space_state_from_db
-from ..models import SpaceStateEnum
+from ..models import SpaceStateEnum, SpaceStateResponse
 
 clients = set()
 logger = logging.getLogger("Space State Websocket")
@@ -19,7 +19,11 @@ def register(ws: WebsocketEventInterface):
 
         try:
             # Send initial state
-            state = await get_space_state_from_db()
+            db_state = await get_space_state_from_db()
+            state = SpaceStateResponse(**db_state.model_dump())
+            logger.debug(
+                f"Sending initial space state to client: {websocket.client.host}"
+            )
             await websocket.send_json(state.model_dump())
 
             # Listen for messages (or just keep connection alive)
@@ -43,10 +47,10 @@ def register(ws: WebsocketEventInterface):
 
 
 async def inform_websocket_clients_of_space_state_change(new_state: SpaceStateEnum):
-    state_json = {"open": new_state == SpaceStateEnum.OPEN}
+    state = SpaceStateResponse(open=new_state == SpaceStateEnum.OPEN)
     for client in clients.copy():
         try:
-            await client.send_json(state_json)
+            await client.send_json(state.model_dump())
             logger.info(f"Sent space state to client: {client.client.host}")
         except Exception:
             clients.discard(client)
