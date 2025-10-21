@@ -69,11 +69,11 @@ class HttpPluginIntegration:
                 if hasattr(route, 'tags'):
                     active_tags.update(route.tags)
 
-        all_tags = {tag["name"]: tag for tag in (self.tag_metadata + self.http_event_interface.service.openapi_tags)}
-        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags.values() if
-                                                          tag["name"] in active_tags]
+        all_tags = {tag["name"]: tag for tag in self.tag_metadata if tag["name"] in active_tags}
+        all_tags |= {tag["name"]: tag for tag in self.http_event_interface.service.openapi_tags}
+
+        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags.values()]
         self.logger.debug(f"OpenAPI Tags:\n{pformat(self.http_event_interface.service.openapi_tags)}")
 
-        include_router_options = self.http_event_interface.include_router_options
         for router in self.http_event_interface.routers.values():
-            self.fastapi_app.include_router(router, **include_router_options)
+            self.fastapi_app.include_router(router)

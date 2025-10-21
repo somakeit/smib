@@ -9,6 +9,8 @@ from fastapi import Request
 from fastapi.routing import APIRouter
 from makefun import remove_signature_parameters, add_signature_parameters
 from slack_bolt.app.async_app import AsyncApp
+from slack_bolt.kwargs_injection.async_args import AsyncArgs
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Match, BaseRoute
 
 from smib.events import BoltEventType
@@ -20,12 +22,13 @@ from smib.events.services.http_event_service import HttpEventService
 
 
 class HttpEventInterface:
-    def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService, path_prefix: str = "", include_in_schema: bool = True):
+    def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService, path_prefix: str = "", include_in_schema: bool = True, default_response_class: type[Response] = JSONResponse):
         self.bolt_app: AsyncApp = bolt_app
         self.handler: HttpEventHandler = handler
         self.service: HttpEventService = service
         self.path_prefix: str = path_prefix
         self.include_in_schema: bool = include_in_schema
+        self.default_response_class: type[Response] = default_response_class
 
         self.routers: dict[str, APIRouter] = {}
 
@@ -36,6 +39,14 @@ class HttpEventInterface:
     def include_router_options(self) -> dict[str, Any]:
         opts = {
             "include_in_schema": self.include_in_schema
+        }
+        return opts
+
+    @property
+    def add_api_route_options(self) -> dict[str, Any]:
+        opts = {
+            "response_class": self.default_response_class,
+            "include_in_schema": self.include_in_schema,
         }
         return opts
 
@@ -90,7 +101,7 @@ class HttpEventInterface:
                 wrapper_kwargs.update(response_kwargs)
                 return response
 
-            self.current_router.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
+            self.current_router.add_api_route(path, wrapper, *args, methods=methods, **{**self.add_api_route_options, **kwargs})
             route: BaseRoute = self.current_router.routes[-1]
 
             matcher: callable = generate_route_matcher(route)

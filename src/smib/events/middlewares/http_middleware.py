@@ -22,7 +22,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         self.request = request
         response: Response = await call_next(request)
 
-        if self.uses_deprecated_route(request):
+        if self.uses_deprecated_route(self.request):
             self.logger.warning(f"Deprecated endpoint used: {request.method} {request.url.path}; IP: {request.client.host}")
             response.headers.append("Deprecation", "true")
 
@@ -59,7 +59,9 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
         "/api/docs",
         "/api/docs/oauth2-redirect",
         "/api/redoc",
-        "/favicon.ico"
+        "/favicon.ico",
+        "/database/docs",
+        "/database/openapi.json",
     }
 
     LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}

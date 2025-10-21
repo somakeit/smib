@@ -1,8 +1,9 @@
 import re
+from datetime import datetime, timedelta
 
-from humanize import naturaltime, naturaldelta, precisedelta
-from datetime import datetime, UTC, timedelta
 import pytz
+from humanize import naturaltime, precisedelta
+
 
 def get_humanized_time(timestamp: datetime) -> str:
     """Convert timestamp to human-readable format.
