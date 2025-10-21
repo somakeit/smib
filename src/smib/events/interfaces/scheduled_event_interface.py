@@ -3,13 +3,14 @@ import uuid
 from asyncio import CancelledError
 from functools import wraps
 
+import unicodedata
 from apscheduler.job import Job
 from apscheduler.util import undefined
 from slack_bolt.app.async_app import AsyncApp
 
+from smib.events.handlers import BoltRequestMode
 from smib.events.handlers.scheduled_event_handler import ScheduledEventHandler
 from smib.events.services.scheduled_event_service import ScheduledEventService
-import unicodedata
 
 
 class ScheduledEventInterface:
@@ -53,7 +54,7 @@ class ScheduledEventInterface:
             async def matcher(event: dict):
                 return event['job']['id'] == id
 
-            self.bolt_app.event('scheduled_job', matchers=[matcher])(func)
+            self.bolt_app.event(BoltRequestMode.SCHEDULED, matchers=[matcher])(func)
             return func
         return decorator
 

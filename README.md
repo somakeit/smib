@@ -8,6 +8,7 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 - **Flexible Plugin System** with multiple interfaces:
   - **Slack Integration**: Define your own event listeners to act on Slack events (full [slack-bolt](https://github.com/slackapi/bolt-python) feature set supported)
   - **HTTP API**: Create self-documenting API endpoints using FastAPI (webpages, REST, etc...)
+  - **Websockets**: Send and receive real-time updates to connected clients using FastAPI WebSockets
   - **Scheduled Tasks**: Define jobs that run on a schedule using APScheduler
   - **Database Integration**: Store and retrieve data using MongoDB and Beanie ODM
 - **Docker Support**: Easy deployment with Docker and Docker Compose
@@ -16,6 +17,7 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
 ## Current Plugins
 - **Space State** (`space/spacestate`)
   - API Endpoints for setting and retrieving the current space state
+  - Websocket endpoint for pushing updates to connected clients
   - Slack integration for posting the current space state to a channel
 - **S.M.I.B.H.I.D.** (`space/smibhid`)
   - API Endpoints for receiving data from a [SMIBHID device](https://github.com/somakeit/smibhid)
@@ -60,15 +62,18 @@ The easiest way to run SMIB is with Docker Compose:
 - Issue the following command to build and run the local copy of the code: `docker compose up -d --build`
 
 #### Proxy Configuration
-SMIB includes a built-in Traefik reverse proxy that handles routing to the various services:
-- API endpoints (default: `/api`)
-- Static files (at `/static`)
-- MongoDB Express UI (at `/database/ui`)
+SMIB uses [traefik](https://github.com/traefik/traefik) as a reverse proxy to route requests to different services:
+- MongoDB Express web interface is accessible at `/database/ui`
+- SMIB webserver handles all other routes:
+    - `/api` - REST API endpoints
+    - `/ws` - WebSocket connections
+    - `/static` - Static files (e.g., images, CSS, JavaScript)
+    - `/` - Web pages and application content
 
 The proxy configuration can be customised with these environment variables:
 - `SMIB_PROXY_EXTERNAL_PORT`: The external port for the proxy (default: `80`)
 - `SMIB_PROXY_TRUSTED_PROXIES`: Trusted IPs for forwarded headers (important if behind another proxy)
-- `SMIB_WEBSERVER_PATH_PREFIX`: URL path prefix for all API endpoints (default: `/api`)
+- `SMIB_WEBSERVER_PATH_PREFIX`: URL path prefix for all SMIB endpoints (default: `/`)
 
 #### Other Configuration/Documentation
 - [Database](https://hub.docker.com/_/mongo)
