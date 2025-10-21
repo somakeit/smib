@@ -40,8 +40,8 @@ class DatabaseManager:
             filtered_documents = set(filter(filter_func, filtered_documents))
         return list(filtered_documents)
 
-    def register_document_filter(self, filter: Callable[[type[Document]], bool]) -> None:
-        self._document_filters.append(filter)
+    def register_document_filter(self, filter_: Callable[[type[Document]], bool]) -> None:
+        self._document_filters.append(filter_)
 
     async def initialise(self) -> None:
         all_documents = self.get_all_document_models()
@@ -49,7 +49,9 @@ class DatabaseManager:
         if all_documents:
             self.logger.info(f"Documents: {', '.join(doc.__name__ for doc in all_documents)}")
         try:
-            await init_beanie(database=self.client[self.db_name], document_models=all_documents)
+            # allow_index_dropping is safe to use in this case as SMIB controls the schema,
+            # so we probably want to move to proper DB migrations at some point
+            await init_beanie(database=self.client[self.db_name], document_models=all_documents, allow_index_dropping=True)
         except PyMongoError as e:
             self.logger.error(f"Failed to initialise database '{self.db_name}'", exc_info=e)
             raise e
