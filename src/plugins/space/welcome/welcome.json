@@ -1,0 +1,252 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "🎉 Welcome to SoMakeIt!"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Hi there! Welcome to the SoMakeIt Slack workspace — the makerspace community in Southampton where you can explore, create, and learn. Here's a quick guide to get started:"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*🌐 Website*\nFind information on policies and safety documents."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Open Website"
+      },
+      "url": "https://somakeit.org.uk/",
+      "action_id": "welcome_message_url_website"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*📚 Wiki*\nFind detailed info on the space and its tools."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Open Wiki"
+      },
+      "url": "https://wiki.somakeit.org.uk/index.php/Main_Page",
+      "action_id": "welcome_message_url_wiki_button"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*🧑‍🤝‍🧑 Members Area*\nManage your membership and your details."
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Open Members Area"
+      },
+      "url": "https://members.somakeit.org.uk/",
+      "action_id": "welcome_message_url_members_button"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*🕒 Official Opening Hours*"
+    }
+  },
+  {
+    "type": "table",
+    "rows": [
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Day",
+                  "style": {
+                    "bold": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Time",
+                  "style": {
+                    "bold": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Tuesday Morning"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "9:30 AM – 12:30 PM"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Tuesday Evening"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "7:30 PM – 10:00 PM (Main open evening for new members)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Thursday Evening"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "7:30 PM – 10:00 PM"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "Friday Morning"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rich_text",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "9:30 AM – 12:30 PM"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*💬 Useful Channels*\n#general — For general announcements and discussion\n#space-open-announce — Updates on space availability and events"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "If you have any questions or need help, feel free to reach out in the channels or ask any of our members. Enjoy making!"
+    }
+  }
+]

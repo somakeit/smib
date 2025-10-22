@@ -2,12 +2,12 @@ import logging
 import sys
 from logging import Logger
 from pathlib import Path
+from pprint import pformat
 
 from fastapi import APIRouter
-from fastapi.routing import Mount
 
 from smib.config import general
-from smib.events.interfaces.http_event_interface import HttpEventInterface
+from smib.events.interfaces.http import HttpEventInterface
 from smib.plugins.plugin import Plugin
 
 
@@ -16,7 +16,7 @@ class HttpPluginIntegration:
         self.http_event_interface: HttpEventInterface = http_event_interface
 
         self.fastapi_app = self.http_event_interface.service.fastapi_app
-        self.logger: Logger = logging.getLogger(self.__class__.__name__)
+        self.logger: Logger = logging.getLogger(f"{self.__class__.__name__}/{self.http_event_interface.__class__.__name__}")
 
         self.tag_metadata: list[dict] = []
 
@@ -48,7 +48,7 @@ class HttpPluginIntegration:
         unique_name = plugin.unique_name
         tags = self.get_plugin_tags(plugin)
         self.tag_metadata.append(tags)
-        self.http_event_interface.current_router = APIRouter(tags=[tags["name"]])
+        self.http_event_interface.current_router = APIRouter(tags=[tags["name"]], prefix=self.http_event_interface.path_prefix)
         self.http_event_interface.routers[unique_name] = self.http_event_interface.current_router
 
     def remove_router_if_unused(self, plugin: Plugin):
@@ -61,7 +61,7 @@ class HttpPluginIntegration:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
 
 
-    def finalise_http_setup(self):
+    def finalise_router_setup(self):
         # Filter out tags that don't have corresponding routes in any router
         active_tags = set()
         for router in self.http_event_interface.routers.values():
@@ -69,8 +69,11 @@ class HttpPluginIntegration:
                 if hasattr(route, 'tags'):
                     active_tags.update(route.tags)
 
-        all_tags = self.tag_metadata + self.http_event_interface.service.openapi_tags
-        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags if tag["name"] in active_tags]
+        all_tags = {tag["name"]: tag for tag in self.tag_metadata if tag["name"] in active_tags}
+        all_tags |= {tag["name"]: tag for tag in self.http_event_interface.service.openapi_tags}
+
+        self.http_event_interface.service.openapi_tags = [tag for tag in all_tags.values()]
+        self.logger.debug(f"OpenAPI Tags:\n{pformat(self.http_event_interface.service.openapi_tags)}")
 
         for router in self.http_event_interface.routers.values():
             self.fastapi_app.include_router(router)

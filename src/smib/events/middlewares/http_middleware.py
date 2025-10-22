@@ -10,7 +10,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
 from smib.config import webserver
-from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
@@ -23,7 +22,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         self.request = request
         response: Response = await call_next(request)
 
-        if self.uses_deprecated_route(request):
+        if self.uses_deprecated_route(self.request):
             self.logger.warning(f"Deprecated endpoint used: {request.method} {request.url.path}; IP: {request.client.host}")
             response.headers.append("Deprecation", "true")
 
@@ -36,7 +35,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
             "type": request.scope["type"],
             "method": request.scope["method"],
             "path": request.scope["path"],
-            "path_params": request.scope["path_params"],
+            "path_params": request.scope.get("path_params", {}),
             "root_path": request.scope["root_path"],
         }
 
@@ -57,11 +56,15 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
 class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
     EXCLUDED_PATHS = {
         "/openapi.json",
-        "/docs",
-        "/docs/oauth2-redirect",
-        "/redoc",
-        "/favicon.ico"
+        "/api/docs",
+        "/api/docs/oauth2-redirect",
+        "/api/redoc",
+        "/favicon.ico",
+        "/database/docs",
+        "/database/openapi.json",
     }
+
+    LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
     def __init__(self, app):
         super().__init__(app)
@@ -69,8 +72,19 @@ class HttpRequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def should_log_request(self, request: Request) -> bool:
         all_excluded_paths = self.EXCLUDED_PATHS | {request.scope['root_path'].rstrip('/') + path for path in self.EXCLUDED_PATHS}
-        return (webserver.log_request_details and request.url.path not in all_excluded_paths
+        route_loggable: bool = (webserver.log_request_details and request.url.path not in all_excluded_paths
                 and not request.url.path.startswith(('/static', request.scope['root_path'].rstrip('/') + '/static')))
+        if not route_loggable:
+            return False
+
+        if (
+            request.client is not None
+            and request.client.host in self.LOCAL_HOSTS
+            and request.headers.get('x-skip-logging', 'false').lower() == 'true'
+        ):
+            return False
+
+        return True
 
     async def dispatch(self, request: Request, call_next) -> Response:
         should_log = self.should_log_request(request)

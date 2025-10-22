@@ -1,33 +1,54 @@
 import logging
+from functools import wraps
 from http import HTTPStatus
-from typing import Annotated, Callable
+from inspect import Signature, Parameter
+from typing import Callable, Any
 
 import makefun
+from fastapi import Request
 from fastapi.routing import APIRouter
+from makefun import remove_signature_parameters, add_signature_parameters
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.kwargs_injection.async_args import AsyncArgs
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Match, BaseRoute
 
+from smib.events import BoltEventType
 from smib.events.handlers.http_event_handler import HttpEventHandler
+from smib.events.interfaces import get_reserved_parameter_names, extract_parameter_and_value
 from smib.events.requests.copyable_starlette_request import CopyableStarletteRequest
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 from smib.events.services.http_event_service import HttpEventService
 
-from inspect import Signature, Parameter
-
-from makefun import remove_signature_parameters, add_signature_parameters
-from functools import wraps
-from fastapi import Request
 
 class HttpEventInterface:
-    def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService):
+    def __init__(self, bolt_app: AsyncApp, handler: HttpEventHandler, service: HttpEventService, path_prefix: str = "", include_in_schema: bool = True, default_response_class: type[Response] = JSONResponse):
         self.bolt_app: AsyncApp = bolt_app
         self.handler: HttpEventHandler = handler
         self.service: HttpEventService = service
+        self.path_prefix: str = path_prefix
+        self.include_in_schema: bool = include_in_schema
+        self.default_response_class: type[Response] = default_response_class
+
         self.routers: dict[str, APIRouter] = {}
 
         self.logger = logging.getLogger(self.__class__.__name__)
         self.current_router: APIRouter = APIRouter()
+
+    @property
+    def include_router_options(self) -> dict[str, Any]:
+        opts = {
+            "include_in_schema": self.include_in_schema
+        }
+        return opts
+
+    @property
+    def add_api_route_options(self) -> dict[str, Any]:
+        opts = {
+            "response_class": self.default_response_class,
+            "include_in_schema": self.include_in_schema,
+        }
+        return opts
 
     def add_openapi_tag(self, tag: str, description: str):
         self.service.openapi_tags.append({
@@ -49,8 +70,7 @@ class HttpEventInterface:
             return func
         return decorator
 
-    # TODO - Add support for slack lazy listeners
-    def __route_decorator(self, path: str, methods: list, *args, **kwargs):
+    def _route_decorator(self, path: str, methods: list, *args, **kwargs):
         def decorator(*funcs: list[Callable], ack: Callable | None = None, lazy: list[Callable] | None = None):
             if funcs and len(funcs) > 1:
                 raise TypeError("Only 1 function may be passed to the decorator")
@@ -68,7 +88,7 @@ class HttpEventInterface:
                                     module_name=func.__module__
                                     )
             @wraps(func)
-            async def wrapper(*wrapper_args: list[any], **wrapper_kwargs: dict[str: any]):
+            async def wrapper(*wrapper_args: list[Any], **wrapper_kwargs: dict[str, Any]):
                 request_value, request_parameter_name = extract_request_parameter(http_function_signature, wrapper_args,
                                                                                   wrapper_kwargs)
 
@@ -81,7 +101,7 @@ class HttpEventInterface:
                 wrapper_kwargs.update(response_kwargs)
                 return response
 
-            self.current_router.add_api_route(path, wrapper, *args, methods=methods, **kwargs)
+            self.current_router.add_api_route(path, wrapper, *args, methods=methods, **{**self.add_api_route_options, **kwargs})
             route: BaseRoute = self.current_router.routes[-1]
 
             matcher: callable = generate_route_matcher(route)
@@ -95,30 +115,11 @@ class HttpEventInterface:
             else:
                 args_ = [response_preserving_func]
                 lazy_kwargs = {}
-            self.bolt_app.event('http', matchers=[matcher])(*args_, **lazy_kwargs)
+            self.bolt_app.event(BoltEventType.HTTP, matchers=[matcher])(*args_, **lazy_kwargs)
             return func
 
         return decorator
 
-    def get(self, path: str, *args, **kwargs):
-        """ See fastapi.FastAPI.get() for parameters """
-        return self.__route_decorator(path, ["GET"], *args, **kwargs)
-
-    def put(self, path: str, *args, **kwargs):
-        """ See fastapi.FastAPI.put() for parameters """
-        return self.__route_decorator(path, ["PUT"], *args, **kwargs)
-
-    def post(self, path: str, *args, **kwargs):
-        """ See fastapi.FastAPI.post() for parameters """
-        return self.__route_decorator(path, ["POST"], *args, **kwargs)
-
-    def delete(self, path: str, *args, **kwargs):
-        """ See fastapi.FastAPI.delete() for parameters """
-        return self.__route_decorator(path, ["DELETE"], *args, **kwargs)
-
-    def patch(self, path: str, *args, **kwargs):
-        """ See fastapi.FastAPI.patch() for parameters """
-        return self.__route_decorator(path, ["PATCH"], *args, **kwargs)
 
 
 def preserve_http_response(func: callable) -> callable:
@@ -138,15 +139,7 @@ def generate_route_matcher(route: BaseRoute) -> callable:
 
 
 def extract_request_parameter(signature: Signature, args, kwargs) -> tuple[Request, str]:
-    bound = signature.bind(*args, **kwargs)
-    bound.apply_defaults()
-
-    request_parameter = next(
-        (param for param in signature.parameters.values() if param.annotation == Request),
-        None
-    )
-    request_value = bound.arguments.get(request_parameter.name) if request_parameter else None
-    return request_value, request_parameter.name
+    return extract_parameter_and_value(Request, signature, args, kwargs)
 
 
 def clean_signature(signature: Signature) -> Signature:
@@ -160,6 +153,3 @@ def clean_signature(signature: Signature) -> Signature:
 
     return cleaned_signature
 
-
-def get_reserved_parameter_names() -> set[str]:
-    return set(AsyncArgs.__annotations__.keys())

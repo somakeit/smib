@@ -1,0 +1,94 @@
+{% extends "_redoc_base.html" %}
+
+{% block links %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+            integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://kit.fontawesome.com/c2aff124ae.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block redocContainer %}
+    <redoc id="redoc-container"></redoc>
+{% endblock %}
+
+{% block styles %}
+<style>
+.index-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 13px;
+    color: rgb(102, 102, 102);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(async function () {
+            const container = document.getElementById("redoc-container");
+
+            // --- Polling helper ---
+            async function waitForSelector(selector, timeout = 5000, interval = 50) {
+                const start = Date.now();
+                while (Date.now() - start < timeout) {
+                    const $el = $(selector);
+                    if ($el.length) return $el;
+                    await new Promise(r => setTimeout(r, interval));
+                }
+                throw new Error(`Timed out waiting for selector: ${selector}`);
+            }
+
+            // --- Main ---
+            try {
+                // Fetch the OpenAPI schema
+                const res = await fetch("{{ openapi_url }}");
+                if (!res.ok) throw new Error(`Failed to fetch schema: ${res.status}`);
+                const schema = await res.json();
+
+                // Initialize Redoc
+                const redocInstance = await Redoc.init(schema, {}, container);
+
+                // Wait for Redoc DOM to render
+                await waitForSelector(".api-content");
+
+                // Add badges for fields with x-indexes
+                Object.entries(schema.components.schemas).forEach(([modelName, model]) => {
+                    if (!model["x-indexes"]) return;
+
+                    const modelCollectionName = model["x-collectionName"]
+
+                    const modelSchemaDiv = $(`[data-section-id="tag/${modelCollectionName}"]`);
+
+                    console.log(modelSchemaDiv);
+
+                    model["x-indexes"].forEach(index => {
+                        const fieldName = index.field;
+                        let $fieldMetadataCell = modelSchemaDiv.find(`td[kind="field"][title="${fieldName}"] ~ td`);
+
+                        // Create a flex container for the icons
+                        const $iconContainer = $('<span class="index-icons">Indexed: </span>');
+
+                        // Direction
+                        if (index.direction === 1) {
+                            $iconContainer.append('<i class="fa-solid fa-arrow-up" title="Ascending"></i>');
+                        } else if (index.direction === -1) {
+                            $iconContainer.append('<i class="fa-solid fa-arrow-down" title="Descending"></i>');
+                        }
+
+                        // Unique
+                        if (index.unique) {
+                            $iconContainer.append('<i class="fa-solid fa-lock" title="Unique"></i>');
+                        }
+
+                        // Append the container to the metadata cell
+                        $fieldMetadataCell.append($iconContainer);
+                    });
+                });
+
+            } catch (err) {
+                console.error("Error loading Redoc schema:", err);
+            }
+        });
+    </script>
+{% endblock %}

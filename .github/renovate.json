@@ -1,27 +1,24 @@
 {
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":maintainLockFilesWeekly",
+    ":label(dependencies)"
   ],
   "schedule": [
     "every weekend"
   ],
   "minimumReleaseAge": "1 day",
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": [
-      "every weekend"
-    ]
-  },
   "prHourlyLimit": 2,
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
-  "prCreation": "not-pending",
+  "prCreation": "immediate",
   "assignees": [
     "sam57719"
   ],
   "reviewers": [
     "sam57719"
   ],
+  "labels": ["dependencies"],
   "pruneStaleBranches": true,
   "packageRules": [
     {
@@ -29,6 +26,68 @@
         "asyncio"
       ],
       "enabled": false
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "all non-major updates"
+    },
+    {
+      "matchPackageNames": ["python"],
+      "matchManagers": ["pep621", "dockerfile"],
+      "groupName": "Python version",
+      "addLabels": ["dependencies/python"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "matchPackageNames": ["*", "!python"],
+      "minimumReleaseAge": "3 days",
+      "addLabels": ["dependencies/docker"]
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["*"],
+      "rangeStrategy": "bump",
+      "skipArtifactsUpdate": false
+    }
+  ],
+  "enabledManagers": [
+    "pep621",
+    "dockerfile",
+    "docker-compose",
+    "custom.regex"
+  ],
+  "pre-commit": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ENV UV_VERSION=(?<currentValue>.*?)\\n"
+      ],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^compose.yml$/"
+      ],
+      "matchStrings": [
+        "image:\\s*mongo:\\${SMIB_COMPOSE_MONGO_DB_TAG:-?(?<currentValue>[^\\s]+)}"
+      ],
+      "depNameTemplate": "mongo",
+      "datasourceTemplate": "docker"
     }
   ]
 }

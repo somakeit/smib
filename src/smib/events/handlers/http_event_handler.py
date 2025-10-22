@@ -1,14 +1,15 @@
 import json
 from http import HTTPMethod
-from pprint import pprint
+from typing import Any
 
+from fastapi import Request, Response
 from fastapi.encoders import jsonable_encoder
 from slack_bolt import BoltResponse
 from slack_bolt.adapter.starlette.async_handler import to_starlette_response
 from slack_bolt.app.async_app import AsyncApp
-from fastapi import Request, Response
 from slack_bolt.request.async_request import AsyncBoltRequest
 
+from smib.events import BoltEventType
 from smib.events.handlers import BoltRequestMode, get_slack_signature_headers
 from smib.events.responses.http_bolt_response import HttpBoltResponse
 
@@ -23,10 +24,10 @@ class HttpEventHandler:
         return await to_http_response(bolt_response)
 
 async def to_async_bolt_request(request: Request, context: dict) -> AsyncBoltRequest:
-    request_body: dict[str, any] = {
+    request_body: dict[str, Any] = {
         "type": "event_callback",
         "event": {
-            "type": "http",
+            "type": BoltEventType.HTTP,
             "request": {
                 "method": HTTPMethod(request.method),
                 "scheme": request.url.scheme,

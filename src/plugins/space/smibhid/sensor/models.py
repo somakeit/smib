@@ -1,10 +1,10 @@
 from datetime import datetime, UTC
-from typing import Annotated, Union, Optional
+from typing import Annotated, Optional
 
 import pymongo
-from beanie import Document, PydanticObjectId, Indexed
+from beanie import Document, Indexed
 from beanie.odm.operators.update.general import Set
-from pydantic import BaseModel, Field, AfterValidator, RootModel, ConfigDict
+from pydantic import BaseModel, Field, AfterValidator, RootModel
 
 from ..common import validate_timestamp
 
@@ -76,10 +76,12 @@ class SensorLogRequest(BaseModel):
     ]
 
 class SensorLog(Document, SensorLogBase):
-    id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
+    """
+    Stores recorded sensor readings from a S.M.I.B.H.I.D. device.
+    """
     device: Annotated[str, Field(description="Device hostname")]
-    timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)]), Indexed()]
-    received_timestamp: Annotated[datetime, Field(examples=[datetime.now(UTC)], default_factory=lambda: datetime.now(UTC)), Indexed()]
+    timestamp: Annotated[datetime, Field(description="Timestamp of the sensor reading on the device", examples=[datetime.now(UTC)]), Indexed()]
+    received_timestamp: Annotated[datetime, Field(description="Timestamp of when the sensor reading was received by S.M.I.B.",examples=[datetime.now(UTC)], default_factory=lambda: datetime.now(UTC)), Indexed()]
 
     @classmethod
     def from_api(cls, api_model: SensorLogReading, device: str):
@@ -95,27 +97,43 @@ class SensorLog(Document, SensorLogBase):
             return await cls.find_one(cls.device == device, sort=[(cls.timestamp, pymongo.DESCENDING)])
         return await cls.find_one(sort=[(cls.timestamp, pymongo.DESCENDING)])
 
+    @classmethod
+    async def get_latest_log_received(cls) -> Optional["SensorLog"]:
+        return await cls.find_one(sort=[(cls.received_timestamp, pymongo.DESCENDING)])
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "device": "SMIBHID-DUMMY",
+                "timestamp": datetime.now(UTC),
+                "received_timestamp": datetime.now(UTC),
+                "data": {
+                    "SCD30": {
+                        "co2": 1548.1,
+                        "temperature": 26.3,
+                        "relative_humidity": 52.9
+                    },
+                    "BME280": {
+                        "pressure": 632,
+                        "humidity": 57.64,
+                        "temperature": 23.05
+                    }
+                }
+            }
+        }
+
     class Settings:
         name = "smibhid_sensor_log"
 
 class SensorUnit(Document):
-    id: Annotated[PydanticObjectId | None, Field(default=None, exclude=True)]
-    device: Annotated[str, Field(description="Device hostname"), Indexed()]
-    sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", examples=[{
-        "SCD30": {
-            "co2": "ppm",
-            "temperature": "C",
-            "relative_humidity": "%"
-        },
-        "BME280": {
-            "pressure": "hPa",
-            "humidity": "%",
-            "temperature": "C"
-        }
-    }])]
+    """
+    Stores sensor unit information for a S.M.I.B.H.I.D. device.
+    """
+    device: Annotated[str, Field(description="Device hostname"), Indexed(unique=True, name="device_unique")]
+    sensors: Annotated[SensorUnitMap, Field(description="Sensor Units", )]
 
-    created_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
-    updated_at: Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
+    created_at: Annotated[datetime, Field(description="Timestamp of when the sensor unit document was created", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
+    updated_at: Annotated[datetime, Field(description="Timestamp of when the sensor unit document was last updated", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
 
     @classmethod
     async def upsert_from_api(cls, data: SensorUnitMap, device: str) -> "SensorUnit":
@@ -128,5 +146,39 @@ class SensorUnit(Document):
     async def get_for_device(cls, /,device: str | None = None) -> Optional["SensorUnit"]:
         return await cls.find_one(cls.device == device)
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "device": "SMIBHID-DUMMY",
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
+                "sensors": {
+                    "SCD30": {
+                        "co2": "ppm",
+                        "temperature": "C",
+                        "relative_humidity": "%"
+                    },
+                    "BME280": {
+                        "pressure": "hPa",
+                        "humidity": "%",
+                        "temperature": "C"
+                    }
+                }
+            }
+        }
+
     class Settings:
         name = "smibhid_sensor_units"
+
+class SensorLogMonitorState(Document):
+    """
+    Stores sensor log monitor state information.
+    """
+    last_log_received: Annotated[datetime | None, Field(description="Timestamp of the last sensor log received by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]
+    last_check: Annotated[datetime | None, Field(description="Timestamp of the last check for sensor logs by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]
+    last_alert_sent: Annotated[datetime | None, Field(description="Timestamp of the last alert sent by S.M.I.B.", default=None, examples=[datetime.now(UTC)])]
+    alert_active: Annotated[bool, Field(description="Whether an alert is currently active", default=False)]
+
+    class Settings:
+        name = "smibhid_sensor_log_monitor_state"
+

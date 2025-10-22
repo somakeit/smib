@@ -1,5 +1,5 @@
 ## ------------------------------- Builder Stage ------------------------------ ##
-FROM python:3.13-bookworm AS builder
+FROM python:3.14-bookworm AS builder
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         build-essential && \
@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Download the latest installer, install it and then remove it
 ADD https://astral.sh/uv/install.sh /install.sh
+ENV UV_VERSION=0.9.4
 RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
 # Set up the UV environment path correctly
@@ -17,19 +18,19 @@ WORKDIR /app
 # Copy bare minimum for requirements install
 COPY pyproject.toml README.md ./
 
-# Override to dummy version when installing dependancies only
+# Override to dummy version when installing dependencies only
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
 RUN uv sync --no-install-project --no-install-workspace
 
-# Copy entire context - so we can caculate the git revision
+# Copy entire context - so we can calculate the git revision
 COPY . .
 
-# Unset version so actual version number can be used 
+# Unset version so the actual version number can be used 
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.13-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 
 RUN useradd smibuser
 USER smibuser
@@ -45,7 +46,9 @@ COPY --from=builder /app/pyproject.toml ./pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
 
+COPY docker/healthcheck.py ./healthcheck.py
+
 HEALTHCHECK --interval=10s --timeout=10s --start-period=8s --retries=3 \
-  CMD python -c "import os, urllib.request; exit(0) if urllib.request.urlopen(f'http://localhost:{os.environ.get(\"SMIB_WEBSERVER_PORT\", \"80\")}/ping').status == 200 else exit(1)"
+ CMD ["python", "/app/healthcheck.py"]
 
 CMD ["python", "-m", "smib"]

@@ -1,5 +1,10 @@
+import logging
+
 from pydantic import Field
+
 from smib.config import EnvBaseSettings
+from smib.config.utils import init_plugin_settings
+
 
 class SpaceStatePluginConfig(EnvBaseSettings):
     space_open_announce_channel_id: str = Field(
@@ -11,4 +16,6 @@ class SpaceStatePluginConfig(EnvBaseSettings):
         "env_prefix": "SMIB_PLUGIN_SPACE_STATE_"
     }
 
-config = SpaceStatePluginConfig()
+_logger = logging.getLogger("Space State Plugin Config")
+config = init_plugin_settings(SpaceStatePluginConfig, _logger)
+

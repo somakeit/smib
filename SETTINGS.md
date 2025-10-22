@@ -20,13 +20,13 @@ This document provides a comprehensive overview of all configurable settings in 
 
 ## Webserver Settings
 
-| Environment Variable | Description | Example | Default |
-|---------------------|-------------|---------|---------|
+| Environment Variable | Description                                                        | Example | Default |
+|---------------------|--------------------------------------------------------------------|---------|---------|
 | SMIB_WEBSERVER_HOST | Host address to bind the webserver to (0.0.0.0 for all interfaces) | `127.0.0.1` | `0.0.0.0` |
-| SMIB_WEBSERVER_PORT | Port number for the webserver to listen on | `8080` | `80` |
-| SMIB_WEBSERVER_PATH_PREFIX | URL path prefix for the API endpoints | `/smib/api` | `/api` |
-| SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all) | `[10.0.0.1, 192.168.1.1]` | `[*]` |
-| SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests | `true` | `false` |
+| SMIB_WEBSERVER_PORT | Port number for the webserver to listen on                         | `8080` | `80` |
+| SMIB_WEBSERVER_PATH_PREFIX | URL path prefix for the webserver endpoints                        | `/smib/` | `/` |
+| SMIB_WEBSERVER_FORWARDED_ALLOW_IPS | List of IPs allowed for X-Forwarded-For headers (* for all)        | `[10.0.0.1, 192.168.1.1]` | `[*]` |
+| SMIB_WEBSERVER_LOG_REQUEST_DETAILS | Whether to log detailed information about HTTP requests            | `true` | `false` |
 
 ## Logging Settings
 | Environment Variable | Description | Example | Default |
@@ -60,3 +60,11 @@ This document provides a comprehensive overview of all configurable settings in 
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|
 | SMIB_PLUGIN_STATIC_FILES_STATIC_FILES_DIRECTORY | Directory path where static files are stored and served from | `public/assets` | `static` |
+
+### S.M.I.B.H.I.D. Plugin
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_INTERVAL | Interval between sensor log monitor checks. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations like `PT10M`. Set to `None` to disable monitoring. | `PT1M` or `0:01:00` or `60` | `0:01:00` |
+| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD | Time since the last received sensor log after which an alert should be sent. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. | `PT1H` or `1:00:00` or `3600` | `1:00:00` |
+| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_RESEND_INTERVAL | Interval to resend alerts while the issue persists. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. Set to `None` to only alert once per issue. | `PT10M` or `0:10:00` or `600` | `None` |
+| SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_CHANNEL_ID | Slack channel ID where sensor log monitor alerts are posted | `C1234567890` | `code` |

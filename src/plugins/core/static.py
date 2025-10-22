@@ -10,7 +10,9 @@ from fastapi.responses import FileResponse
 from pydantic import Field
 
 from smib.config import EnvBaseSettings
-from smib.events.interfaces.http_event_interface import HttpEventInterface
+from smib.config.utils import init_plugin_settings
+from smib.events.interfaces.http.http_web_event_interface import WebEventInterface
+
 
 class StaticFilesPluginSettings(EnvBaseSettings):
     static_files_directory: Path = Field(
@@ -22,11 +24,10 @@ class StaticFilesPluginSettings(EnvBaseSettings):
         "env_prefix": "SMIB_PLUGIN_STATIC_FILES_"
     }
 
-config = StaticFilesPluginSettings()
-
 logger = logging.getLogger(__display_name__)
+config = init_plugin_settings(StaticFilesPluginSettings, logger)
 
-def register(http: HttpEventInterface):
+def register(web: WebEventInterface):
     resolved_static_directory_path: Path = config.static_files_directory.resolve()
     logger.info(f"Resolved static files directory to {resolved_static_directory_path}")
     if not resolved_static_directory_path.exists():
@@ -38,7 +39,7 @@ def register(http: HttpEventInterface):
     # TODO (eventually): Replace this with normal StaticFiles mounting.
     #  This is a workaround for FastAPI issue #10180 (https://github.com/fastapi/fastapi/issues/10180).
     #  For additional context, see the related discussion: https://github.com/fastapi/fastapi/discussions/9070.
-    @http.get("/static/{rest_of_path:path}", include_in_schema=False)
+    @web.get("/static/{rest_of_path:path}", include_in_schema=False)
     async def static_files(rest_of_path: str):
         file_path = resolved_static_directory_path / rest_of_path
         if not rest_of_path or not file_path.exists():
