@@ -19,7 +19,9 @@ import pytest
         "smib.events.responses",
         "smib.events.responses.http_bolt_response",
         "smib.events.interfaces",
-        "smib.events.interfaces.http_event_interface",
+        "smib.events.interfaces.http",  # Changed: this is a package, not a module
+        "smib.events.interfaces.http.http_api_event_interface",  # Added
+        "smib.events.interfaces.http.http_web_event_interface",  # Added
         "smib.events.interfaces.slack_event_interface",
         "smib.events.interfaces.scheduled_event_interface",
         "smib.events.middlewares",
