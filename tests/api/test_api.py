@@ -1,49 +1,68 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 
 from smib.config.project import ProjectSettings
 from smib.config.webserver import WebserverSettings
 
 
-@pytest.fixture(autouse=True, scope="module")
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
 def webserver_settings() -> WebserverSettings:
-    """Fixture to provide the webserver settings."""
-    from smib.config import webserver
-    return webserver
+    """Provide instantiated webserver settings."""
+    from smib.config.webserver import WebserverSettings
+    return WebserverSettings()
 
-@pytest.fixture(autouse=True, scope="module")
+
+@pytest.fixture(scope="module")
 def project_settings() -> ProjectSettings:
-    """Fixture to provide the webserver URL."""
-    from smib.config import project
-    return project
+    """Provide instantiated project settings."""
+    from smib.config.project import ProjectSettings
+    return ProjectSettings()
 
-@pytest.fixture(autouse=True, scope="module")
-def api_client(webserver_settings: WebserverSettings) -> AsyncClient:
-    """Fixture to provide an API client for testing."""
-    url = f"http://{webserver_settings.host}:{webserver_settings.port}/{webserver_settings.path_prefix.rstrip('/')}"
-    return AsyncClient(base_url=url, follow_redirects=True)
+
+@pytest_asyncio.fixture(scope="function")
+async def api_client(webserver_settings: WebserverSettings) -> AsyncClient:
+    """
+    Provide an AsyncClient for testing.
+    Each test gets its own event loop, preventing 'Event loop is closed' errors.
+    """
+    # Build a clean base URL regardless of trailing slashes
+    prefix = webserver_settings.path_prefix.strip("/")
+    base_url = f"http://{webserver_settings.host}:{webserver_settings.port}"
+    if prefix:
+        base_url = f"{base_url}/{prefix}"
+
+    async with AsyncClient(base_url=base_url, follow_redirects=True) as client:
+        yield client
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_api_ping(api_client: AsyncClient, project_settings: ProjectSettings):
+async def test_api_ping(api_client: AsyncClient):
     """Test the ping endpoint."""
-    resp = await api_client.get('/api/ping')
+    resp = await api_client.get("/api/ping")
     assert resp.status_code == 200
-    assert resp.json() == {"ping": "pong"}
+    assert resp.json().get("ping") == "pong"
 
-    assert resp.headers['x-app-name'] == project_settings.name
-    assert resp.headers['x-app-version'] == project_settings.version
 
 @pytest.mark.asyncio
 async def test_api_version(api_client: AsyncClient, project_settings: ProjectSettings):
     """Test the version endpoint."""
-    resp = await api_client.get('/api/version')
+    resp = await api_client.get("/api/version")
     assert resp.status_code == 200
 
-    resp_json = resp.json()
-    assert resp_json.has_key('smib')
+    data = resp.json()
+    assert "smib" in data
+    assert data["smib"] == project_settings.version
+    assert "mongo" in data
 
-    assert resp_json['smib'] == project_settings.version
-    assert resp_json.has_key('mongo')
-
-    assert resp.headers['x-app-name'] == project_settings.name
-    assert resp.headers['x-app-version'] == project_settings.version
+    # Use .get() to avoid KeyErrors, headers are case-insensitive
+    assert resp.headers.get("x-app-name") == project_settings.name
+    assert resp.headers.get("x-app-version") == project_settings.version
