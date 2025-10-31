@@ -13,7 +13,7 @@ class ScheduledEventService:
     @property
     @lru_cache(maxsize=1)
     def scheduler(self) -> AsyncIOScheduler:
-        scheduler = AsyncIOScheduler()
+        scheduler = AsyncIOScheduler(timezone='UTC')
         return scheduler
 
     async def start(self) -> None:
