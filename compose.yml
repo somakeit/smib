@@ -30,7 +30,7 @@ services:
 
   smib-db:
     <<: *common
-    image: mongo:${SMIB_COMPOSE_MONGO_DB_TAG:-8.0.15}
+    image: mongo:${SMIB_COMPOSE_MONGO_DB_TAG:-8.2.1}
     container_name: smib-db
     healthcheck:
       test:
