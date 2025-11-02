@@ -28,7 +28,7 @@ class HttpEventService:
             root_path=root_path,
             root_path_in_servers=bool(root_path),
         )
-        self.logger.debug(f"FastAPI app: {pformat(app.__dict__)}")
+        self.logger.debug(f"FastAPI app:\n{pformat(app.__dict__)}")
         return app
 
     @property
@@ -41,10 +41,9 @@ class HttpEventService:
             forwarded_allow_ips=webserver.forwarded_allow_ips,
             headers=self.headers,
             log_config=get_logging_config(logging_config.log_level),
-            log_level=logging_config.log_level,
             access_log=False,
         )
-        self.logger.debug(f"Uvicorn config: {pformat(config.__dict__)}")
+        self.logger.debug(f"Uvicorn config:\n{pformat(config.__dict__)}")
         return config
 
     @property
@@ -55,11 +54,13 @@ class HttpEventService:
     @property
     @lru_cache(maxsize=1)
     def headers(self) -> list[tuple[str, str]] | None:
-        return [
+        headers = [
             ("server", f"{socket.gethostname()}"),
             ("x-app-name", project.name),
             ("x-app-version", str(project.version)),
         ]
+        self.logger.debug(f"Uvicorn headers:\n{pformat(headers)}")
+        return headers
 
     def apply_middlewares(self):
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
