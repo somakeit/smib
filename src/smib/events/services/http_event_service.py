@@ -2,6 +2,7 @@ import logging
 import socket
 from functools import lru_cache
 from logging import Logger
+from pprint import pformat
 
 from fastapi import FastAPI
 from uvicorn import Config, Server
@@ -20,18 +21,20 @@ class HttpEventService:
     @lru_cache(maxsize=1)
     def fastapi_app(self) -> FastAPI:
         root_path = webserver.path_prefix.rstrip('/')
-        return FastAPI(
+        app = FastAPI(
             version=str(project.version),
             title=project.display_name,
             description=project.description,
             root_path=root_path,
             root_path_in_servers=bool(root_path),
         )
+        self.logger.debug(f"FastAPI app: {pformat(app.__dict__)}")
+        return app
 
     @property
     @lru_cache(maxsize=1)
     def uvicorn_config(self) -> Config:
-        return Config(self.fastapi_app,
+        config = Config(self.fastapi_app,
             host=webserver.host,
             port=webserver.port,
             proxy_headers=True,
@@ -41,11 +44,12 @@ class HttpEventService:
             log_level=logging_config.log_level,
             access_log=False,
         )
+        self.logger.debug(f"Uvicorn config: {pformat(config.__dict__)}")
+        return config
 
     @property
     @lru_cache(maxsize=1)
     def uvicorn_server(self) -> Server:
-        self.logger.warning(f"Starting uvicorn server with config: {self.uvicorn_config.__dict__}")
         return Server(config=self.uvicorn_config)
 
     @property
