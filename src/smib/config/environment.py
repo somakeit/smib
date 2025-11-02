@@ -13,7 +13,7 @@ class Environment(StrEnum):
 class EnvironmentSettings(EnvBaseSettings):
     environment: Environment = Field(
         Environment.PRODUCTION,
-        description="The application environment.",
+        description="The application environment",
     )
 
     @field_validator("environment", mode="before")
