@@ -21,7 +21,7 @@ class HttpEventService:
     def fastapi_app(self) -> FastAPI:
         root_path = webserver.path_prefix.rstrip('/')
         return FastAPI(
-            version=project.version,
+            version=str(project.version),
             title=project.display_name,
             description=project.description,
             root_path=root_path,
@@ -38,12 +38,14 @@ class HttpEventService:
             forwarded_allow_ips=webserver.forwarded_allow_ips,
             headers=self.headers,
             log_config=get_logging_config(logging_config.log_level),
+            log_level=logging_config.log_level,
             access_log=False,
         )
 
     @property
     @lru_cache(maxsize=1)
     def uvicorn_server(self) -> Server:
+        self.logger.warning(f"Starting uvicorn server with config: {self.uvicorn_config.__dict__}")
         return Server(config=self.uvicorn_config)
 
     @property
@@ -52,7 +54,7 @@ class HttpEventService:
         return [
             ("server", f"{socket.gethostname()}"),
             ("x-app-name", project.name),
-            ("x-app-version", project.version),
+            ("x-app-version", str(project.version)),
         ]
 
     def apply_middlewares(self):

@@ -17,6 +17,7 @@ def format_validation_errors(collected: CollectedErrors_T) -> str:
 
         message_lines.append(f"Validation error for {model.__name__}:")
         for error in validation_errors.errors():
+            print(error)
             field_name = error["loc"][0]
             field: FieldInfo = model.model_fields[field_name]
             error_message = error["msg"]

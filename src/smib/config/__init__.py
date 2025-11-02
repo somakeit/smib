@@ -2,12 +2,13 @@ import logging as logging_lib
 
 from smib.config._env_base_settings import EnvBaseSettings
 from smib.config._types import IntervalField, BaseSettings_T, CollectedErrors_T
-from smib.config.utils import format_validation_errors, init_settings
 from smib.config.database import DatabaseSettings
+from smib.config.environment import EnvironmentSettings
 from smib.config.general import GeneralSettings
 from smib.config.logging_ import LoggingSettings
 from smib.config.project import ProjectSettings
 from smib.config.slack import SlackSettings
+from smib.config.utils import format_validation_errors, init_settings
 from smib.config.webserver import WebserverSettings
 from smib.logging_ import initialise_logging
 from smib.utilities import split_camel_case
@@ -19,6 +20,7 @@ __all__ = [
     "slack",
     "database",
     "webserver",
+    "environment",
     "EnvBaseSettings",
     "IntervalField",
     "format_validation_errors",
@@ -37,6 +39,7 @@ if logging is not None:
     initialise_logging(logging.log_level)
     _logger = logging_lib.getLogger(__name__)
 
+environment: EnvironmentSettings | None = init_settings(EnvironmentSettings, _collected_errors)
 project: ProjectSettings | None = init_settings(ProjectSettings, _collected_errors)
 general: GeneralSettings | None = init_settings(GeneralSettings, _collected_errors)
 slack: SlackSettings | None = init_settings(SlackSettings, _collected_errors)
@@ -50,5 +53,5 @@ if _collected_errors:
     # Exit early so the application clearly stops on config errors
     raise SystemExit(1)
 else:
-    for setting in [logging, project, general, slack, database, webserver]:
+    for setting in [logging, environment, project, general, slack, database, webserver]:
         _logger.debug(f"{" ".join(split_camel_case(setting.__class__.__name__))} Initialised:\n{setting.model_dump_json(indent=2)}")

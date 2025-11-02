@@ -31,7 +31,7 @@ def register(web: WebEventInterface):
             return fastapi_app.openapi_schema
         openapi_schema = get_openapi(
             title=project.display_name,
-            version=project.version,
+            version=str(project.version),
             description=project.description,
             routes=fastapi_app.routes,
             tags=fastapi_app.openapi_tags
