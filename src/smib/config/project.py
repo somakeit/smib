@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 
 from packaging.version import Version
@@ -29,6 +30,7 @@ class _BaseProjectSettings(BaseSettings):
             self.raw_version = Version(get_package_version(self.name))
 
     @field_validator("raw_version", mode="before")
+    @classmethod
     def parse_version(cls, v):
         if isinstance(v, Version):
             return v
@@ -80,6 +82,7 @@ class ProjectSettings(BaseSettings):
             self.raw_version = Version(get_package_version(self.name))
 
     @field_validator("raw_version", mode="before")
+    @classmethod
     def parse_version(cls, v):
         if isinstance(v, Version):
             return v
@@ -106,12 +109,12 @@ class ProjectSettings(BaseSettings):
         return (merged_source, )
 
     @computed_field
-    @property
+    @cached_property
     def version(self) -> Version:
-        from .environment import EnvironmentSettings, Environment
-        settings = EnvironmentSettings()
+        from . import environment as environment_settings
+        from .environment import Environment
 
-        match settings.environment:
+        match environment_settings.environment:
             case Environment.PRODUCTION:
                 return Version(self.raw_version.base_version)
             case Environment.DEVELOPMENT:
@@ -119,10 +122,8 @@ class ProjectSettings(BaseSettings):
             case Environment.TESTING:
                 return Version(self.raw_version.public)
 
-        return self.raw_version
-
     @computed_field
-    @property
+    @cached_property
     def package_root(self) -> Path:
         return get_package_root(self.name)
 
