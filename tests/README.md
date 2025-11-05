@@ -7,5 +7,9 @@ To get started:
 ```bash
 uv pip install -e .
 docker compose up -d --build --force-recreate
+```
+Wait for it to start and be healthy
+
+```bash
 uv run pytest
 ```
