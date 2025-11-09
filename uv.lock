@@ -693,7 +693,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.2,<4.0.0" },
     { name = "apscheduler", specifier = ">=3.11.1,<4.0.0" },
     { name = "beanie", specifier = ">=2.0.0" },
-    { name = "fastapi", specifier = ">=0.121.0" },
+    { name = "fastapi", specifier = ">=0.121.1" },
     { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
     { name = "humanize", specifier = ">=4.14.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
