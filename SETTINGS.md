@@ -10,6 +10,12 @@ This document provides a comprehensive overview of all configurable settings in 
 | SMIB_SLACK_APP_TOKEN | Slack app token used for socket mode connections | `xapp-1-A1234567890-1234567890123-abcdefghijklmnopqrstuvwxyz1234567890123456789012` | None (Required) |
 | SMIB_SLACK_SIGNING_SECRET | Secret used to verify requests from Slack | `abcdef1234567890abcdef1234567890` | Random generated string |
 
+## Environment Settings
+
+| Environment Variable      | Description                                                    | Example       | Default |
+|---------------------------|----------------------------------------------------------------|---------------|---------|
+| SMIB_ENVIRONMENT          | The application environment (PRODUCTION, TESTING, DEVELOPMENT) | `DEVELOPMENT` | `PRODUCTION` |
+
 ## Database Settings
 
 | Environment Variable | Description | Example | Default |

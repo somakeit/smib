@@ -1,6 +1,8 @@
 import logging
 import logging.config
+
 from smib.utilities.environment import is_running_in_docker
+
 
 def get_logging_config(log_level: str = "DEBUG") -> dict:
     return {
@@ -44,7 +46,7 @@ def get_logging_config(log_level: str = "DEBUG") -> dict:
             },
             "pymongo": {
                 "level": "WARNING"
-            }
+            },
         },
     }
 

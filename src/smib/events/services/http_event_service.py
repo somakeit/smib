@@ -2,6 +2,7 @@ import logging
 import socket
 from functools import lru_cache
 from logging import Logger
+from pprint import pformat
 
 from fastapi import FastAPI
 from uvicorn import Config, Server
@@ -20,18 +21,20 @@ class HttpEventService:
     @lru_cache(maxsize=1)
     def fastapi_app(self) -> FastAPI:
         root_path = webserver.path_prefix.rstrip('/')
-        return FastAPI(
-            version=project.version,
+        app = FastAPI(
+            version=str(project.version),
             title=project.display_name,
             description=project.description,
             root_path=root_path,
             root_path_in_servers=bool(root_path),
         )
+        self.logger.debug(f"FastAPI app:\n{pformat(app.__dict__)}")
+        return app
 
     @property
     @lru_cache(maxsize=1)
     def uvicorn_config(self) -> Config:
-        return Config(self.fastapi_app,
+        config = Config(self.fastapi_app,
             host=webserver.host,
             port=webserver.port,
             proxy_headers=True,
@@ -40,6 +43,8 @@ class HttpEventService:
             log_config=get_logging_config(logging_config.log_level),
             access_log=False,
         )
+        self.logger.debug(f"Uvicorn config:\n{pformat(config.__dict__)}")
+        return config
 
     @property
     @lru_cache(maxsize=1)
@@ -49,11 +54,13 @@ class HttpEventService:
     @property
     @lru_cache(maxsize=1)
     def headers(self) -> list[tuple[str, str]] | None:
-        return [
+        headers = [
             ("server", f"{socket.gethostname()}"),
             ("x-app-name", project.name),
-            ("x-app-version", project.version),
+            ("x-app-version", str(project.version)),
         ]
+        self.logger.debug(f"Uvicorn headers:\n{pformat(headers)}")
+        return headers
 
     def apply_middlewares(self):
         self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)

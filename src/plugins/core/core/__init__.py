@@ -13,7 +13,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
     @api.get("/version")
     async def get_version() -> Versions:
         return Versions(
-            smib=project.version,
+            smib=str(project.version),
             mongo=await database.get_db_version()
         )
 

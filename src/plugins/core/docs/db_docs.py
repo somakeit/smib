@@ -87,7 +87,7 @@ def create_dummy_app() -> FastAPI:
     """Create a dummy FastAPI app for generating OpenAPI schema."""
     return FastAPI(
         title=f"{project.display_name} - Database Docs",
-        version=project.version,
+        version=str(project.version),
         description="This is the database schema documentation. The database is a Mongo DB instance.",
         openapi_url="/database/openapi.json",
         docs_url=None,
