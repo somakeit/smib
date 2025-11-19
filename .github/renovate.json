@@ -7,6 +7,8 @@
   "schedule": [
     "every weekend"
   ],
+  "timezone": "Europe/London",
+  "fetchChangeLogs": "off",
   "minimumReleaseAge": "1 day",
   "prHourlyLimit": 2,
   "prConcurrentLimit": 2,
