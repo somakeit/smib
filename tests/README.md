@@ -11,5 +11,6 @@ docker compose up -d --build --force-recreate
 Wait for it to start and be healthy
 
 ```bash
+sudo chown -R $USER:$USER static/
 uv run pytest
 ```
