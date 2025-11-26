@@ -68,8 +68,6 @@ async def test_api_version(api_client: AsyncClient, project_settings: ProjectSet
     assert resp.headers.get("x-app-version") == project_settings.version
 
 
-# Additional tests start here
-
 @pytest.mark.asyncio
 async def test_api_health(api_client: AsyncClient):
     """
@@ -182,13 +180,13 @@ async def test_api_spacestate(api_client: AsyncClient):
     Test for the current space state API.
     - Ensure it returns latest data or correct default state.
     """
-    resp = await api_client.get("/api/spacestate")
+    resp = await api_client.get("/api/space/state")
     assert resp.status_code == 200
     data = resp.json()
-    assert "state" in data  # Check the key exists
-    assert isinstance(data["state"], str)  # Validate type
+    assert "open" in data  # Check the key exists
+    assert isinstance(data["open"], bool)  # Validate type
 
-
+#
 @pytest.mark.asyncio
 async def test_api_smibhid_log(api_client: AsyncClient):
     """
