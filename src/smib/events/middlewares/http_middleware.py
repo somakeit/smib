@@ -39,7 +39,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         scope_str = json.dumps(scope)
         return self._uses_deprecated_route(scope_str)
 
-    @lru_cache
+    @lru_cache(maxsize=128)
     def _uses_deprecated_route(self, scope_str: str) -> bool:
         scope = json.loads(scope_str)
         for route in self.app.routes:
