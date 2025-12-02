@@ -4,7 +4,7 @@ import time
 from functools import lru_cache
 from pprint import pformat
 
-from fastapi import FastAPI, Request, Response
+from fastapi import Request, Response
 from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
@@ -37,12 +37,12 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
 
         # Convert to string to allow for caching
         scope_str = json.dumps(scope)
-        return self._uses_deprecated_route(scope_str, request.app)
+        return self._uses_deprecated_route(scope_str)
 
     @lru_cache
-    def _uses_deprecated_route(self, scope_str: str, app: FastAPI) -> bool:
+    def _uses_deprecated_route(self, scope_str: str) -> bool:
         scope = json.loads(scope_str)
-        for route in app.routes:
+        for route in self.app.routes:
             match, _ = route.matches(scope)
             if match == Match.FULL and getattr(route, "deprecated", False):
                 return True
