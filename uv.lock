@@ -711,7 +711,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.2,<4.0.0" },
     { name = "apscheduler", specifier = ">=3.11.1,<4.0.0" },
     { name = "beanie", specifier = ">=2.0.1" },
-    { name = "fastapi", specifier = ">=0.123.10" },
+    { name = "fastapi", specifier = ">=0.124.0" },
     { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
     { name = "humanize", specifier = ">=4.14.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
