@@ -63,7 +63,7 @@ class HttpEventService:
         return headers
 
     def apply_middlewares(self):
-        self.fastapi_app.add_middleware(DeprecatedRouteMiddleware)
+        self.fastapi_app.add_middleware(DeprecatedRouteMiddleware, self.fastapi_app)
         self.fastapi_app.add_middleware(HttpRequestLoggingMiddleware)
 
     async def start(self):

@@ -212,3 +212,4 @@ static/
 db/
 src/plugins/sam-dev
 temp/
+compose.override.yaml

@@ -1,32 +1,29 @@
 import json
 import logging
 import time
-from functools import lru_cache
 from pprint import pformat
 
-from fastapi import Request, Response
+from fastapi import Request, Response, FastAPI
 from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
 from smib.config import webserver
+from smib.utilities.functions import weak_lru
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
+    def __init__(self, app, fastapi_app: FastAPI):
         super().__init__(app)
+        self.fastapi_app = fastapi_app
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.request: Request | None = None
 
     async def dispatch(self, request: Request, call_next):
-        self.request = request
         response: Response = await call_next(request)
 
-        if self.uses_deprecated_route(self.request):
+        if self.uses_deprecated_route(request):
             self.logger.warning(f"Deprecated endpoint used: {request.method} {request.url.path}; IP: {request.client.host}")
             response.headers.append("Deprecation", "true")
-
-        self.request = None
 
         return response
 
@@ -43,10 +40,10 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         scope_str = json.dumps(scope)
         return self._uses_deprecated_route(scope_str)
 
-    @lru_cache
+    @weak_lru(maxsize=128)
     def _uses_deprecated_route(self, scope_str: str) -> bool:
         scope = json.loads(scope_str)
-        for route in self.request.app.routes:
+        for route in self.fastapi_app.routes:
             match, _ = route.matches(scope)
             if match == Match.FULL and getattr(route, "deprecated", False):
                 return True

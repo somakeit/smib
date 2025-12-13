@@ -16,7 +16,7 @@ class SpaceStateSource(StrEnum):
 
 
 class SpaceStateBase(BaseModel):
-    open: Annotated[bool, Field(description="Whether the space is open")]
+    open: Annotated[bool | None, Field(default=None, description="Whether the space is open")]
 
 class SpaceState(Document, SpaceStateBase):
     """
