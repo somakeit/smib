@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from functools import lru_cache
 from pprint import pformat
 
 from fastapi import Request, Response, FastAPI
@@ -10,6 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
 from smib.config import webserver
+from smib.utilities.functions import weak_lru
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
@@ -40,7 +40,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
         scope_str = json.dumps(scope)
         return self._uses_deprecated_route(scope_str)
 
-    @lru_cache(maxsize=128)
+    @weak_lru(maxsize=128)
     def _uses_deprecated_route(self, scope_str: str) -> bool:
         scope = json.loads(scope_str)
         for route in self.fastapi_app.routes:
