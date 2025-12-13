@@ -1,7 +1,7 @@
 [project]
 name = "smib"
 description = "The SoMakeIt Bot"
-requires-python = ">=3.14.0,<4.0.0"
+requires-python = ">=3.14.2,<4.0.0"
 authors = [
     { name = "Sam Cork", email = "sam57719@gmail.com" }
 ]
@@ -20,7 +20,7 @@ dependencies = [
     "humanize>=4.14.0",
     "pytz>=2025.2",
     "beanie>=2.0.1",
-    "fastapi>=0.122.0",
+    "fastapi>=0.124.0",
     "pydantic-settings>=2.12.0",
     "jinja2>=3.1.6",
     "websockets>=15.0.1",
