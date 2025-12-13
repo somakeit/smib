@@ -58,6 +58,16 @@
       "rangeStrategy": "bump",
       "addLabels": ["dependencies/python-packages"],
       "skipArtifactsUpdate": false
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["astral-sh/uv"],
+      "addLabels": ["dependencies/python-packages"]
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["mongo"],
+      "addLabels": ["dependencies/docker"]
     }
   ],
   "enabledManagers": [
