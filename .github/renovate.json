@@ -40,7 +40,7 @@
       "matchPackageNames": ["python"],
       "matchManagers": ["pep621", "dockerfile"],
       "groupName": "Python version",
-      "addLabels": ["dependencies/python"],
+      "addLabels": ["dependencies/python-version"],
       "rangeStrategy": "bump"
     },
     {
@@ -56,6 +56,7 @@
       "matchManagers": ["pep621"],
       "matchPackageNames": ["*"],
       "rangeStrategy": "bump",
+      "addLabels": ["dependencies/python-packages"],
       "skipArtifactsUpdate": false
     }
   ],
