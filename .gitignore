@@ -211,4 +211,4 @@ cython_debug/
 static/
 db/
 src/plugins/sam-dev
-temp/
+temp/!/compose.override.yaml

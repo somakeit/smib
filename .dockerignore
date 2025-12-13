@@ -2,3 +2,4 @@ db/
 static/
 .venv/
 .env
+/compose.override.yaml

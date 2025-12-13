@@ -4,7 +4,7 @@ import time
 from functools import lru_cache
 from pprint import pformat
 
-from fastapi import Request, Response
+from fastapi import Request, Response, FastAPI
 from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
@@ -13,8 +13,9 @@ from smib.config import webserver
 
 
 class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
+    def __init__(self, app, fastapi_app: FastAPI):
         super().__init__(app)
+        self.fastapi_app = fastapi_app
         self.logger = logging.getLogger(self.__class__.__name__)
 
     async def dispatch(self, request: Request, call_next):
@@ -42,7 +43,7 @@ class DeprecatedRouteMiddleware(BaseHTTPMiddleware):
     @lru_cache(maxsize=128)
     def _uses_deprecated_route(self, scope_str: str) -> bool:
         scope = json.loads(scope_str)
-        for route in self.app.routes:
+        for route in self.fastapi_app.routes:
             match, _ = route.matches(scope)
             if match == Match.FULL and getattr(route, "deprecated", False):
                 return True
