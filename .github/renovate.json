@@ -14,12 +14,6 @@
   "prConcurrentLimit": 2,
   "dependencyDashboard": true,
   "prCreation": "immediate",
-  "assignees": [
-    "sam57719"
-  ],
-  "reviewers": [
-    "sam57719"
-  ],
   "labels": ["dependencies"],
   "pruneStaleBranches": true,
   "packageRules": [
