@@ -6,7 +6,6 @@ from pprint import pformat
 
 from fastapi import APIRouter
 
-from smib.config import general
 from smib.events.interfaces.http import HttpEventInterface
 from smib.plugins.plugin import Plugin
 
@@ -22,7 +21,7 @@ class HttpPluginIntegration:
 
 
     def disconnect_plugin(self, plugin: Plugin):
-        self.logger.info(f"Locating and removing http routes in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing http routes in {plugin.unique_name}")
         plugin_path = plugin.path
 
         module_path = Path(plugin.module.__file__)
@@ -55,7 +54,7 @@ class HttpPluginIntegration:
         router = self.http_event_interface.routers.get(plugin.unique_name)
         included_routes = any(route for route in router.routes if route.include_in_schema)
         if len(router.routes) == 0:
-            self.logger.debug(f"Removing unused router for {plugin.path.relative_to(general.plugins_directory)}")
+            self.logger.debug(f"Removing unused router for {plugin.unique_name}")
             self.http_event_interface.routers.pop(plugin.unique_name)
         if not included_routes:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))

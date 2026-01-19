@@ -5,7 +5,6 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from smib.config import general
 from smib.events.interfaces.websocket_event_interface import WebsocketEventInterface
 from smib.plugins.plugin import Plugin
 
@@ -18,7 +17,7 @@ class WebsocketPluginIntegration:
         self.logger: Logger = logging.getLogger(f"{self.__class__.__name__}")
 
     def disconnect_plugin(self, plugin: Plugin):
-        self.logger.info(f"Locating and removing websocket routes in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing websocket routes in {plugin.unique_name}")
 
         module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
@@ -40,7 +39,7 @@ class WebsocketPluginIntegration:
     def remove_router_if_unused(self, plugin: Plugin):
         router = self.websocket_event_interface.routers.get(plugin.unique_name)
         if len(router.routes) == 0:
-            self.logger.debug(f"Removing unused router for {plugin.path.relative_to(general.plugins_directory)}")
+            self.logger.debug(f"Removing unused router for {plugin.unique_name}")
             self.websocket_event_interface.routers.pop(plugin.unique_name)
 
 

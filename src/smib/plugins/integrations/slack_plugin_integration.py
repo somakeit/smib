@@ -1,15 +1,11 @@
 import logging
 import sys
 from pathlib import Path
-from types import ModuleType
-from typing import Optional
 
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.middleware.async_custom_middleware import AsyncCustomMiddleware
-from slack_bolt.middleware.async_middleware import AsyncMiddleware
 
-from smib.plugins.plugin import Plugin, PythonModulePlugin
-from smib.utilities.package import get_actual_module_name
+from smib.plugins.plugin import Plugin
 
 
 class SlackPluginIntegration:
@@ -22,7 +18,7 @@ class SlackPluginIntegration:
         self.disconnect_middlewares(plugin)
 
     def disconnect_listeners(self, plugin: Plugin):
-        self.logger.info(f"Locating and removing slack listeners in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing slack listeners in {plugin.unique_name}")
 
         module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
@@ -36,7 +32,7 @@ class SlackPluginIntegration:
                     self.bolt_app._async_listeners.remove(listener)
 
     def disconnect_middlewares(self, plugin: Plugin):
-        self.logger.info(f"Locating and removing slack middleware in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing slack middleware in {plugin.unique_name}")
 
         module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
