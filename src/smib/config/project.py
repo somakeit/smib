@@ -2,7 +2,7 @@ from functools import cached_property
 from pathlib import Path
 
 from packaging.version import Version
-from pydantic import computed_field, field_validator, Field
+from pydantic import computed_field, field_validator, Field, field_serializer
 from pydantic_settings import (
     SettingsConfigDict,
     PyprojectTomlConfigSettingsSource,
@@ -22,7 +22,6 @@ class _BaseProjectSettings(BaseSettings):
         pyproject_toml_table_header=("project",),
         pyproject_toml_depth=3,
         extra="ignore",
-        json_encoders={Version: str}
     )
 
     def model_post_init(self, __context):
@@ -35,6 +34,10 @@ class _BaseProjectSettings(BaseSettings):
         if isinstance(v, Version):
             return v
         return Version(v)
+
+    @field_serializer("raw_version")
+    def serialize_version(self, value: Version):
+        return str(value)
 
     @classmethod
     def settings_customise_sources(
@@ -88,6 +91,9 @@ class ProjectSettings(BaseSettings):
             return v
         return Version(v)
 
+    @field_serializer("raw_version")
+    def serialize_version(self, value: Version):
+        return str(value)
 
     @classmethod
     def settings_customise_sources(
