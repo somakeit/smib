@@ -45,7 +45,7 @@ def register(slack: AsyncApp):
         await ack()
 
     @slack.action("space_closed_minutes_select")
-    async def handle_space_open_hours_select(ack: AsyncAck):
+    async def handle_space_closed_minutes_select(ack: AsyncAck):
         await ack()
 
     @slack.action(re.compile('app_home_url_.*'))
