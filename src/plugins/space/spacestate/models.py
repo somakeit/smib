@@ -49,6 +49,7 @@ class SpaceStateEventHistory(Document):
     requested_duration_seconds: Annotated[int | None, Field(default=None, description="The requested duration (in seconds)")]
     previous_state: Annotated[SpaceStateEnum | None, Field(default=None, description="The previous state")]
     new_state: Annotated[SpaceStateEnum, Field(description="The new state")]
+    metrics_exported_at: Annotated[datetime | None, Field(default=None, description="Timestamp of when the metrics were exported"), Indexed()]
 
     class Settings:
         name = "space_state_event_history"
