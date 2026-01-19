@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from enum import StrEnum
 from typing import Annotated
 
-from beanie import Document, Indexed
+from beanie import Document, Indexed, before_event, Insert, Replace, Update, Save
 from pydantic import BaseModel, Field
 
 
@@ -23,6 +23,12 @@ class SpaceState(Document, SpaceStateBase):
     Stores the current space state.
     This collection should only ever have 1 document in it.
     """
+    updated_at: Annotated[datetime, Field(description="Timestamp of when the space state was last updated", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
+
+    @before_event(Insert, Replace, Save, Update)
+    def update_updated_at(self):
+        self.updated_at = datetime.now(UTC)
+
     class Settings:
         name = "space_state"
 
