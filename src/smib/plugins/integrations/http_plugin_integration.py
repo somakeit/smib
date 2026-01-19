@@ -33,7 +33,7 @@ class HttpPluginIntegration:
                 if hasattr(route.endpoint, '__module__') and route.endpoint.__module__ in sys.modules:
                     route_module_path = sys.modules[route.endpoint.__module__].__file__
                     if Path(route_module_path).resolve().is_relative_to(module_path):
-                        self.logger.debug(f"Removing route {route}")
+                        self.logger.debug(f"Removing route {route} from {plugin.unique_name}")
                         router.routes.remove(route)
 
     @staticmethod
@@ -54,7 +54,7 @@ class HttpPluginIntegration:
         router = self.http_event_interface.routers.get(plugin.unique_name)
         included_routes = any(route for route in router.routes if route.include_in_schema)
         if len(router.routes) == 0:
-            self.logger.debug(f"Removing unused router for {plugin.unique_name}")
+            self.logger.debug(f"Removing unused router for {plugin.unique_name} from {plugin.unique_name}")
             self.http_event_interface.routers.pop(plugin.unique_name)
         if not included_routes:
             self.tag_metadata.remove(self.get_plugin_tags(plugin))
