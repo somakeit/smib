@@ -52,7 +52,7 @@ class PluginLifecycleManager:
                 self.unregister_plugin(plugin)
                 continue
             except Exception as e:
-                self.logger.exception(f"Failed to register plugin {plugin.unique_name}): {e}", exc_info=e)
+                self.logger.exception(f"Failed to register plugin {plugin.unique_name}: {e}", exc_info=e)
                 self.unregister_plugin(plugin)
                 continue
             else:
