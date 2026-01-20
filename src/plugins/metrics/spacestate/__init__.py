@@ -5,6 +5,8 @@ __author__ = "Sam Cork"
 import logging
 from typing import TYPE_CHECKING
 
+from beanie.odm.queries.find import FindMany
+
 from plugins.metrics.common import config as metrics_config
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
@@ -31,7 +33,7 @@ def register(schedule: ScheduledEventInterface, database: DatabaseManager):
 
         # Create an async generator for the unsynced events
         # noinspection PyComparisonWithNone
-        unsynced_iterator = _SpaceStateEventHistory.find(
+        unsynced_iterator: FindMany[SpaceStateEventHistory] = _SpaceStateEventHistory.find(
             _SpaceStateEventHistory.metrics_exported_at == None
         ).sort(+_SpaceStateEventHistory.timestamp)
 
