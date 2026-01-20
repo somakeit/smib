@@ -1,4 +1,5 @@
 import logging as logging_lib
+from pprint import pformat
 from typing import Optional
 
 from pydantic import ValidationError
@@ -62,6 +63,9 @@ def init_plugin_settings(settings_cls: type[BaseSettings_T], logger: logging_lib
     errors: list[tuple[type[BaseSettings_T], ValidationError]] = []
     settings = init_settings(settings_cls, errors)
     if settings is None:
+        logger.debug(f"Failed to initialise {settings_cls.__name__}: {errors}")
+        for _, error in errors:
+            logger.debug(f"{pformat(error.errors())}")
         logger.error(format_validation_errors(errors))
         raise AssertionError('Invalid configuration') from errors[0][1]
 

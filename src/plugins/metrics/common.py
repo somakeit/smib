@@ -4,7 +4,7 @@ __author__ = "Sam Cork"
 
 import logging
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, ValidationInfo
 
 from smib.config import EnvBaseSettings
 from smib.config.utils import init_plugin_settings
@@ -22,11 +22,13 @@ class MetricsCommonConfig(EnvBaseSettings):
         "env_prefix": "SMIB_METRICS_",
     }
 
-    @model_validator(mode="after")
-    def validate_token_if_enabled(self) -> MetricsCommonConfig:
-        if self.enabled and not self.influx_token.get_secret_value():
-            raise ValueError("influx_token must be provided when metrics are enabled")
-        return self
+    @field_validator("influx_token")
+    @classmethod
+    def validate_token_if_enabled(cls, v: SecretStr | None, info: ValidationInfo) -> SecretStr | None:
+        # Check the 'enabled' field from the values already processed
+        if info.data.get("enabled") and (v is None or not v.get_secret_value()):
+            raise ValueError("must be provided when metrics are enabled")
+        return v
 
 _logger = logging.getLogger("Metrics Common Config")
 config = init_plugin_settings(MetricsCommonConfig, _logger)

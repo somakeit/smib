@@ -79,6 +79,8 @@ class PythonModulePluginLoader:
                     plugins.append(self.load_from_path(item))
                 except (ImportError, FileNotFoundError) as e:
                     logger.exception(f"Failed to import {item}", exc_info=e)
+                except AssertionError as e:
+                    logger.error(f"Failed to import {item}: {e}")
                 except Exception as e:
                     logger.exception(f"Unexpected error importing {item}", exc_info=e)
 
@@ -144,6 +146,8 @@ class PythonPackagePluginLoader:
                     plugins.append(self.load_from_path(item))
                 except (ImportError, FileNotFoundError) as e:
                     logger.exception(f"Failed to import {item}", exc_info=e)
+                except AssertionError as e:
+                    logger.error(f"Failed to import {item}: {e}")
                 except Exception as e:
                     logger.exception(f"Unexpected error importing {item}", exc_info=e)
 
