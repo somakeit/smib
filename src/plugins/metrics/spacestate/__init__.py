@@ -36,15 +36,9 @@ def register(schedule: ScheduledEventInterface, database: DatabaseManager):
         ).sort(+_SpaceStateEventHistory.timestamp)
 
         # Check if we have anything to process
-        if await unsynced_iterator.count() == 0:
+        unsynced_event_count = await unsynced_iterator.count()
+        if unsynced_event_count == 0:
             logger.debug("No unsynced events found. Skipping metrics export.")
             return
 
-        async for event in unsynced_iterator:
-            # Process each event one by one
-            logger.debug(f"Processing event: {event.timestamp} - {event.new_state}")
-            # ... explosion logic ...
-
-
-
-
+        logger.info(f"Found {unsynced_event_count} unsynced events")
