@@ -16,7 +16,7 @@ class MetricsCommonConfig(EnvBaseSettings):
     influx_url: str = Field(default="http://localhost:8086", description="InfluxDB URL for metrics storage")
     influx_token: SecretStr | None = Field(default=None, description="InfluxDB token for metrics storage")
     influx_org: str = Field(default="somakeit", description="InfluxDB organization for metrics storage")
-    influx_bucket: str = Field(default="smib_metrics", description="InfluxDB bucket for metrics storage")
+    influx_bucket: str = Field(default="metrics", description="InfluxDB bucket for metrics storage")
 
     model_config = {
         "env_prefix": "SMIB_METRICS_",
