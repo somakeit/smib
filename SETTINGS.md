@@ -74,3 +74,21 @@ This document provides a comprehensive overview of all configurable settings in 
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD | Time since the last received sensor log after which an alert should be sent. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. | `PT1H` or `1:00:00` or `3600` | `1:00:00` |
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_RESEND_INTERVAL | Interval to resend alerts while the issue persists. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. Set to `None` to only alert once per issue. | `PT10M` or `0:10:00` or `600` | `None` |
 | SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_CHANNEL_ID | Slack channel ID where sensor log monitor alerts are posted | `C1234567890` | `code` |
+
+## Metrics Plugins
+
+### Global Metrics Settings
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_METRICS_ENABLED | Global toggle for metrics collection | `true` | `false` |
+| SMIB_METRICS_INFLUX_URL | InfluxDB URL for metrics storage | `http://influxdb:8086` | `http://localhost:8086` |
+| SMIB_METRICS_INFLUX_TOKEN | InfluxDB authentication token | `my-secret-token` | `None` |
+| SMIB_METRICS_INFLUX_ORG | InfluxDB organization name | `somakeit` | `somakeit` |
+| SMIB_METRICS_INFLUX_BUCKET | InfluxDB bucket name for storage | `metrics` | `metrics` |
+
+### Space State Metrics Plugin
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_PLUGIN_SPACE_STATE_METRICS_MONITOR_INTERVAL | How often to check for new state events to push to InfluxDB. | `PT5M` or `300` | `PT1M` |
