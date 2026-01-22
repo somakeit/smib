@@ -9,9 +9,9 @@ from smib.events.interfaces.websocket_event_interface import WebsocketEventInter
 
 
 def register(slack: AsyncApp, api: ApiEventInterface, ws: WebsocketEventInterface):
-    from .listeners.http import register as register_http_listeners
-    from .listeners.slack import register as register_slack_listeners
-    from .listeners.websocket import register as register_websocket_listeners
+    from plugins.space.spacestate.listeners.http import register as register_http_listeners
+    from plugins.space.spacestate.listeners.slack import register as register_slack_listeners
+    from plugins.space.spacestate.listeners.websocket import register as register_websocket_listeners
 
     register_http_listeners(api)
     register_slack_listeners(slack)

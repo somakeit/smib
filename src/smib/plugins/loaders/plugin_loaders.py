@@ -9,7 +9,6 @@ import importlib.util
 import logging
 import sys
 from pathlib import Path
-from types import ModuleType
 from typing import List, Optional, Protocol
 
 from smib.plugins.plugin import Plugin, PythonModulePlugin
@@ -40,7 +39,7 @@ class PythonModulePluginLoader:
     def load_from_path(self, path: Path, name: Optional[str] = None) -> Plugin:
         """Load a plugin from a .py file."""
         path = path.resolve()
-        module_name = name or path.with_suffix('').name
+        module_name = name or f"{path.parent.name}.{path.with_suffix('').name}"
 
         # Ensure the module is a .py file
         if not path.suffix == ".py":
@@ -96,7 +95,7 @@ class PythonPackagePluginLoader:
     def load_from_path(self, path: Path, name: Optional[str] = None) -> Plugin:
         """Load a plugin from a directory with an __init__.py file."""
         path = path.resolve()
-        package_name = name or path.name
+        package_name = name or f"{path.parent.name}.{path.name}"
 
         # Ensure the package contains an __init__.py file
         init_file = path / '__init__.py'

@@ -2,16 +2,13 @@ import logging
 import sys
 from logging import Logger
 from pathlib import Path
-from types import ModuleType
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from slack_bolt.app.async_app import AsyncApp
 
 from smib.config import general
-from smib.plugins.plugin import Plugin
 from smib.plugins.loaders import PluginLoader, create_default_plugin_loader
-from smib.utilities.dynamic_caller import dynamic_caller
-from smib.utilities.package import get_actual_module_name
+from smib.plugins.plugin import Plugin
 
 
 class PluginLifecycleManager:
@@ -50,17 +47,16 @@ class PluginLifecycleManager:
                 self.preregister_plugin(plugin)
                 self.register_plugin(plugin)
                 self.postregister_plugin(plugin)
-
-                self.logger.info(f"Registered plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)})")
             except AssertionError as e:
-                self.logger.error(f"Failed to register plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)}): {e}")
+                self.logger.error(f"Failed to register plugin {plugin.unique_name}: {e}")
                 self.unregister_plugin(plugin)
                 continue
             except Exception as e:
-                self.logger.exception(f"Failed to register plugin {plugin.unique_name} ({self.get_relative_path(plugin.path)}): {e}", exc_info=e)
+                self.logger.exception(f"Failed to register plugin {plugin.unique_name}: {e}", exc_info=e)
                 self.unregister_plugin(plugin)
                 continue
-
+            else:
+                self.logger.info(f"Registered plugin {plugin.unique_name}")
         self.logger.info(f"Registered {len(self.plugins)} plugin(s) ({self.plugin_string})")
 
     def register_plugin(self, plugin: Plugin):
@@ -108,7 +104,7 @@ class PluginLifecycleManager:
             if self.validate_plugin(plugin):
                 valid_plugins.append(plugin)
             else:
-                self.logger.info(f'{plugin.unique_name} ({self.get_relative_path(plugin.path)}) is invalid... removing')
+                self.logger.info(f'{plugin.unique_name} is invalid... removing')
                 continue
 
         return valid_plugins
@@ -118,23 +114,23 @@ class PluginLifecycleManager:
         self.logger.debug(f"Validating plugin {plugin.unique_name}")
         # All plugins must have metadata with display_name and description
         if not plugin.metadata.display_name or not plugin.metadata.description:
-            self.logger.warning(f'{plugin.unique_name} ({plugin.name}) does not have required metadata (display_name, description)')
+            self.logger.warning(f'{plugin.unique_name} does not have required metadata (display_name, description)')
             return False
 
         # All plugins must have a register method
         if not hasattr(plugin, 'register'):
-            self.logger.info(f'{plugin.unique_name} ({plugin.name}) does not have a register method')
+            self.logger.info(f'{plugin.unique_name} does not have a register method')
             return False
 
         # Log if recommended metadata is missing
         if not plugin.metadata.author:
-            self.logger.info(f'{plugin.unique_name} ({plugin.name}) does not have the recommended author metadata')
+            self.logger.info(f'{plugin.unique_name} does not have the recommended author metadata')
 
         return True
 
     @property
     def plugin_string(self):
-        return ", ".join(str(self.get_relative_path(plugin.path)) for plugin in self.plugins) or "None"
+        return ", ".join(plugin.unique_name for plugin in self.plugins) or "None"
 
     def register_plugin_unregister_callback(self, callback: callable):
         self.plugin_unregister_callbacks.append(callback)
