@@ -1,15 +1,11 @@
 import logging
 import sys
 from pathlib import Path
-from types import ModuleType
-from typing import Optional
 
 from apscheduler.job import Job
-from slack_bolt.app.async_app import AsyncApp
 
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
-from smib.plugins.plugin import Plugin, PythonModulePlugin
-from smib.utilities.package import get_actual_module_name
+from smib.plugins.plugin import Plugin
 
 
 class ScheduledPluginIntegration:
@@ -18,7 +14,7 @@ class ScheduledPluginIntegration:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     def disconnect_plugin(self, plugin: Plugin):
-        self.logger.info(f"Locating and removing scheduled jobs in {plugin.unique_name} ({plugin.name})")
+        self.logger.info(f"Locating and removing scheduled jobs in {plugin.unique_name}")
 
         module_path = Path(plugin.module.__file__)
         if module_path.name == "__init__.py":
