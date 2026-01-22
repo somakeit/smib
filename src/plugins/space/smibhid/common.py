@@ -1,12 +1,12 @@
-from datetime import datetime
 from datetime import UTC
+from datetime import datetime
 from typing import Any, Annotated
 
 from fastapi import Header
 
 DeviceHostnameHeader = Annotated[str, Header(
     description="Hostname of S.M.I.B.H.I.D. device",
-    example="SMIBHID-DUMMY"
+    json_schema_extra={"example":"SMIBHID-DUMMY"}
 )]
 
 
