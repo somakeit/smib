@@ -20,7 +20,7 @@ dependencies = [
     "humanize>=4.15.0",
     "pytz>=2025.2",
     "beanie>=2.0.1",
-    "fastapi>=0.129.2",
+    "fastapi>=0.134.0",
     "pydantic-settings>=2.13.1",
     "jinja2>=3.1.6",
     "websockets>=16.0",
@@ -34,7 +34,7 @@ display_name = "S.M.I.B."
 
 [build-system]
 requires = [
-    "hatchling (>=1.28.0,<2.0.0)",
+    "hatchling (>=1.29.0,<2.0.0)",
     "hatch-vcs (>=0.5.0,<1.0.0)"
 ]
 build-backend = "hatchling.build"
