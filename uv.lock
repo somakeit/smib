@@ -127,7 +127,7 @@ wheels = [
 
 [[package]]
 name = "beanie"
-version = "2.0.1"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -136,9 +136,9 @@ dependencies = [
     { name = "pymongo" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/c0/85857d44d1c59d8bb546bd01e7d128ae08fc9e84e3f3c5c84b365b55ea48/beanie-2.0.1.tar.gz", hash = "sha256:aad0365cba578f5686446ed0960ead140a2231cbbfa8d492220f712c5e0c06b4", size = 171502, upload-time = "2025-11-20T18:45:51.518Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/9c/f3037fff9ea059d7b0c72b6c6e4f3dcfeb28bf544fe0fc5420335d7c49d0/beanie-2.1.0.tar.gz", hash = "sha256:44f3c50710aa90daa9c9c40f9bf9c8954968fe16d7e5398c1f2fd462daf94fe1", size = 185979, upload-time = "2026-03-26T01:27:03.63Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/54/8c9a4ab2d82242074671cc35b1dd2a906c3c36b3a5c80e914c76fa9f45b7/beanie-2.0.1-py3-none-any.whl", hash = "sha256:3aad6cc0e40fb8d256a0a3fdeca92a7b3d3c1f9f47ff377c9ecd2221285e1009", size = 87693, upload-time = "2025-11-20T18:45:50.321Z" },
+    { url = "https://files.pythonhosted.org/packages/00/b5/1c6c404bcce8fa53d3f422dce6e58bff99c3e3cb2a3c49d519e3e5822125/beanie-2.1.0-py3-none-any.whl", hash = "sha256:077381dad0e0129fd4dc38cdaa3d85cb517da7338e3d893a689314884df4379b", size = 92697, upload-time = "2026-03-26T01:27:02.191Z" },
 ]
 
 [[package]]
@@ -200,7 +200,7 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.135.1"
+version = "0.135.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
@@ -209,9 +209,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e7/7b/f8e0211e9380f7195ba3f3d40c292594fd81ba8ec4629e3854c353aaca45/fastapi-0.135.1.tar.gz", hash = "sha256:d04115b508d936d254cea545b7312ecaa58a7b3a0f84952535b4c9afae7668cd", size = 394962, upload-time = "2026-03-01T18:18:29.369Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/e6/7adb4c5fa231e82c35b8f5741a9f2d055f520c29af5546fd70d3e8e1cd2e/fastapi-0.135.3.tar.gz", hash = "sha256:bd6d7caf1a2bdd8d676843cdcd2287729572a1ef524fc4d65c17ae002a1be654", size = 396524, upload-time = "2026-04-01T16:23:58.188Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/72/42e900510195b23a56bde950d26a51f8b723846bfcaa0286e90287f0422b/fastapi-0.135.1-py3-none-any.whl", hash = "sha256:46e2fc5745924b7c840f71ddd277382af29ce1cdb7d5eab5bf697e3fb9999c9e", size = 116999, upload-time = "2026-03-01T18:18:30.831Z" },
+    { url = "https://files.pythonhosted.org/packages/84/a4/5caa2de7f917a04ada20018eccf60d6cc6145b0199d55ca3711b0fc08312/fastapi-0.135.3-py3-none-any.whl", hash = "sha256:9b0f590c813acd13d0ab43dd8494138eb58e484bfac405db1f3187cfc5810d98", size = 117734, upload-time = "2026-04-01T16:23:59.328Z" },
 ]
 
 [[package]]
@@ -722,10 +722,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.13.3,<4.0.0" },
+    { name = "aiohttp", specifier = ">=3.13.5,<4.0.0" },
     { name = "apscheduler", specifier = ">=3.11.2,<4.0.0" },
-    { name = "beanie", specifier = ">=2.0.1" },
-    { name = "fastapi", specifier = ">=0.135.1" },
+    { name = "beanie", specifier = ">=2.1.0" },
+    { name = "fastapi", specifier = ">=0.135.3" },
     { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
     { name = "humanize", specifier = ">=4.15.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
