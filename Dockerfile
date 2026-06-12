@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Download the latest installer, install it and then remove it
 ADD https://astral.sh/uv/install.sh /install.sh
-ENV UV_VERSION=0.11.19
+ENV UV_VERSION=0.11.20
 RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
 # Set up the UV environment path correctly
@@ -30,7 +30,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.14.5-slim-bookworm AS runtime
+FROM python:3.14.6-slim-bookworm AS runtime
 
 RUN useradd smibuser
 USER smibuser
