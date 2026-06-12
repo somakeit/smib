@@ -30,7 +30,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.14.5-slim-bookworm AS runtime
+FROM python:3.14.6-slim-bookworm AS runtime
 
 RUN useradd smibuser
 USER smibuser
