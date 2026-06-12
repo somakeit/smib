@@ -42,7 +42,7 @@
         "dockerfile",
         "docker-compose"
       ],
-      "matchPackageNames": ["*", "!python"],
+      "excludePackageNames": ["python"],
       "minimumReleaseAge": "3 days",
       "addLabels": ["dependencies/docker"]
     },
