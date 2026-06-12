@@ -42,9 +42,11 @@
         "dockerfile",
         "docker-compose"
       ],
-      "excludePackageNames": ["python"],
       "minimumReleaseAge": "3 days",
-      "addLabels": ["dependencies/docker"]
+      "addLabels": ["dependencies/docker"],
+      "matchPackageNames": [
+        "!python"
+      ]
     },
     {
       "matchManagers": ["pep621"],
