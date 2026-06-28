@@ -31,7 +31,7 @@ class WebsocketPluginIntegration:
         seen_router_ids: set[int] = set()
 
         while router_queue:
-            router = router_queue.pop(0)
+            router = router_queue.pop()
             router_id = id(router)
 
             if router_id in seen_router_ids:
