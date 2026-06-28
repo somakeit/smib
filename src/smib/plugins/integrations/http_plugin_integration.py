@@ -5,6 +5,7 @@ from pathlib import Path
 from pprint import pformat
 
 from fastapi import APIRouter
+from starlette.routing import BaseRoute
 
 from smib.events.interfaces.http import HttpEventInterface
 from smib.plugins.plugin import Plugin
@@ -28,8 +29,19 @@ class HttpPluginIntegration:
         if module_path.name == "__init__.py":
             module_path = module_path.parent
 
-        for router in [self.fastapi_app,]:
+        routers = [self.fastapi_app,]
+        routers += [router for router in self.http_event_interface.routers.values()]
+
+        for router in routers:
             for route in router.routes[::]:
+                nested_router = getattr(route, "original_router", None)
+                if nested_router is not None:
+                    routers.append(nested_router)
+                    continue
+
+                if not isinstance(route, BaseRoute) or not hasattr(route, "endpoint"):
+                    continue
+
                 if hasattr(route.endpoint, '__module__') and route.endpoint.__module__ in sys.modules:
                     route_module_path = sys.modules[route.endpoint.__module__].__file__
                     if Path(route_module_path).resolve().is_relative_to(module_path):

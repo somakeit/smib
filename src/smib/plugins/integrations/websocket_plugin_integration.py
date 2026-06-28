@@ -25,8 +25,12 @@ class WebsocketPluginIntegration:
 
         for router in [self.fastapi_app,]:
             for route in router.routes[::]:
-                if hasattr(route.endpoint, '__module__') and route.endpoint.__module__ in sys.modules:
-                    route_module_path = sys.modules[route.endpoint.__module__].__file__
+                endpoint = getattr(route, "endpoint", None)
+                if endpoint is None:
+                    continue
+
+                if hasattr(endpoint, '__module__') and endpoint.__module__ in sys.modules:
+                    route_module_path = sys.modules[endpoint.__module__].__file__
                     if Path(route_module_path).resolve().is_relative_to(module_path):
                         self.logger.debug(f"Removing route {route}")
                         router.routes.remove(route)
