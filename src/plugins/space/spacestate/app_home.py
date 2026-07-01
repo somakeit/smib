@@ -5,6 +5,7 @@ from slack_sdk.models.views import View
 
 from .common import get_space_state_from_db
 from .models import SpaceState
+from ..lightstate.app_home import get_space_light_state_blocks
 
 
 async def get_app_home() -> View:
@@ -12,6 +13,7 @@ async def get_app_home() -> View:
 
     blocks += [_get_header_block()]
     blocks += await _get_space_state_blocks()
+    blocks += await get_space_light_state_blocks()
     blocks += [_get_divider()]
     blocks += _get_info_blocks()
 
