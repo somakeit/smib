@@ -26,7 +26,13 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
     - Button press log
 - **How Fresh?** (`space/howfresh`)
   - Slack command `/howfresh`
-    - Responds in Slack with the latest sensor readings received from any SMIBHID.
+    - Responds in Slack with a summary of the latest sensor readings received from any SMIBHID
+      - 🌡️ Temperature
+      - 💧 Humidity
+      - 💡 Light Level
+      - 🌫️ CO₂
+  - Slack command `/howfresh detailed`
+    - Responds in Slack with a all of the latest sensor readings received from any SMIBHID
 - **Space Welcome** (`space/welcome`)
   - Automatic welcome message for new users when they join the Slack workspace
   - Slack command `/welcome`
