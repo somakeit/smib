@@ -28,7 +28,27 @@ SUMMARY_MEASUREMENT_ALIASES = {
 }
 
 MEASUREMENT_NAME_FORMATS = {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "relative_humidity": "Relative Humidity",
+    "pressure": "Pressure",
+    "light": "Light",
     "co2": "CO₂",
+
+    "pm10_standard": "PM1.0 (Standard)",
+    "pm25_standard": "PM2.5 (Standard)",
+    "pm100_standard": "PM10 (Standard)",
+
+    "pm10_env": "PM1.0 (Environmental)",
+    "pm25_env": "PM2.5 (Environmental)",
+    "pm100_env": "PM10 (Environmental)",
+
+    "particles_03um": "Particle Count ≥0.3 µm",
+    "particles_05um": "Particle Count ≥0.5 µm",
+    "particles_10um": "Particle Count ≥1.0 µm",
+    "particles_25um": "Particle Count ≥2.5 µm",
+    "particles_50um": "Particle Count ≥5.0 µm",
+    "particles_100um": "Particle Count ≥10.0 µm",
 }
 
 MEASUREMENT_SYMBOLS = {
@@ -37,6 +57,20 @@ MEASUREMENT_SYMBOLS = {
     "co2": "🌫️",
     "light": "💡",
     "pressure": "🧭",
+
+    "pm10_standard": "🌬️",
+    "pm25_standard": "🌬️",
+    "pm100_standard": "🌬️",
+    "pm10_env": "🌬️",
+    "pm25_env": "🌬️",
+    "pm100_env": "🌬️",
+
+    "particles_03um": "🫧",
+    "particles_05um": "🫧",
+    "particles_10um": "🫧",
+    "particles_25um": "🫧",
+    "particles_50um": "🫧",
+    "particles_100um": "🫧",
 }
 
 MEASUREMENT_UNIT_FORMATS = {
@@ -49,6 +83,7 @@ MEASUREMENT_UNIT_FORMATS = {
     "percentage": "%",
     "ppm": "ppm",
     "lux": "lux",
+    "ug/m3": "μg/m³",
 }
 
 
@@ -220,6 +255,9 @@ def normalize_measurement_unit(unit: str | None) -> str:
 
 
 def format_measurement_value(value: int | float) -> str:
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+
     return f"{value:.2f}" if isinstance(value, float) else str(value)
 
 
@@ -237,12 +275,16 @@ def format_measurement_line(
         measurement_name: str,
         value: int | float,
         unit: str | None,
+        *,
+        suffix: str = ""
 ) -> str:
     symbol = get_measurement_symbol(measurement_name)
     display_name = normalize_measurement_name(measurement_name)
     formatted_measurement = format_measurement_with_unit(value, unit)
 
-    return f"{symbol} *{display_name}*: {formatted_measurement}"
+    suffix_text = f" {suffix}" if suffix else ""
+
+    return f"{symbol} *{display_name}{suffix_text}*: {formatted_measurement}"
 
 
 def build_detailed_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorUnit") -> list[Block]:
@@ -344,7 +386,14 @@ def format_summary_measurement_line(
 
     average_value = sum(values) / len(values)
 
-    return format_measurement_line(summary_measurement_name, average_value, unit)
+    suffix = "(avg)" if len(values) > 1 else ""
+
+    return format_measurement_line(
+        summary_measurement_name,
+        average_value,
+        unit,
+        suffix=suffix,
+    )
 
 
 def remove_trailing_divider(blocks: list[Block]) -> None:
