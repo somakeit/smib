@@ -38,7 +38,6 @@ MEASUREMENT_NAME_FORMATS = {
     "pm10_standard": "PM1.0 (Standard)",
     "pm25_standard": "PM2.5 (Standard)",
     "pm100_standard": "PM10 (Standard)",
-    
     "pm10_env": "PM1.0 (Environmental)",
     "pm25_env": "PM2.5 (Environmental)",
     "pm100_env": "PM10 (Environmental)",
