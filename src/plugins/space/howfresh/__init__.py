@@ -38,17 +38,17 @@ MEASUREMENT_NAME_FORMATS = {
     "pm10_standard": "PM1.0 (Standard)",
     "pm25_standard": "PM2.5 (Standard)",
     "pm100_standard": "PM10 (Standard)",
-
+    
     "pm10_env": "PM1.0 (Environmental)",
     "pm25_env": "PM2.5 (Environmental)",
     "pm100_env": "PM10 (Environmental)",
 
-    "particles_03um": "Particle Count ≥0.3 µm",
-    "particles_05um": "Particle Count ≥0.5 µm",
-    "particles_10um": "Particle Count ≥1.0 µm",
-    "particles_25um": "Particle Count ≥2.5 µm",
-    "particles_50um": "Particle Count ≥5.0 µm",
-    "particles_100um": "Particle Count ≥10.0 µm",
+    "particles_03um": "Particles ≥0.3 μm",
+    "particles_05um": "Particles ≥0.5 μm",
+    "particles_10um": "Particles ≥1.0 μm",
+    "particles_25um": "Particles ≥2.5 μm",
+    "particles_50um": "Particles ≥5.0 μm",
+    "particles_100um": "Particles ≥10.0 μm",
 }
 
 MEASUREMENT_SYMBOLS = {
@@ -58,12 +58,13 @@ MEASUREMENT_SYMBOLS = {
     "light": "💡",
     "pressure": "🧭",
 
-    "pm10_standard": "🌬️",
-    "pm25_standard": "🌬️",
-    "pm100_standard": "🌬️",
-    "pm10_env": "🌬️",
-    "pm25_env": "🌬️",
-    "pm100_env": "🌬️",
+    "pm25_standard": "🌫️",
+    "pm10_standard": "🌫️",
+    "pm100_standard": "🌫️",
+
+    "pm25_env": "🌫️",
+    "pm10_env": "🌫️",
+    "pm100_env": "🌫️",
 
     "particles_03um": "🫧",
     "particles_05um": "🫧",
@@ -86,6 +87,12 @@ MEASUREMENT_UNIT_FORMATS = {
     "ug/m3": "μg/m³",
 }
 
+SENSOR_NAME_FORMATS = {
+    "BH1750": "Light (BH1750)",
+    "BME280": "Climate (BME280)",
+    "SCD30": "Air Quality (SCD30)",
+    "PMSA003I": "Particles (PMSA003I)",
+}
 
 class SummaryReading(TypedDict):
     values: list[int | float]
@@ -245,6 +252,9 @@ def get_measurement_symbol(name: str) -> str:
     normalized_name = normalize_measurement_key(name)
     return MEASUREMENT_SYMBOLS.get(normalized_name, "•")
 
+def get_sensor_label(name: str) -> str:
+    return SENSOR_NAME_FORMATS.get(name, name)
+
 
 def normalize_measurement_unit(unit: str | None) -> str:
     if not unit:
@@ -276,13 +286,13 @@ def format_measurement_line(
         value: int | float,
         unit: str | None,
         *,
-        suffix: str = ""
+        suffix: str | None = None
 ) -> str:
     symbol = get_measurement_symbol(measurement_name)
     display_name = normalize_measurement_name(measurement_name)
     formatted_measurement = format_measurement_with_unit(value, unit)
 
-    suffix_text = f" {suffix}" if suffix else ""
+    suffix_text = f" ({suffix})" if suffix else ""
 
     return f"{symbol} *{display_name}{suffix_text}*: {formatted_measurement}"
 
@@ -294,7 +304,8 @@ def build_detailed_sensor_message_blocks(sensor_log: "SensorLog", units: "Sensor
     units_data = get_units_data(units)
 
     for sensor_name, readings in sensor_data.items():
-        sensor_lines = [f"*{sensor_name}*"]
+        sensor_label = get_sensor_label(sensor_name)
+        sensor_lines = [f"*{sensor_label}*"]
         sensor_units = units_data.get(sensor_name, {})
 
         for measurement_name, value in readings.items():
@@ -319,9 +330,9 @@ def build_summary_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorU
         return blocks
 
     summary_lines = [
-        format_summary_measurement_line(measurement_name, summary_readings)
+        line
         for measurement_name in SUMMARY_MEASUREMENTS
-        if normalize_measurement_key(measurement_name) in summary_readings
+        if (line := format_summary_measurement_line(measurement_name, summary_readings))
     ]
 
     blocks.append(SectionBlock(text=MarkdownTextObject(text="\n".join(summary_lines))))
@@ -379,14 +390,19 @@ def format_summary_measurement_line(
         summary_readings: dict[str, SummaryReading],
 ) -> str:
     summary_measurement_name = normalize_measurement_key(measurement_name)
-    summary_reading = summary_readings[summary_measurement_name]
+    summary_reading = summary_readings.get(summary_measurement_name)
+    if not summary_reading:
+        return ""
 
     values = summary_reading["values"]
     unit = summary_reading["unit"]
 
+    if not values:
+        return ""
+
     average_value = sum(values) / len(values)
 
-    suffix = "(avg)" if len(values) > 1 else ""
+    suffix = "avg" if len(values) > 1 else None
 
     return format_measurement_line(
         summary_measurement_name,
