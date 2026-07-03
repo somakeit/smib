@@ -387,17 +387,17 @@ def collect_summary_readings(sensor_log: "SensorLog", units: "SensorUnit") -> di
 def format_summary_measurement_line(
         measurement_name: str,
         summary_readings: dict[str, SummaryReading],
-) -> str:
+) -> str | None:
     summary_measurement_name = normalize_measurement_key(measurement_name)
     summary_reading = summary_readings.get(summary_measurement_name)
     if not summary_reading:
-        return ""
+        return None
 
     values = summary_reading["values"]
     unit = summary_reading["unit"]
 
     if not values:
-        return ""
+        return None
 
     average_value = sum(values) / len(values)
 
