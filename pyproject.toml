@@ -11,16 +11,16 @@ keywords = ["slack", "bot", "python"]
 readme = "README.md"
 
 dependencies = [
-    "slack-bolt>=1.28.0,<2.0.0",
-    "uvicorn==0.49.0",
+    "slack-bolt>=1.29.0,<2.0.0",
+    "uvicorn==0.50.0",
     "aiohttp (>=3.14.1,<4.0.0)",
     "makefun>=1.16.0,<2.0.0",
     "apscheduler (>=3.11.3,<4.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "humanize>=4.15.0",
+    "humanize>=4.16.0",
     "pytz>=2026.2",
     "beanie>=2.1.0",
-    "fastapi>=0.138.1",
+    "fastapi>=0.139.0",
     "pydantic-settings>=2.14.2",
     "jinja2>=3.1.6",
     "websockets>=16.0",
