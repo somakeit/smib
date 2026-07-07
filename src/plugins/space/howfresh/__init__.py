@@ -23,9 +23,35 @@ logger = logging.getLogger(__display_name__)
 
 SUMMARY_MEASUREMENTS = ["temperature", "humidity", "light", "co2"]
 
+SENSOR_ORDER = ["BH1750", "BME280", "SCD30", "PMSA003I"]
+
 SUMMARY_MEASUREMENT_ALIASES = {
     "relative_humidity": "humidity",
 }
+
+MEASUREMENT_ORDER = [
+    "temperature",
+    "humidity",
+    "relative_humidity",
+    "pressure",
+    "light",
+    "co2",
+    "pm10_standard",
+    "pm25_standard",
+    "pm100_standard",
+    "pm10_env",
+    "pm25_env",
+    "pm100_env",
+    "particles_03um",
+    "particles_05um",
+    "particles_10um",
+    "particles_25um",
+    "particles_50um",
+    "particles_100um",
+]
+
+SENSOR_SORT_ORDER = {name: index for index, name in enumerate(SENSOR_ORDER)}
+MEASUREMENT_SORT_ORDER = {name: index for index, name in enumerate(MEASUREMENT_ORDER)}
 
 MEASUREMENT_NAME_FORMATS = {
     "temperature": "Temperature",
@@ -233,6 +259,16 @@ def get_units_data(units: "SensorUnit") -> dict[str, dict[str, str]]:
     return units.sensors.model_dump()
 
 
+def get_sensor_sort_key(name: str) -> tuple[int, str]:
+    return SENSOR_SORT_ORDER.get(name, len(SENSOR_SORT_ORDER)), name
+
+
+def get_measurement_sort_key(name: str) -> tuple[int, str, str]:
+    normalized_name = normalize_measurement_key(name)
+    order = MEASUREMENT_SORT_ORDER.get(name, MEASUREMENT_SORT_ORDER.get(normalized_name, len(MEASUREMENT_SORT_ORDER)))
+    return order, normalized_name, name
+
+
 def normalize_measurement_key(name: str) -> str:
     normalized_name = name.strip().lower()
     return SUMMARY_MEASUREMENT_ALIASES.get(normalized_name, normalized_name)
@@ -302,12 +338,14 @@ def build_detailed_sensor_message_blocks(sensor_log: "SensorLog", units: "Sensor
     sensor_data = get_sensor_data(sensor_log)
     units_data = get_units_data(units)
 
-    for sensor_name, readings in sensor_data.items():
+    for sensor_name in sorted(sensor_data, key=get_sensor_sort_key):
+        readings = sensor_data[sensor_name]
         sensor_label = get_sensor_label(sensor_name)
         sensor_lines = [f"*{sensor_label}*"]
         sensor_units = units_data.get(sensor_name, {})
 
-        for measurement_name, value in readings.items():
+        for measurement_name in sorted(readings, key=get_measurement_sort_key):
+            value = readings[measurement_name]
             unit = sensor_units.get(measurement_name)
             sensor_lines.append(format_measurement_line(measurement_name, value, unit))
 
@@ -354,10 +392,12 @@ def collect_summary_readings(sensor_log: "SensorLog", units: "SensorUnit") -> di
 
     summary_readings: dict[str, SummaryReading] = {}
 
-    for sensor_name, readings in sensor_data.items():
+    for sensor_name in sorted(sensor_data, key=get_sensor_sort_key):
+        readings = sensor_data[sensor_name]
         sensor_units = units_data.get(sensor_name, {})
 
-        for measurement_name, value in readings.items():
+        for measurement_name in sorted(readings, key=get_measurement_sort_key):
+            value = readings[measurement_name]
             summary_measurement_name = normalize_measurement_key(measurement_name)
 
             if summary_measurement_name not in summary_measurements:
