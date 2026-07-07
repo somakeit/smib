@@ -28,7 +28,26 @@ SUMMARY_MEASUREMENT_ALIASES = {
 }
 
 MEASUREMENT_NAME_FORMATS = {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "relative_humidity": "Relative Humidity",
+    "pressure": "Pressure",
+    "light": "Light",
     "co2": "CO₂",
+
+    "pm10_standard": "PM1.0 (Standard)",
+    "pm25_standard": "PM2.5 (Standard)",
+    "pm100_standard": "PM10 (Standard)",
+    "pm10_env": "PM1.0 (Environmental)",
+    "pm25_env": "PM2.5 (Environmental)",
+    "pm100_env": "PM10 (Environmental)",
+
+    "particles_03um": "Particles ≥0.3 μm",
+    "particles_05um": "Particles ≥0.5 μm",
+    "particles_10um": "Particles ≥1.0 μm",
+    "particles_25um": "Particles ≥2.5 μm",
+    "particles_50um": "Particles ≥5.0 μm",
+    "particles_100um": "Particles ≥10.0 μm",
 }
 
 MEASUREMENT_SYMBOLS = {
@@ -37,6 +56,21 @@ MEASUREMENT_SYMBOLS = {
     "co2": "🌫️",
     "light": "💡",
     "pressure": "🧭",
+
+    "pm25_standard": "🌫️",
+    "pm10_standard": "🌫️",
+    "pm100_standard": "🌫️",
+
+    "pm25_env": "🌫️",
+    "pm10_env": "🌫️",
+    "pm100_env": "🌫️",
+
+    "particles_03um": "🫧",
+    "particles_05um": "🫧",
+    "particles_10um": "🫧",
+    "particles_25um": "🫧",
+    "particles_50um": "🫧",
+    "particles_100um": "🫧",
 }
 
 MEASUREMENT_UNIT_FORMATS = {
@@ -49,8 +83,15 @@ MEASUREMENT_UNIT_FORMATS = {
     "percentage": "%",
     "ppm": "ppm",
     "lux": "lux",
+    "ug/m3": "μg/m³",
 }
 
+SENSOR_NAME_FORMATS = {
+    "BH1750": "Light (BH1750)",
+    "BME280": "Climate (BME280)",
+    "SCD30": "Air Quality (SCD30)",
+    "PMSA003I": "Particles (PMSA003I)",
+}
 
 class SummaryReading(TypedDict):
     values: list[int | float]
@@ -210,6 +251,9 @@ def get_measurement_symbol(name: str) -> str:
     normalized_name = normalize_measurement_key(name)
     return MEASUREMENT_SYMBOLS.get(normalized_name, "•")
 
+def get_sensor_label(name: str) -> str:
+    return SENSOR_NAME_FORMATS.get(name, name)
+
 
 def normalize_measurement_unit(unit: str | None) -> str:
     if not unit:
@@ -220,6 +264,9 @@ def normalize_measurement_unit(unit: str | None) -> str:
 
 
 def format_measurement_value(value: int | float) -> str:
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+
     return f"{value:.2f}" if isinstance(value, float) else str(value)
 
 
@@ -237,12 +284,16 @@ def format_measurement_line(
         measurement_name: str,
         value: int | float,
         unit: str | None,
+        *,
+        suffix: str | None = None
 ) -> str:
     symbol = get_measurement_symbol(measurement_name)
     display_name = normalize_measurement_name(measurement_name)
     formatted_measurement = format_measurement_with_unit(value, unit)
 
-    return f"{symbol} *{display_name}*: {formatted_measurement}"
+    suffix_text = f" ({suffix})" if suffix else ""
+
+    return f"{symbol} *{display_name}{suffix_text}*: {formatted_measurement}"
 
 
 def build_detailed_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorUnit") -> list[Block]:
@@ -252,7 +303,8 @@ def build_detailed_sensor_message_blocks(sensor_log: "SensorLog", units: "Sensor
     units_data = get_units_data(units)
 
     for sensor_name, readings in sensor_data.items():
-        sensor_lines = [f"*{sensor_name}*"]
+        sensor_label = get_sensor_label(sensor_name)
+        sensor_lines = [f"*{sensor_label}*"]
         sensor_units = units_data.get(sensor_name, {})
 
         for measurement_name, value in readings.items():
@@ -277,9 +329,9 @@ def build_summary_sensor_message_blocks(sensor_log: "SensorLog", units: "SensorU
         return blocks
 
     summary_lines = [
-        format_summary_measurement_line(measurement_name, summary_readings)
+        line
         for measurement_name in SUMMARY_MEASUREMENTS
-        if normalize_measurement_key(measurement_name) in summary_readings
+        if (line := format_summary_measurement_line(measurement_name, summary_readings))
     ]
 
     blocks.append(SectionBlock(text=MarkdownTextObject(text="\n".join(summary_lines))))
@@ -335,16 +387,28 @@ def collect_summary_readings(sensor_log: "SensorLog", units: "SensorUnit") -> di
 def format_summary_measurement_line(
         measurement_name: str,
         summary_readings: dict[str, SummaryReading],
-) -> str:
+) -> str | None:
     summary_measurement_name = normalize_measurement_key(measurement_name)
-    summary_reading = summary_readings[summary_measurement_name]
+    summary_reading = summary_readings.get(summary_measurement_name)
+    if not summary_reading:
+        return None
 
     values = summary_reading["values"]
     unit = summary_reading["unit"]
 
+    if not values:
+        return None
+
     average_value = sum(values) / len(values)
 
-    return format_measurement_line(summary_measurement_name, average_value, unit)
+    suffix = "avg" if len(values) > 1 else None
+
+    return format_measurement_line(
+        summary_measurement_name,
+        average_value,
+        unit,
+        suffix=suffix,
+    )
 
 
 def remove_trailing_divider(blocks: list[Block]) -> None:
