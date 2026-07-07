@@ -1,21 +1,75 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "config:semverAllWeekly",
+    ":automergePr",
+    ":dependencyDashboard",
+    ":automergeStableNonMajor",
+    ":automergeRequireAllStatusChecks",
+    ":configMigration",
+    ":enableVulnerabilityAlertsWithLabel(security)",
+    ":label(dependencies)",
+    ":updateNotScheduled",
     ":maintainLockFilesWeekly",
-    ":label(dependencies)"
+    ":rebaseStalePrs",
+    ":automergeMinor",
+    ":combinePatchMinorReleases",
+    "security:openssf-scorecard"
+  ],
+  "enabledManagers": [
+    "pep621",
+    "github-actions",
+    "dockerfile",
+    "docker-compose",
+    "custom.regex"
   ],
   "schedule": [
-    "every weekend"
+    "before 9am on Monday"
   ],
   "timezone": "Europe/London",
   "fetchChangeLogs": "off",
   "minimumReleaseAge": "1 day",
-  "prHourlyLimit": 2,
-  "prConcurrentLimit": 2,
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 5,
   "dependencyDashboard": true,
   "prCreation": "immediate",
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
+  "branchTopic": "{{depName}}-{{newVersion}}",
   "pruneStaleBranches": true,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "\\[tool\\.uv\\][\\s\\S]*?required-version = \">=(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^compose\\.yml$/"
+      ],
+      "matchStrings": [
+        "image:\\s*mongo:\\${SMIB_COMPOSE_MONGO_DB_TAG:-?(?<currentValue>[^\\s]+)}"
+      ],
+      "depNameTemplate": "mongo",
+      "datasourceTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "matchPackageNames": [
@@ -24,79 +78,265 @@
       "enabled": false
     },
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
+      "matchManagers": [
+        "pep621"
       ],
-      "groupName": "all non-major updates"
+      "rangeStrategy": "pin"
     },
     {
-      "matchPackageNames": ["python"],
-      "matchManagers": ["pep621", "dockerfile"],
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
       "groupName": "Python version",
-      "addLabels": ["dependencies/python-version"],
-      "rangeStrategy": "bump"
+      "addLabels": [
+        "dependencies/python-version"
+      ],
+      "rangeStrategy": "replace"
+    },
+    {
+      "matchDepNames": [
+        "ghcr.io/astral-sh/uv",
+        "astral-sh/uv"
+      ],
+      "groupName": "uv",
+      "addLabels": [
+        "area/dependencies:tooling",
+        "dependencies/python-packages"
+      ],
+      "branchPrefix": "renovate/tooling/",
+      "branchTopic": "uv-{{newVersion}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "uv",
+      "commitMessageExtra": "to {{newVersion}}"
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "mongo"
+      ],
+      "groupName": "mongo",
+      "addLabels": [
+        "area/dependencies:docker",
+        "dependencies/docker"
+      ],
+      "branchPrefix": "renovate/docker/",
+      "branchTopic": "mongo-{{newVersion}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "mongo",
+      "commitMessageExtra": "to {{newVersion}}"
     },
     {
       "matchManagers": [
         "dockerfile",
         "docker-compose"
       ],
+      "groupName": "docker: base-images",
       "minimumReleaseAge": "3 days",
-      "addLabels": ["dependencies/docker"],
-      "matchPackageNames": [
+      "addLabels": [
+        "area/dependencies:docker",
+        "dependencies/docker"
+      ],
+      "branchPrefix": "renovate/docker/",
+      "branchTopic": "base-images",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "base image",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "matchDepNames": [
+        "!ghcr.io/astral-sh/uv",
         "!python"
       ]
     },
     {
-      "matchManagers": ["pep621"],
-      "matchPackageNames": ["*"],
-      "rangeStrategy": "bump",
-      "addLabels": ["dependencies/python-packages"],
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "project.dependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "runtime: minor-patch",
+      "addLabels": [
+        "area/dependencies:runtime",
+        "dependencies/python-packages"
+      ],
+      "branchPrefix": "renovate/runtime/",
+      "branchTopic": "minor-patch",
+      "minimumReleaseAge": "3 days",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "runtime deps",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
       "skipArtifactsUpdate": false
     },
     {
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["astral-sh/uv"],
-      "addLabels": ["dependencies/python-packages"]
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "build-system.requires"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "build: minor-patch",
+      "addLabels": [
+        "area/dependencies:build",
+        "dependencies/python-packages"
+      ],
+      "branchPrefix": "renovate/build/",
+      "branchTopic": "minor-patch",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "build deps",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "skipArtifactsUpdate": false
     },
     {
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["mongo"],
-      "addLabels": ["dependencies/docker"]
-    }
-  ],
-  "enabledManagers": [
-    "pep621",
-    "dockerfile",
-    "docker-compose",
-    "custom.regex"
-  ],
-  "pre-commit": {
-    "enabled": true
-  },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^Dockerfile$/"
+      "matchManagers": [
+        "pep621"
       ],
-      "matchStrings": [
-        "ENV UV_VERSION=(?<currentValue>.*?)\\n"
+      "matchDepTypes": [
+        "dependency-groups"
       ],
-      "depNameTemplate": "astral-sh/uv",
-      "datasourceTemplate": "github-releases"
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "dev: minor-patch",
+      "addLabels": [
+        "area/dependencies:dev",
+        "dependencies/python-packages"
+      ],
+      "branchPrefix": "renovate/dev/",
+      "branchTopic": "minor-patch",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "dev deps",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "skipArtifactsUpdate": false
     },
     {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^compose.yml$/"
+      "matchManagers": [
+        "pep621"
       ],
-      "matchStrings": [
-        "image:\\s*mongo:\\${SMIB_COMPOSE_MONGO_DB_TAG:-?(?<currentValue>[^\\s]+)}"
+      "matchDepTypes": [
+        "project.dependencies"
       ],
-      "depNameTemplate": "mongo",
-      "datasourceTemplate": "docker"
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": null,
+      "addLabels": [
+        "area/dependencies:runtime",
+        "dependencies/python-packages",
+        "major"
+      ],
+      "branchPrefix": "renovate/runtime/",
+      "branchTopic": "{{depName}}-major-{{newMajor}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "dependency",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "skipArtifactsUpdate": false
+    },
+    {
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "dependency-groups"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": null,
+      "addLabels": [
+        "area/dependencies:dev",
+        "dependencies/python-packages",
+        "major"
+      ],
+      "branchPrefix": "renovate/dev/",
+      "branchTopic": "{{depName}}-major-{{newMajor}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "dependency",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "skipArtifactsUpdate": false
+    },
+    {
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "build-system.requires"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": null,
+      "addLabels": [
+        "area/dependencies:build",
+        "dependencies/python-packages",
+        "major"
+      ],
+      "branchPrefix": "renovate/build/",
+      "branchTopic": "{{depName}}-major-{{newMajor}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "dependency",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}",
+      "skipArtifactsUpdate": false
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "ci: minor-patch",
+      "addLabels": [
+        "area/dependencies:ci"
+      ],
+      "branchPrefix": "renovate/ci/",
+      "branchTopic": "actions-minor-patch",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "GitHub Actions",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": null,
+      "addLabels": [
+        "area/dependencies:ci",
+        "major"
+      ],
+      "branchPrefix": "renovate/ci/",
+      "branchTopic": "{{depName}}-major-{{newMajor}}",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "GitHub Actions",
+      "commitMessageExtra": "{{depName}} to {{newVersion}}"
+    },
+    {
+      "matchUpdateTypes": [
+        "lockFileMaintenance"
+      ],
+      "addLabels": [
+        "area/dependencies:lockfile"
+      ],
+      "branchPrefix": "renovate/lockfile/",
+      "branchTopic": "maintenance",
+      "commitMessageAction": "Update",
+      "commitMessageTopic": "lockfiles"
     }
   ]
 }
