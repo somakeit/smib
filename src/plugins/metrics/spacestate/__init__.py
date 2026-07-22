@@ -90,7 +90,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         logger.debug(f"Found {await event_query.count()} events")
 
         async for event in event_query:
-            event: SpaceStateEventHistory
             logger.debug(
             f"Event: {event.timestamp} - "
             f"Requested State: {event.requested_state} - "
