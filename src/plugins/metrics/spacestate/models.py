@@ -1,13 +1,13 @@
 import calendar
-from datetime import datetime
+from datetime import datetime, date
 from typing import Annotated
 
 from pydantic import BaseModel, Field, computed_field
 
 
 class WeeklyBucketMetadata(BaseModel):
-    requested_start: Annotated[datetime, Field(description="Requested start timestamp for the query", examples=["2024-01-01T00:00:00Z"])]
-    requested_end: Annotated[datetime, Field(description="Requested end timestamp for the query", examples=["2024-01-07T23:59:59Z"])]
+    requested_start: Annotated[date, Field(description="Requested start date for the query", examples=["2024-01-01"])]
+    requested_end: Annotated[date, Field(description="Requested end date for the query", examples=["2024-01-07"])]
     event_start: Annotated[datetime | None, Field(description="Timestamp of the first event used in the response", examples=["2024-01-01T00:00:00Z"])]
     event_end: Annotated[datetime | None, Field(description="Timestamp of the last event used in the response", examples=["2024-01-07T23:59:59Z"])]
     bucket_minutes: Annotated[int, Field(description="Bucket size in minutes", examples=[15, 30])]

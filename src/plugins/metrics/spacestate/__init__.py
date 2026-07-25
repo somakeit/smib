@@ -4,7 +4,7 @@ __author__ = "Sam Cork"
 
 import logging
 from collections import defaultdict
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, UTC, timedelta, date
 from pprint import pformat
 from typing import Annotated
 
@@ -30,12 +30,13 @@ def register(api: ApiEventInterface, database: DatabaseManager):
     @api.get("/metrics/spacestate/weekly-bucket")
     async def get_weekly_bucket(
             start: Annotated[
-                datetime | None,
-                Query(description="Start timestamp for the accumulation period (ISO 8601 format)", example="2023-01-01T00:00:00Z"),
+                date | None,
+                Query(description="Start date for the accumulation period (ISO 8601 format)", example="2026-01-01"),
             ] = None,
             end: Annotated[
-                datetime | None,
-                Query(description="End timestamp for the accumulation period (ISO 8601 format)", example="2023-01-08T00:00:00Z"),
+                date | None,
+                Query(description="End date for the accumulation period (ISO 8601 format)", example="2026-01-08"),
+
             ] = None,
             bucket_minutes: Annotated[
                 int,
@@ -46,10 +47,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         end = end or new
         start = start or new - timedelta(days=DEFAULT_DATE_RANGE_DAYS)
 
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=UTC)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=UTC)
+        start_datetime = datetime.combine(start, datetime.min.time(), tzinfo=UTC)
+        end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
 
         if bucket_minutes not in ALLOWED_BUCKET_SIZES:
             raise HTTPException(
@@ -58,7 +57,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             )
 
         if start >= end:
-            raise HTTPException(status_code=400, detail="Start timestamp must be before end timestamp")
+            raise HTTPException(status_code=400, detail="Start date must be before end date")
 
         if end - start < timedelta(days=MIN_DATE_DIFFERENCE_DAYS):
             raise HTTPException(
@@ -68,7 +67,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
 
         logger.debug(f"Getting weekly bucket for {start} to {end} with bucket size {bucket_minutes} minutes")
 
-        result = await build_weekly_bucket(start, end, bucket_minutes)
+        result = await build_weekly_bucket(start_datetime, end_datetime, bucket_minutes)
 
         return result
 
