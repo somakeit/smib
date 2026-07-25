@@ -132,8 +132,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         """
         SpaceStateEventHistoryModel: type[SpaceStateEventHistory] = database.find_model_by_name("SpaceStateEventHistory")
 
-        logger.debug(await SpaceStateEventHistoryModel.find_all().sort("timestamp").to_list())
-
         event_query = SpaceStateEventHistoryModel.find(
             SpaceStateEventHistoryModel.timestamp >= start,
             SpaceStateEventHistoryModel.timestamp < end,
