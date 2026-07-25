@@ -272,8 +272,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             metadata=WeeklyBucketMetadata(
                 requested_start=requested_start,
                 requested_end=requested_end,
-                event_start=events[0].timestamp if events else None,
-                event_end=events[-1].timestamp if events else None,
+                first_event_timestamp=events[0].timestamp if events else None,
+                last_event_timestamp=events[-1].timestamp if events else None,
                 bucket_minutes=size,
                 total_events_processed=len(events),
             ),
