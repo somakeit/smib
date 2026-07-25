@@ -2,7 +2,6 @@ __display_name__ = "Space State Metrics"
 __description__ = "A plugin to expose bucketed space state metrics as JSON for Grafana."
 __author__ = "Sam Cork"
 
-import calendar
 import logging
 from collections import defaultdict
 from datetime import datetime, UTC, timedelta
@@ -220,25 +219,13 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             )
             add_open_interval(current_open_started_at, current_open_closed_at)
 
-        def calculate_open_ratio(weekday: int, minute_of_day: int) -> float:
-            open_seconds = buckets[(weekday, minute_of_day)]
-            possible_seconds = possible_bucket_seconds[(weekday, minute_of_day)]
-
-            if possible_seconds <= 0:
-                return 0
-
-            return round(min(open_seconds / possible_seconds, 1), 4)
-
         results = [
             WeeklyBucketData(
-                weekday=calendar.day_name[weekday].lower(),
                 weekday_index=weekday,
-                time=f"{minute_of_day // 60:02d}:{minute_of_day % 60:02d}",
                 time_index=minute_of_day,
                 bucket_minutes=size,
                 open_seconds=buckets[(weekday, minute_of_day)],
-                open_minutes=round(buckets[(weekday, minute_of_day)] / 60, 2),
-                open_ratio=calculate_open_ratio(weekday, minute_of_day),
+                total_bucket_seconds=possible_bucket_seconds[(weekday, minute_of_day)],
             )
             for weekday in range(7)
             for minute_of_day in range(0, 24 * 60, size)
@@ -251,6 +238,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
                 event_start=events[0].timestamp if events else None,
                 event_end=events[-1].timestamp if events else None,
                 bucket_minutes=size,
+                total_events_processed=len(events),
             ),
             buckets=results,
         )
