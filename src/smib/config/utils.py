@@ -1,4 +1,6 @@
+import csv
 import logging as logging_lib
+from io import StringIO
 from typing import Optional
 
 from pydantic import ValidationError
@@ -8,6 +10,12 @@ from pydantic_core import PydanticUndefined
 from smib.config._types import BaseSettings_T, CollectedErrors_T
 from smib.utilities import split_camel_case
 
+
+def format_csv_values(values: list[object]) -> str:
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([str(value) for value in values])
+    return output.getvalue().strip("\r\n")
 
 def format_validation_errors(collected: CollectedErrors_T) -> str:
     message_lines: list[str] = []
@@ -38,6 +46,9 @@ def format_validation_errors(collected: CollectedErrors_T) -> str:
             message_lines.append(f"\t\t{"Setting Type:":<{spacing}} {getattr(field.annotation, '__name__', str(field.annotation))}")
             if field.default != PydanticUndefined:
                 message_lines.append(f"\t\t{"Setting Default:":<{spacing}} {field.default}")
+
+            if field.examples:
+                message_lines.append(f"\t\t{"Setting Examples:":<{spacing}} {format_csv_values(field.examples)}")
 
     return "\n".join(["He's dead, Jim 🖖"] + message_lines)
 
