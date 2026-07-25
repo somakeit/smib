@@ -46,6 +46,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
                 Query(description="Bucket size in minutes. Supported values: 15, 30", example=15),
             ] = 15,
     ) -> WeeklyBucketResult:
+        """Get weekly bucket metrics for the specified date range and bucket size."""
         fastapi_response.headers["Cache-Control"] = CACHE_CONTROL_HEADER
 
         new = datetime.now(UTC)
