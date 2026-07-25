@@ -229,6 +229,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             )
             for weekday in range(7)
             for minute_of_day in range(0, 24 * 60, size)
+            if events
         ]
 
         result = WeeklyBucketResult(
