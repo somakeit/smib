@@ -16,18 +16,27 @@ class WeeklyBucketMetadata(BaseModel):
 
 
 class WeeklyBucketData(BaseModel):
-    weekday_index: Annotated[int, Field(description="Weekday index, where Monday is 0 and Sunday is 6", ge=0, le=6, examples=[0, 1, 2, 3, 4, 5, 6])]
-    time_index: Annotated[int, Field(description="Bucket start time in minutes since midnight", ge=0, le=1439, examples=[0, 15, 30, 60, 120])]
+    """
+    Represents a single canonical weekly bucket.
+
+    Bucket labels are local-time presentation values. The source event timestamps
+    may be stored in UTC, but ``weekday_index`` and ``time_index`` should be
+    calculated after converting event intervals into the configured application
+    timezone.
+    """
+
+    weekday_index: Annotated[int, Field(description="Local weekday index, where Monday is 0 and Sunday is 6", ge=0, le=6, examples=[0, 1, 2, 3, 4, 5, 6])]
+    time_index: Annotated[int, Field(description="Local bucket start time in minutes since midnight", ge=0, le=1439, examples=[0, 15, 30, 60, 120])]
     bucket_minutes: Annotated[int, Field(description="Bucket size in minutes", examples=[15, 30])]
     open_seconds: Annotated[int, Field(description="Total calculated open seconds in this weekly bucket", ge=0, examples=[0, 900, 1800])]
     total_bucket_seconds: Annotated[int, Field(description="Total possible seconds represented by this weekly bucket", ge=0, examples=[900, 1800, 3600])]
 
-    @computed_field(description="Weekday name for this bucket, Monday through Sunday", examples=["monday"])
+    @computed_field(description="Local weekday name for this bucket, Monday through Sunday", examples=["monday"])
     @property
     def weekday(self) -> str:
         return calendar.day_name[self.weekday_index].lower()
 
-    @computed_field(description="Bucket start time in HH:MM format", examples=["00:00", "12:30"])
+    @computed_field(description="Local bucket start time in HH:MM format", examples=["00:00", "12:30"])
     @property
     def time(self) -> str:
         return f"{self.time_index // 60:02d}:{self.time_index % 60:02d}"

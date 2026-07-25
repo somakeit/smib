@@ -7,10 +7,12 @@ from collections import defaultdict
 from datetime import datetime, UTC, timedelta, date
 from pprint import pformat
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import Query, HTTPException, Response
 
 from plugins.space.spacestate.models import SpaceStateEnum, SpaceStateEventHistory
+from smib.config import general
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
 from .models import WeeklyBucketData, WeeklyBucketResult, WeeklyBucketMetadata
@@ -24,6 +26,7 @@ DEFAULT_OPEN_HOURS = 8
 MAX_OPEN_HOURS = 16
 DEFAULT_OPEN_DURATION = timedelta(hours=DEFAULT_OPEN_HOURS)
 MAX_OPEN_DURATION = timedelta(hours=MAX_OPEN_HOURS)
+LOCAL_TIMEZONE = ZoneInfo(general.timezone)
 
 CACHE_CONTROL_HEADER = "public, max-age=300, stale-while-revalidate=60"
 
@@ -39,7 +42,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             end: Annotated[
                 date | None,
                 Query(description="End date for the accumulation period (ISO 8601 format)", example="2026-01-08"),
-
             ] = None,
             bucket_minutes: Annotated[
                 int,
@@ -49,12 +51,20 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         """Get weekly bucket metrics for the specified date range and bucket size."""
         fastapi_response.headers["Cache-Control"] = CACHE_CONTROL_HEADER
 
-        new = datetime.now(UTC)
-        end = end or new
-        start = start or new - timedelta(days=DEFAULT_DATE_RANGE_DAYS)
+        today = datetime.now(LOCAL_TIMEZONE).date()
+        end = end or today
+        start = start or end - timedelta(days=DEFAULT_DATE_RANGE_DAYS)
 
-        start_datetime = datetime.combine(start, datetime.min.time(), tzinfo=UTC)
-        end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
+        start_datetime = datetime.combine(
+            start,
+            datetime.min.time(),
+            tzinfo=LOCAL_TIMEZONE,
+        ).astimezone(UTC)
+        end_datetime = datetime.combine(
+            end + timedelta(days=1),
+            datetime.min.time(),
+            tzinfo=LOCAL_TIMEZONE,
+            ).astimezone(UTC)
 
         if bucket_minutes not in ALLOWED_BUCKET_SIZES:
             raise HTTPException(
@@ -73,13 +83,28 @@ def register(api: ApiEventInterface, database: DatabaseManager):
 
         logger.debug(f"Getting weekly bucket for {start} to {end} with bucket size {bucket_minutes} minutes")
 
-        result = await build_weekly_bucket(start_datetime, end_datetime, bucket_minutes)
+        result = await build_weekly_bucket(start, end, start_datetime, end_datetime, bucket_minutes)
 
         return result
 
-    async def build_weekly_bucket(start: datetime, end: datetime, size: int) -> WeeklyBucketResult:
+    async def build_weekly_bucket(
+            requested_start: date,
+            requested_end: date,
+            start: datetime,
+            end: datetime,
+            size: int,
+    ) -> WeeklyBucketResult:
         """
         Build a canonical Monday-to-Sunday weekly profile of calculated open time.
+
+        Database event timestamps are expected to be stored and queried in UTC.
+        The public ``requested_start`` and ``requested_end`` dates are interpreted
+        in the configured application timezone, then converted to UTC boundaries
+        before querying. During bucketing, UTC event intervals are converted back
+        into the configured local timezone before deriving ``weekday_index`` and
+        ``time_index``. As a result, returned bucket labels represent local wall
+        time, while ``event_start`` and ``event_end`` remain the original event
+        timestamps.
 
         The requested time range is treated as a source interval containing individual
         space-state events. Events are processed in timestamp order to reconstruct
@@ -88,6 +113,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         close event appears before the requested or default fallback close time, the
         interval is automatically closed at that fallback time. Open intervals are
         also capped by a maximum open duration to prevent unrealistically long spans.
+
 
         Closed-event durations are intentionally ignored, because they are
         informational and should not reduce or extend calculated open time.
@@ -109,7 +135,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
 
         event_query = SpaceStateEventHistoryModel.find(
             SpaceStateEventHistoryModel.timestamp >= start,
-            SpaceStateEventHistoryModel.timestamp <= end,
+            SpaceStateEventHistoryModel.timestamp < end,
             ).sort("timestamp")
 
         logger.info(f"Querying SpaceStateEventHistory for events between {start} and {end}")
@@ -122,12 +148,15 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         events = await event_query.to_list()
 
         def floor_to_bucket(timestamp: datetime) -> datetime:
+            timestamp = timestamp.astimezone(LOCAL_TIMEZONE)
             midnight = timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
             seconds_since_midnight = int((timestamp - midnight).total_seconds())
             floored_seconds = seconds_since_midnight - (seconds_since_midnight % bucket_seconds)
             return midnight + timedelta(seconds=floored_seconds)
 
         def add_possible_interval(interval_start: datetime, interval_end: datetime) -> None:
+            interval_start = interval_start.astimezone(LOCAL_TIMEZONE)
+            interval_end = interval_end.astimezone(LOCAL_TIMEZONE)
             cursor = floor_to_bucket(interval_start)
 
             while cursor < interval_end:
@@ -149,6 +178,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             if interval_start >= interval_end:
                 return
 
+            interval_start = interval_start.astimezone(LOCAL_TIMEZONE)
+            interval_end = interval_end.astimezone(LOCAL_TIMEZONE)
             cursor = floor_to_bucket(interval_start)
 
             while cursor < interval_end:
@@ -239,8 +270,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
 
         result = WeeklyBucketResult(
             metadata=WeeklyBucketMetadata(
-                requested_start=start,
-                requested_end=end,
+                requested_start=requested_start,
+                requested_end=requested_end,
                 event_start=events[0].timestamp if events else None,
                 event_end=events[-1].timestamp if events else None,
                 bucket_minutes=size,
