@@ -279,6 +279,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             buckets=results,
         )
 
-        logger.debug(f"Built weekly bucket:\n{pformat(result.model_dump(mode='json'))}")
+        logger.debug(f"Built weekly bucket:\n{pformat(result.model_dump())}")
 
         return result
