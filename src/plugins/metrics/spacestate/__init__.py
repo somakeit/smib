@@ -37,15 +37,15 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             fastapi_response: Response,
             start: Annotated[
                 date | None,
-                Query(description="Start date for the accumulation period (ISO 8601 format)", example="2026-01-01"),
+                Query(description="Start date for the accumulation period (ISO 8601 format)", examples=["2026-01-01"]),
             ] = None,
             end: Annotated[
                 date | None,
-                Query(description="End date for the accumulation period (ISO 8601 format)", example="2026-01-08"),
+                Query(description="End date for the accumulation period (ISO 8601 format)", examples=["2026-01-08"]),
             ] = None,
             bucket_minutes: Annotated[
                 int,
-                Query(description="Bucket size in minutes. Supported values: 15, 30", example=15),
+                Query(description="Bucket size in minutes. Supported values: 15, 30", examples=[15, 30]),
             ] = 15,
     ) -> WeeklyBucketResult:
         """Get weekly bucket metrics for the specified date range and bucket size."""
