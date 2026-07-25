@@ -8,7 +8,7 @@ from datetime import datetime, UTC, timedelta, date
 from pprint import pformat
 from typing import Annotated
 
-from fastapi import Query, HTTPException
+from fastapi import Query, HTTPException, Response
 
 from plugins.space.spacestate.models import SpaceStateEnum, SpaceStateEventHistory
 from smib.db.manager import DatabaseManager
@@ -25,10 +25,13 @@ MAX_OPEN_HOURS = 16
 DEFAULT_OPEN_DURATION = timedelta(hours=DEFAULT_OPEN_HOURS)
 MAX_OPEN_DURATION = timedelta(hours=MAX_OPEN_HOURS)
 
+CACHE_CONTROL_HEADER = "public, max-age=300, stale-while-revalidate=60"
+
 
 def register(api: ApiEventInterface, database: DatabaseManager):
     @api.get("/metrics/spacestate/weekly-bucket")
     async def get_weekly_bucket(
+            fastapi_response: Response,
             start: Annotated[
                 date | None,
                 Query(description="Start date for the accumulation period (ISO 8601 format)", example="2026-01-01"),
@@ -43,6 +46,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
                 Query(description="Bucket size in minutes. Supported values: 15, 30", example=15),
             ] = 15,
     ) -> WeeklyBucketResult:
+        fastapi_response.headers["Cache-Control"] = CACHE_CONTROL_HEADER
+
         new = datetime.now(UTC)
         end = end or new
         start = start or new - timedelta(days=DEFAULT_DATE_RANGE_DAYS)
