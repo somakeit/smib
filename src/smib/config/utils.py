@@ -1,7 +1,7 @@
-import csv
 import logging as logging_lib
-from io import StringIO
-from typing import Optional
+from collections import defaultdict
+from types import UnionType
+from typing import Optional, get_origin, Union, get_args, Annotated, Literal
 
 from pydantic import ValidationError
 from pydantic.fields import FieldInfo
@@ -10,12 +10,91 @@ from pydantic_core import PydanticUndefined
 from smib.config._types import BaseSettings_T, CollectedErrors_T
 from smib.utilities import split_camel_case
 
+CONSTRAINT_LABELS = {
+    "gt": "Greater Than",
+    "ge": "Greater Than Or Equal",
+    "lt": "Less Than",
+    "le": "Less Than Or Equal",
+    "multiple_of": "Multiple Of",
+    "min_length": "Minimum Length",
+    "max_length": "Maximum Length",
+    "pattern": "Pattern",
+}
 
-def format_csv_values(values: list[object]) -> str:
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow([str(value) for value in values])
-    return output.getvalue().strip("\r\n")
+
+def get_field_constraints(field: FieldInfo) -> list[tuple[str, object]]:
+    constraints: list[tuple[str, object]] = []
+
+    for metadata in field.metadata:
+        for attribute_name, label in CONSTRAINT_LABELS.items():
+            value = getattr(metadata, attribute_name, None)
+
+            if value is not None:
+                constraints.append((label, value))
+
+    return constraints
+
+
+def select_provided_value(values: list[object]) -> object | None:
+    if not values:
+        return None
+
+    unique_values = list(dict.fromkeys(values))
+
+    if len(unique_values) == 1:
+        return unique_values[0]
+
+    return max(unique_values, key=lambda value: len(str(value)))
+
+
+def select_failed_value(values: list[object], provided_value: object | None) -> object | None:
+    if provided_value is None:
+        return None
+
+    unique_values = list(dict.fromkeys(values))
+    failed_values = [
+        value
+        for value in unique_values
+        if value != provided_value
+    ]
+
+    if not failed_values:
+        return None
+
+    return min(failed_values, key=lambda value: len(str(value)))
+
+
+def is_union_field(field: FieldInfo) -> bool:
+    return get_origin(field.annotation) in (Union, type(Union[str, int]))
+
+def format_type_annotation(annotation: object) -> str:
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    if origin is Annotated:
+        annotation_type, *metadata = args
+        formatted_metadata = ", ".join(type(item).__name__ for item in metadata)
+        return f"Annotated[{format_type_annotation(annotation_type)}, {formatted_metadata}]"
+
+    if origin in (Union, UnionType) or isinstance(annotation, UnionType):
+        return " | ".join(format_type_annotation(arg) for arg in args)
+
+    if origin is Literal:
+        return "Literal[" + ", ".join(repr(arg) for arg in args) + "]"
+
+    if origin is list:
+        return f"list[{format_type_annotation(args[0])}]" if args else "list"
+
+    if origin is not None:
+        formatted_args = ", ".join(format_type_annotation(arg) for arg in args)
+        origin_name = getattr(origin, "__name__", str(origin).replace("typing.", ""))
+        return f"{origin_name}[{formatted_args}]"
+
+    if hasattr(annotation, "__name__"):
+        return annotation.__name__
+
+    return str(annotation).replace("typing.", "")
+
 
 def format_validation_errors(collected: CollectedErrors_T) -> str:
     message_lines: list[str] = []
@@ -23,32 +102,62 @@ def format_validation_errors(collected: CollectedErrors_T) -> str:
         model_config = model.model_config
         env_var_prefix = model_config.get('env_prefix', '')
 
-        message_lines.append(f"Validation error for {model.__name__}:")
+        grouped_errors = defaultdict(list)
         for error in validation_errors.errors():
-            field_name = error["loc"][0]
+            grouped_errors[error["loc"][0]].append(error)
+
+        message_lines.append(f"Validation error for {model.__name__}:")
+        for field_name, errors in grouped_errors.items():
             field: FieldInfo = model.model_fields[field_name]
-            error_message = error["msg"]
-            error_type = error["type"]
-            provided_value = error["input"]
+            provided_values = [
+                error["input"]
+                for error in errors
+                if error["type"] != "missing" and error["input"] != PydanticUndefined
+            ]
 
             message_lines.append(f"\t• {field_name}:")
 
             spacing = 30
-            message_lines.append(f"\t\t{"Error:":<{spacing}} {error_message}")
-            if error_type != 'missing' and provided_value != PydanticUndefined:
+            if len(errors) == 1:
+                message_lines.append(f"\t\t{"Error:":<{spacing}} {errors[0]["msg"]}")
+            elif is_union_field(field):
+                message_lines.append(f"\t\tError (Input value should match one of these supported formats):")
+                for error in errors:
+                    message_lines.append(f"\t\t\t• {error["msg"]}")
+            else:
+                message_lines.append(f"\t\t{"Errors:":<{spacing}}")
+                for error in errors:
+                    message_lines.append(f"\t\t\t• {error["msg"]}")
+
+            provided_value = select_provided_value(provided_values)
+            failed_value = select_failed_value(provided_values, provided_value)
+
+            if provided_value is not None:
                 message_lines.append(f"\t\t{"Provided Value:":<{spacing}} {provided_value}")
+
+            if failed_value is not None:
+                message_lines.append(f"\t\t{"Failed Value:":<{spacing}} {failed_value}")
 
             if field.description:
                 message_lines.append(f"\t\t{"Setting Description:":<{spacing}} {field.description}")
 
+            constraints = get_field_constraints(field)
+            if constraints:
+                constraint_spacing = max(len(label) for label, _ in constraints) + 3
+                message_lines.append(f"\t\t{"Setting Constraints:":<{spacing}}")
+                for label, value in constraints:
+                    message_lines.append(f"\t\t\t• {f"{label}:":<{constraint_spacing}} {value}")
+
             message_lines.append(f"\t\t{"Setting Environment Variable:":<{spacing}} {env_var_prefix}{field_name.upper()}")
 
-            message_lines.append(f"\t\t{"Setting Type:":<{spacing}} {getattr(field.annotation, '__name__', str(field.annotation))}")
+            message_lines.append(f"\t\t{"Setting Type:":<{spacing}} {format_type_annotation(field.annotation)}")
             if field.default != PydanticUndefined:
                 message_lines.append(f"\t\t{"Setting Default:":<{spacing}} {field.default}")
 
             if field.examples:
-                message_lines.append(f"\t\t{"Setting Examples:":<{spacing}} {format_csv_values(field.examples)}")
+                message_lines.append(f"\t\t{"Setting Examples:":<{spacing}}")
+                for example in field.examples:
+                    message_lines.append(f"\t\t\t• {example}")
 
     return "\n".join(["He's dead, Jim 🖖"] + message_lines)
 

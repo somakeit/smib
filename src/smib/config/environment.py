@@ -18,7 +18,7 @@ class EnvironmentSettings(EnvBaseSettings):
 
     @field_validator("environment", mode="before")
     @classmethod
-    def normalize_log_level(cls, v: str) -> str:
+    def normalize_environment_name(cls, v: str) -> str:
         if isinstance(v, str):
             return v.upper()
         return v
