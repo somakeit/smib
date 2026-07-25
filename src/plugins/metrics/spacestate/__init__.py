@@ -139,7 +139,7 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             ).sort("timestamp")
 
         logger.info(f"Querying SpaceStateEventHistory for events between {start} and {end}")
-        logger.debug(f"Found {await event_query.count()} events")
+        logger.info(f"Found {await event_query.count()} events")
 
         bucket_size = timedelta(minutes=size)
         bucket_seconds = int(bucket_size.total_seconds())
@@ -272,8 +272,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             metadata=WeeklyBucketMetadata(
                 requested_start=requested_start,
                 requested_end=requested_end,
-                event_start=events[0].timestamp if events else None,
-                event_end=events[-1].timestamp if events else None,
+                first_event_timestamp=events[0].timestamp if events else None,
+                last_event_timestamp=events[-1].timestamp if events else None,
                 bucket_minutes=size,
                 total_events_processed=len(events),
             ),

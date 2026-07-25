@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, computed_field
 class WeeklyBucketMetadata(BaseModel):
     requested_start: Annotated[date, Field(description="Requested start date for the query", examples=["2024-01-01"])]
     requested_end: Annotated[date, Field(description="Requested end date for the query", examples=["2024-01-07"])]
-    event_start: Annotated[datetime | None, Field(description="Timestamp of the first event used in the response", examples=["2024-01-01T00:00:00Z"])]
-    event_end: Annotated[datetime | None, Field(description="Timestamp of the last event used in the response", examples=["2024-01-07T23:59:59Z"])]
+    first_event_timestamp: Annotated[datetime | None, Field(description="Timestamp of the first event used in the response", examples=["2024-01-01T00:00:00Z"])]
+    last_event_timestamp: Annotated[datetime | None, Field(description="Timestamp of the last event used in the response", examples=["2024-01-07T23:59:59Z"])]
     bucket_minutes: Annotated[int, Field(description="Bucket size in minutes", examples=[15, 30])]
     total_events_processed: Annotated[int, Field(description="Total number of events processed for this query", ge=0, examples=[0, 100, 1000])]
 
