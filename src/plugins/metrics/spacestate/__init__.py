@@ -114,7 +114,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         interval is automatically closed at that fallback time. Open intervals are
         also capped by a maximum open duration to prevent unrealistically long spans.
 
-
         Closed-event durations are intentionally ignored, because they are
         informational and should not reduce or extend calculated open time.
 
