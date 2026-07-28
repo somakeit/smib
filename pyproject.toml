@@ -11,19 +11,19 @@ keywords = ["slack", "bot", "python"]
 readme = "README.md"
 
 dependencies = [
-    "slack-bolt>=1.29.0,<2.0.0",
+    "slack-bolt>=1.30.0,<2.0.0",
     "uvicorn==0.51.0",
-    "aiohttp (>=3.14.1,<4.0.0)",
+    "aiohttp (>=3.14.3,<4.0.0)",
     "makefun>=1.16.0,<2.0.0",
     "apscheduler (>=3.11.3,<4.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "humanize>=4.16.0",
-    "pytz>=2026.2",
+    "pytz>=2026.3.post1",
     "beanie>=2.1.0",
-    "fastapi>=0.139.0",
+    "fastapi>=0.140.0",
     "pydantic-settings>=2.14.2",
     "jinja2>=3.1.6",
-    "websockets>=16.1",
+    "websockets>=16.1.1",
     "packaging>=26.2",
 ]
 
@@ -41,7 +41,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.6.0",
+    "pre-commit>=4.6.1",
 ]
 
 [tool.hatch.version]
