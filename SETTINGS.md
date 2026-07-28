@@ -20,7 +20,7 @@ This document provides a comprehensive overview of all configurable settings in 
 
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|
-| SMIB_TIMEZONE | Application timezone used for local date/time calculations | `Europe/London` | System timezone |
+| SMIB_TIMEZONE | Application timezone used for local date/time calculations. If unset, the standard `TZ` environment variable is used when available. | `Europe/London` | `TZ`, otherwise `Etc/UTC` |
 
 ## Database Settings
 

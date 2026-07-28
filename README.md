@@ -66,6 +66,9 @@ The easiest way to run SMIB is with Docker Compose:
 - Set the environment variables (minimum of the slack tokens). See [template.env](template.env) for all possible environment variables.
   - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
+  - Timezone
+    - Set `SMIB_TIMEZONE` to configure the application timezone explicitly, for example `SMIB_TIMEZONE=Europe/London`.
+    - If `SMIB_TIMEZONE` is unset, SMIB uses the standard `TZ` environment variable when available, otherwise it falls back to `Etc/UTC`.
 - To build a specific version/tag:
   - Use git to checkout the specific branch/tag; e.g. `git checkout v2.0.0`
 - Issue the following command to build and run the local copy of the code: `docker compose up -d --build`
