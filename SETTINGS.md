@@ -16,6 +16,12 @@ This document provides a comprehensive overview of all configurable settings in 
 |---------------------------|----------------------------------------------------------------|---------------|---------|
 | SMIB_ENVIRONMENT          | The application environment (PRODUCTION, TESTING, DEVELOPMENT) | `DEVELOPMENT` | `PRODUCTION` |
 
+## General Settings
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_TIMEZONE | Application timezone used for local date/time calculations | `Europe/London` | System timezone |
+
 ## Database Settings
 
 | Environment Variable | Description | Example | Default |

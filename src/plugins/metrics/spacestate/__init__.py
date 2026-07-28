@@ -30,7 +30,6 @@ LOCAL_TIMEZONE = ZoneInfo(general.timezone)
 
 CACHE_CONTROL_HEADER = "public, max-age=300, stale-while-revalidate=60"
 
-
 def register(api: ApiEventInterface, database: DatabaseManager):
     @api.get("/metrics/spacestate/weekly-bucket")
     async def get_weekly_bucket(

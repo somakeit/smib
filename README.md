@@ -19,6 +19,9 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
   - API Endpoints for setting and retrieving the current space state
   - Websocket endpoint for pushing updates to connected clients
   - Slack integration for posting the current space state to a channel
+- **Space State Metrics** (`metrics/spacestate`)
+  - API endpoint for exposing bucketed space-state metrics as JSON
+  - Supports weekly bucketed open-time data for Grafana dashboards
 - **S.M.I.B.H.I.D.** (`space/smibhid`)
   - API Endpoints for receiving data from a [SMIBHID device](https://github.com/somakeit/smibhid)
     - Sensor readings
