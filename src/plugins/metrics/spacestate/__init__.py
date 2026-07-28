@@ -19,7 +19,7 @@ from .models import WeeklyBucketData, WeeklyBucketResult, WeeklyBucketMetadata
 
 logger = logging.getLogger(__display_name__)
 
-ALLOWED_BUCKET_SIZES = {15, 30}
+ALLOWED_BUCKET_SIZES = {15, 30, 60}
 DEFAULT_DATE_RANGE_DAYS = 28
 MIN_DATE_DIFFERENCE_DAYS = 7
 DEFAULT_OPEN_HOURS = 8
@@ -45,8 +45,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             ] = None,
             bucket_minutes: Annotated[
                 int,
-                Query(description="Bucket size in minutes. Supported values: 15, 30", examples=[15, 30]),
-            ] = 15,
+                Query(description="Bucket size in minutes. Supported values: 15, 30, 60", examples=[15, 30, 60]),
+            ] = 30,
     ) -> WeeklyBucketResult:
         """Get weekly bucket metrics for the specified date range and bucket size."""
         fastapi_response.headers["Cache-Control"] = CACHE_CONTROL_HEADER
@@ -131,6 +131,8 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         returned with zero seconds/minutes so consumers can render a stable grid.
         """
         SpaceStateEventHistoryModel: type[SpaceStateEventHistory] = database.find_model_by_name("SpaceStateEventHistory")
+
+        assert SpaceStateEventHistoryModel is not None, "SpaceStateEventHistory model not found in database"
 
         event_query = SpaceStateEventHistoryModel.find(
             SpaceStateEventHistoryModel.timestamp >= start,
