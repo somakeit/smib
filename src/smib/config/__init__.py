@@ -53,13 +53,17 @@ if _collected_errors:
     # Exit early so the application clearly stops on config errors
     raise SystemExit(1)
 
-assert logging is not None
-assert _environment is not None
-assert _project is not None
-assert _general is not None
-assert _slack is not None
-assert _database is not None
-assert _webserver is not None
+if (
+    logging is None
+    or _environment is None
+    or _project is None
+    or _general is None
+    or _slack is None
+    or _database is None
+    or _webserver is None
+):
+    _logger.error("Unexpected None settings after successful settings validation")
+    raise SystemExit(1)
 
 environment: EnvironmentSettings = _environment
 project: ProjectSettings = _project

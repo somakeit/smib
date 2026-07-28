@@ -129,24 +129,22 @@ def register(api: ApiEventInterface, database: DatabaseManager):
         every bucket for each day included. Buckets with no calculated open time are
         returned with zero seconds/minutes so consumers can render a stable grid.
         """
-        SpaceStateEventHistoryModel: type[SpaceStateEventHistory] = database.find_model_by_name("SpaceStateEventHistory")
-
-        assert SpaceStateEventHistoryModel is not None, "SpaceStateEventHistory model not found in database"
-
+        SpaceStateEventHistoryModel: type[SpaceStateEventHistory] | None = database.find_model_by_name("SpaceStateEventHistory")
+        if SpaceStateEventHistoryModel is None:
+            raise HTTPException(status_code=500, detail="SpaceStateEventHistory model not found in database")
         event_query = SpaceStateEventHistoryModel.find(
             SpaceStateEventHistoryModel.timestamp >= start,
             SpaceStateEventHistoryModel.timestamp < end,
             ).sort("timestamp")
 
         logger.info(f"Querying SpaceStateEventHistory for events between {start} and {end}")
-        logger.info(f"Found {await event_query.count()} events")
 
         bucket_size = timedelta(minutes=size)
         bucket_seconds = int(bucket_size.total_seconds())
         buckets: dict[tuple[int, int], int] = defaultdict(int)
         possible_bucket_seconds: dict[tuple[int, int], int] = defaultdict(int)
         events = await event_query.to_list()
-
+        logger.info(f"Found {len(events)} events")
         def floor_to_bucket(timestamp: datetime) -> datetime:
             timestamp = timestamp.astimezone(LOCAL_TIMEZONE)
             midnight = timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -265,7 +263,6 @@ def register(api: ApiEventInterface, database: DatabaseManager):
             )
             for weekday in range(7)
             for minute_of_day in range(0, 24 * 60, size)
-            if events
         ]
 
         result = WeeklyBucketResult(

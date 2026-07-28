@@ -65,7 +65,8 @@ def select_failed_value(values: list[object], provided_value: object | None) -> 
 
 
 def is_union_field(field: FieldInfo) -> bool:
-    return get_origin(field.annotation) in (Union, type(Union[str, int]))
+    origin = get_origin(field.annotation)
+    return origin in (Union, UnionType) or isinstance(field.annotation, UnionType)
 
 def format_type_annotation(annotation: object) -> str:
     origin = get_origin(annotation)
