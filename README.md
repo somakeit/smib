@@ -19,6 +19,9 @@ SMIB is the So Make It Bot, a versatile Slack bot designed for the So Make It ma
   - API Endpoints for setting and retrieving the current space state
   - Websocket endpoint for pushing updates to connected clients
   - Slack integration for posting the current space state to a channel
+- **Space State Metrics** (`metrics/spacestate`)
+  - API endpoint for exposing bucketed space-state metrics as JSON
+  - Supports weekly bucketed open-time data for Grafana dashboards
 - **S.M.I.B.H.I.D.** (`space/smibhid`)
   - API Endpoints for receiving data from a [SMIBHID device](https://github.com/somakeit/smibhid)
     - Sensor readings
@@ -63,6 +66,9 @@ The easiest way to run SMIB is with Docker Compose:
 - Set the environment variables (minimum of the slack tokens). See [template.env](template.env) for all possible environment variables.
   - `.env` File
     - Create a file called `.env` alongside the docker-compose.yml file (see `template.env` in the repo)
+  - Timezone
+    - Set `SMIB_TIMEZONE` to configure the application timezone explicitly, for example `SMIB_TIMEZONE=Europe/London`.
+    - If `SMIB_TIMEZONE` is unset, SMIB uses the standard `TZ` environment variable when available, otherwise it falls back to `Etc/UTC`.
 - To build a specific version/tag:
   - Use git to checkout the specific branch/tag; e.g. `git checkout v2.0.0`
 - Issue the following command to build and run the local copy of the code: `docker compose up -d --build`

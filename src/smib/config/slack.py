@@ -14,7 +14,7 @@ class SlackSettings(EnvBaseSettings):
         description="Slack app token used for socket mode connections"
     )
     signing_secret: SecretStr = Field(
-        default_factory=lambda: secrets.token_hex(16),
+        default_factory=lambda: SecretStr(secrets.token_hex(16)),
         description="Secret used to verify requests from Slack"
     )
 

@@ -39,12 +39,12 @@ if logging is not None:
     initialise_logging(logging.log_level)
     _logger = logging_lib.getLogger(__name__)
 
-environment: EnvironmentSettings | None = init_settings(EnvironmentSettings, _collected_errors)
-project: ProjectSettings | None = init_settings(ProjectSettings, _collected_errors)
-general: GeneralSettings | None = init_settings(GeneralSettings, _collected_errors)
-slack: SlackSettings | None = init_settings(SlackSettings, _collected_errors)
-database: DatabaseSettings | None = init_settings(DatabaseSettings, _collected_errors)
-webserver: WebserverSettings | None = init_settings(WebserverSettings, _collected_errors)
+_environment: EnvironmentSettings | None = init_settings(EnvironmentSettings, _collected_errors)
+_project: ProjectSettings | None = init_settings(ProjectSettings, _collected_errors)
+_general: GeneralSettings | None = init_settings(GeneralSettings, _collected_errors)
+_slack: SlackSettings | None = init_settings(SlackSettings, _collected_errors)
+_database: DatabaseSettings | None = init_settings(DatabaseSettings, _collected_errors)
+_webserver: WebserverSettings | None = init_settings(WebserverSettings, _collected_errors)
 
 if _collected_errors:
     # Log to stderr only to avoid duplicate outputs (some environments route logs to stderr too)
@@ -52,6 +52,25 @@ if _collected_errors:
 
     # Exit early so the application clearly stops on config errors
     raise SystemExit(1)
-else:
-    for setting in [logging, environment, project, general, slack, database, webserver]:
-        _logger.debug(f"{" ".join(split_camel_case(setting.__class__.__name__))} Initialised:\n{setting.model_dump_json(indent=2)}")
+
+if (
+    logging is None
+    or _environment is None
+    or _project is None
+    or _general is None
+    or _slack is None
+    or _database is None
+    or _webserver is None
+):
+    _logger.error("Unexpected None settings after successful settings validation")
+    raise SystemExit(1)
+
+environment: EnvironmentSettings = _environment
+project: ProjectSettings = _project
+general: GeneralSettings = _general
+slack: SlackSettings = _slack
+database: DatabaseSettings = _database
+webserver: WebserverSettings = _webserver
+
+for setting in [logging, environment, project, general, slack, database, webserver]:
+    _logger.debug(f"{" ".join(split_camel_case(setting.__class__.__name__))} Initialised:\n{setting.model_dump_json(indent=2)}")
