@@ -1,13 +1,13 @@
 import logging
-from datetime import timedelta
 from http import HTTPStatus
 
 from slack_bolt.app.async_app import AsyncApp
 
-from plugins.space.smibhid.common import DeviceHostnameHeader
+from plugins.space.smibhid.common import DeviceHostnameHeader, get_timestamp
 from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
-from smib.utilities import get_humanized_timedelta
-from ..common import record_relay_state_report, record_relay_state_reset
+from smib.utilities import get_humanized_time
+from ..common import record_relay_state_report, record_relay_state_reset, build_relay_lifetime_alert_message, \
+    build_drift_alert_message
 from ..config import config
 from ..models import RelayStateReport, RelayResetReport
 
@@ -22,28 +22,21 @@ def register(slack: AsyncApp, api: ApiEventInterface):
             x_smibhid_hostname: DeviceHostnameHeader,
     ) -> None:
         """ Report the current relay state of the space """
+        event_timestamp = get_timestamp(relay_state_report.timestamp)
         logger.info(
             f"Received relay state report from {x_smibhid_hostname}: "
             f"active={relay_state_report.active}, "
-            f"total_active_seconds={relay_state_report.total_active_seconds}"
+            f"total_active_seconds={relay_state_report.total_active_seconds}, "
+            f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
         )
         outcome = await record_relay_state_report(relay_state_report, x_smibhid_hostname)
 
         if outcome.relay_lifetime_alert_since_reset is not None:
-            message = config.relay_lifetime_alert_message_template.format(
-                relay_name=config.relay_name,
-                device=x_smibhid_hostname,
-                duration=get_humanized_timedelta(timedelta(seconds=outcome.relay_lifetime_alert_since_reset)),
-            )
+            message = build_relay_lifetime_alert_message(outcome.relay_lifetime_alert_since_reset, x_smibhid_hostname)
             await slack.client.chat_postMessage(channel=config.relay_lifetime_alert_channel_id, text=message)
 
         if outcome.drift_alert is not None:
-            message = (
-                f":warning: Relay state total_active_seconds drift for {x_smibhid_hostname} exceeds threshold "
-                f"({config.total_active_seconds_drift_warning_threshold_seconds}s): "
-                f"computed_since_reset={outcome.drift_alert.since_reset}s, "
-                f"reported={outcome.drift_alert.reported}s, delta={outcome.drift_alert.delta}s"
-            )
+            message = build_drift_alert_message(x_smibhid_hostname, outcome.drift_alert)
             await slack.client.chat_postMessage(channel=config.drift_warning_alert_channel_id, text=message)
 
     @api.post("/space/relay/reset", status_code=HTTPStatus.NO_CONTENT, tags=["S.M.I.B.H.I.D."])
@@ -52,8 +45,10 @@ def register(slack: AsyncApp, api: ApiEventInterface):
             x_smibhid_hostname: DeviceHostnameHeader,
     ) -> None:
         """ Record that a human reset S.M.I.B.H.I.D.'s relay on-time counter (e.g. after a filter change) """
+        event_timestamp = get_timestamp(relay_reset_report.timestamp)
         logger.info(
             f"Received relay reset report from {x_smibhid_hostname}: "
-            f"previous_total_active_seconds={relay_reset_report.previous_total_active_seconds}"
+            f"previous_total_active_seconds={relay_reset_report.previous_total_active_seconds}, "
+            f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
         )
         await record_relay_state_reset(relay_reset_report, x_smibhid_hostname)
