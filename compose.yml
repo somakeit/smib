@@ -30,7 +30,7 @@ services:
 
   smib-db:
     <<: *common
-    image: mongo:${SMIB_COMPOSE_MONGO_DB_TAG:-8.3.7}
+    image: mongo:${SMIB_COMPOSE_MONGO_DB_TAG:-8.3.8}
     container_name: smib-db
     healthcheck:
       test:
@@ -68,7 +68,7 @@ services:
     <<: *common
     container_name: smib-proxy
     hostname: smib-proxy
-    image: traefik:v3.7.9
+    image: traefik:v3.7.10
     command:
       - --providers.docker=true
       - --providers.docker.endpoint=tcp://smib-socket-proxy:2375
@@ -96,7 +96,7 @@ services:
   smib-socket-proxy:
     <<: *common
     container_name: smib-socket-proxy
-    image: tecnativa/docker-socket-proxy:v0.4.2
+    image: tecnativa/docker-socket-proxy:v0.5.0
     healthcheck:
       test: wget --spider http://localhost:2375/version || exit 1
     environment:
