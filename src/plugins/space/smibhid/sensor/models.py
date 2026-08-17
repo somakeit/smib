@@ -4,10 +4,9 @@ from typing import Annotated, Optional
 import pymongo
 from beanie import Document, Indexed
 from beanie.odm.operators.update.general import Set
-from pydantic import BaseModel, Field, AfterValidator, RootModel
+from pydantic import BaseModel, Field, RootModel
 
-from ..common import validate_timestamp
-
+from ..common import SMIBHIDTimestamp
 
 SENSOR_DATA_EXAMPLE = {
     "BH1750": {
@@ -87,11 +86,7 @@ class SensorUnitMap(RootModel):
 
 # --- Models ---
 class SensorLogBase(BaseModel):
-    timestamp: Annotated[
-        int | float,
-        Field(description="Unix epoch timestamp", examples=[int(datetime.now(UTC).timestamp())]),
-        AfterValidator(validate_timestamp)
-    ]
+    timestamp: SMIBHIDTimestamp
     data: Annotated[
         SensorDataMap,
         Field(description="Sensor Data", examples=[SENSOR_DATA_EXAMPLE])
