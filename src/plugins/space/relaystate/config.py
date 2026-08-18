@@ -46,8 +46,8 @@ class RelayStatePluginConfig(EnvBaseSettings):
     )
 
     relay_lifetime_alert_message_template: str = Field(
-        default=":warning: {relay_name} on {device} has been active for {duration} since the last reset — it may need replacing.",
-        description="Slack alert message template. Supports {device}, {relay_name}, {duration} placeholders.",
+        default=":warning: {relay_name} on {device} has been active for {duration} since the last reset, exceeding the {threshold} threshold — {relay_name} may need replacing.",
+        description="Slack alert message template. Supports {device}, {relay_name}, {duration}, {threshold} placeholders.",
     )
 
     drift_warning_alert_channel_id: str = Field(

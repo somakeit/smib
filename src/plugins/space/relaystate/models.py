@@ -41,6 +41,18 @@ class RelayResetReport(BaseModel):
     ]
 
 
+class AlertState(BaseModel):
+    """ Debounce/resend bookkeeping shared by the relay-lifetime and drift Slack alerts. """
+    active: Annotated[
+        bool,
+        Field(default=False, description="Whether this alert's trigger condition is currently considered active")
+    ]
+    last_sent_at: Annotated[
+        datetime | None,
+        Field(default=None, description="Timestamp this alert was last actually sent", examples=[datetime.now(UTC)])
+    ]
+
+
 class RelayState(Document):
     """
     Stores the latest reported relay state for a device, plus SMIB's own
@@ -78,29 +90,13 @@ class RelayState(Document):
             examples=[42.5],
         )
     ]
-    last_reset_at: Annotated[
-        datetime | None,
-        Field(default=None, description="Timestamp of the last reset event", examples=[datetime.now(UTC)])
+    lifetime_alert: Annotated[
+        AlertState,
+        Field(default_factory=AlertState, description="Relay-lifetime alert debounce state")
     ]
-    last_reset_previous_total_active_seconds: Annotated[
-        float | None,
-        Field(default=None, description="S.M.I.B.H.I.D.'s previous_total_active_seconds from the last reset payload, kept for observability only", examples=[82])
-    ]
-    relay_lifetime_alert_sent: Annotated[
-        bool,
-        Field(default=False, description="Whether the current cycle's relay-lifetime alert has fired at least once")
-    ]
-    relay_lifetime_alert_last_sent_at: Annotated[
-        datetime | None,
-        Field(default=None, description="Timestamp the relay-lifetime Slack alert was last actually sent", examples=[datetime.now(UTC)])
-    ]
-    drift_alert_active: Annotated[
-        bool,
-        Field(default=False, description="Whether relay state total_active_seconds drift is currently over the warning threshold")
-    ]
-    drift_alert_last_sent_at: Annotated[
-        datetime | None,
-        Field(default=None, description="Timestamp the drift warning Slack alert was last actually sent", examples=[datetime.now(UTC)])
+    drift_alert: Annotated[
+        AlertState,
+        Field(default_factory=AlertState, description="Drift warning alert debounce state")
     ]
     updated_at: Annotated[datetime, Field(description="Timestamp of when the relay state was last updated", default_factory=lambda: datetime.now(UTC), examples=[datetime.now(UTC)])]
 
