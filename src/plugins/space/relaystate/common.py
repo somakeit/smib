@@ -44,6 +44,13 @@ def _apply_transition(relay_state: RelayState, report: RelayStateReport, event_t
         relay_state.active_since = event_timestamp
     elif not is_on and was_on and relay_state.active_since is not None:
         duration = (event_timestamp - relay_state.active_since).total_seconds()
+        if duration < 0:
+            logger.warning(
+                f"Relay state report for {relay_state.device} has an out-of-order timestamp "
+                f"(event_timestamp={event_timestamp} precedes active_since={relay_state.active_since}); "
+                f"clamping ON duration to 0 instead of applying a negative value."
+            )
+            duration = 0.0
         relay_state.computed_total_active_seconds += duration
         relay_state.active_since = None
     elif not is_on and relay_state.active_since is not None:
@@ -86,9 +93,9 @@ def _update_relay_lifetime_alert_state(relay_state: RelayState, since_reset: flo
     return True
 
 
-def _update_drift_alert_state(device: str, relay_state: RelayState, since_reset: float, reported_total_active_seconds: float) -> DriftAlertInfo | None:
+def _update_drift_alert_state(device: str, relay_state: RelayState, since_reset: float, reported_since_reset: float) -> DriftAlertInfo | None:
     """ Mutates relay_state.drift_alert as a side effect; call exactly once per check cycle. """
-    delta = abs(since_reset - reported_total_active_seconds)
+    delta = abs(since_reset - reported_since_reset)
     condition_met = delta > config.total_active_seconds_drift_warning_threshold_seconds
 
     if condition_met:
@@ -96,7 +103,7 @@ def _update_drift_alert_state(device: str, relay_state: RelayState, since_reset:
             f"Relay state total_active_seconds drift for {device} exceeds threshold "
             f"({config.total_active_seconds_drift_warning_threshold_seconds}s): "
             f"computed_since_reset={since_reset}s, "
-            f"reported={reported_total_active_seconds}s, delta={delta}s"
+            f"reported_since_reset={reported_since_reset}s, delta={delta}s"
         )
 
     now = datetime.now(UTC)
@@ -107,7 +114,7 @@ def _update_drift_alert_state(device: str, relay_state: RelayState, since_reset:
         return None
 
     relay_state.drift_alert.last_sent_at = now
-    return DriftAlertInfo(since_reset=since_reset, reported=reported_total_active_seconds, delta=delta)
+    return DriftAlertInfo(since_reset=since_reset, reported=reported_since_reset, delta=delta)
 
 
 def build_relay_lifetime_alert_message(since_reset: float, device: str) -> str:
@@ -144,6 +151,7 @@ async def record_relay_state_report(report: RelayStateReport, device: str) -> Re
                 device=device,
                 active=False,
                 reported_total_active_seconds=report.total_active_seconds,
+                reported_total_active_seconds_at_last_reset=report.total_active_seconds,
             )
 
         _apply_transition(relay_state, report, event_timestamp)
@@ -153,7 +161,8 @@ async def record_relay_state_report(report: RelayStateReport, device: str) -> Re
 
         since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
         relay_lifetime_alert_since_reset = since_reset if _update_relay_lifetime_alert_state(relay_state, since_reset) else None
-        drift_alert = None if is_first_event else _update_drift_alert_state(device, relay_state, since_reset, report.total_active_seconds)
+        reported_since_reset = report.total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
+        drift_alert = None if is_first_event else _update_drift_alert_state(device, relay_state, since_reset, reported_since_reset)
 
         logger.debug(
             f"Recording relay state report from {device}: "
@@ -187,7 +196,8 @@ async def record_relay_state_reset(report: RelayResetReport, device: str) -> Non
         relay_state = await get_relay_state_from_db(device) or RelayState(
             device=device,
             active=False,
-            reported_total_active_seconds=report.previous_total_active_seconds,
+            reported_total_active_seconds=0,
+            reported_total_active_seconds_at_last_reset=0,
         )
 
         if relay_state.active and relay_state.active_since is not None:
@@ -204,6 +214,7 @@ async def record_relay_state_reset(report: RelayResetReport, device: str) -> Non
         # and drift bookkeeping - otherwise the next drift check compares the new since_reset=0
         # against the stale pre-reset reported total and falsely fires.
         relay_state.reported_total_active_seconds = 0
+        relay_state.reported_total_active_seconds_at_last_reset = 0
         relay_state.drift_alert = AlertState()
 
         await relay_state.save()
@@ -240,9 +251,10 @@ async def check_relay_state_for_alerts(relay_state: RelayState) -> RelayReportOu
         live_since_reset = live_computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
 
         since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
+        reported_since_reset = relay_state.reported_total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
 
         relay_lifetime_alert_since_reset = live_since_reset if _update_relay_lifetime_alert_state(relay_state, live_since_reset) else None
-        drift_alert = _update_drift_alert_state(relay_state.device, relay_state, since_reset, relay_state.reported_total_active_seconds)
+        drift_alert = _update_drift_alert_state(relay_state.device, relay_state, since_reset, reported_since_reset)
 
         await relay_state.save()
 

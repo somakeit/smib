@@ -20,13 +20,18 @@ def validate_timestamp(value: Any) -> Any:
         except (OverflowError, OSError, ValueError):
             raise ValueError("Invalid Unix timestamp")
     elif isinstance(value, datetime):
+        if value.tzinfo is None:
+            raise ValueError("Timestamp must include a timezone (naive datetime is ambiguous)")
         return value.timestamp()
 
     elif isinstance(value, str):
         try:
-            return datetime.fromisoformat(value).timestamp()
+            parsed = datetime.fromisoformat(value)
         except ValueError:
             raise ValueError("Invalid ISO 8601 timestamp")
+        if parsed.tzinfo is None:
+            raise ValueError("ISO 8601 timestamp must include a timezone offset (e.g. 'Z' or '+00:00')")
+        return parsed.timestamp()
 
     raise ValueError("Timestamp must be a UNIX epoch timestamp, or an ISO 8601 timestamp string")
 
