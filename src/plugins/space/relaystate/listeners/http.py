@@ -1,13 +1,14 @@
 import logging
 from http import HTTPStatus
 
+from fastapi import HTTPException
 from slack_bolt.app.async_app import AsyncApp
 
 from plugins.space.smibhid.common import DeviceHostnameHeader, get_timestamp
 from smib.events.interfaces.http.http_api_event_interface import ApiEventInterface
 from smib.utilities import get_humanized_time
 from ..common import record_relay_state_report, record_relay_state_reset, build_relay_lifetime_alert_message, \
-    build_drift_alert_message
+    build_drift_alert_message, get_relay_state_from_db
 from ..config import config
 from ..models import RelayStateReport, RelayResetReport
 
@@ -52,3 +53,13 @@ def register(slack: AsyncApp, api: ApiEventInterface):
             f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
         )
         await record_relay_state_reset(relay_reset_report, x_smibhid_hostname)
+
+    @api.delete("/space/relay/state/{device}", status_code=HTTPStatus.NO_CONTENT)
+    async def delete_relay_state(device: str) -> None:
+        """ Delete a device's relay state so the next report from it reseeds all baselines from scratch """
+        relay_state = await get_relay_state_from_db(device)
+        if relay_state is None:
+            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"No relay state found for device {device}")
+
+        await relay_state.delete()
+        logger.info(f"Deleted relay state for {device}; next report will reseed all baselines.")
