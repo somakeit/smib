@@ -1,0 +1,368 @@
+import asyncio
+import logging
+from collections import defaultdict
+from datetime import datetime, UTC, timedelta
+from typing import NamedTuple
+
+from smib.utilities import get_humanized_time, get_humanized_timedelta
+from .config import config
+from .models import RelayState, RelayStateHistory, RelayStateReport, RelayResetReport, RelayResetHistory, AlertState
+from ..smibhid.common import get_timestamp
+
+logger = logging.getLogger("Space Relay State Plugin - Common")
+
+# Serializes read-modify-write access to a device's RelayState document within this process,
+# since record_relay_state_report/record_relay_state_reset/check_relay_state_for_alerts all do a
+# find-then-save with no DB-level atomicity.
+_device_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+
+
+def _get_device_lock(device: str) -> asyncio.Lock:
+    return _device_locks[device]
+
+
+class DriftAlertInfo(NamedTuple):
+    since_reset: float
+    reported: float
+    delta: float
+
+
+class RelayReportOutcome(NamedTuple):
+    relay_lifetime_alert_since_reset: float | None
+    drift_alert: DriftAlertInfo | None
+
+
+async def get_relay_state_from_db(device: str) -> RelayState | None:
+    return await RelayState.find_one(RelayState.device == device)
+
+
+def _apply_transition(relay_state: RelayState, report: RelayStateReport, event_timestamp: datetime) -> None:
+    was_on = relay_state.active
+    is_on = report.active
+
+    if is_on and not was_on:
+        relay_state.active_since = event_timestamp
+    elif not is_on and was_on and relay_state.active_since is not None:
+        duration = (event_timestamp - relay_state.active_since).total_seconds()
+        if duration < 0:
+            logger.warning(
+                f"Relay state report for {relay_state.device} has an out-of-order timestamp "
+                f"(event_timestamp={event_timestamp} precedes active_since={relay_state.active_since}); "
+                f"clamping ON duration to 0 instead of applying a negative value."
+            )
+            duration = 0.0
+        elif duration > config.max_plausible_on_session_seconds:
+            # A single ON session longer than this almost always means active_since was never a real
+            # ON transition - e.g. a document written by an older schema, or a restored/migrated
+            # record where active=True survived but active_since did not. Crediting it would dump
+            # weeks of phantom on-time into the authoritative total in one event, which is exactly
+            # how SMIBHID-FAN ended up ~20 days over on its first OFF transition.
+            logger.error(
+                f"Relay state report for {relay_state.device} implies an implausible ON session of "
+                f"{duration}s (active_since={relay_state.active_since}, event_timestamp={event_timestamp}), "
+                f"exceeding max_plausible_on_session_seconds="
+                f"{config.max_plausible_on_session_seconds}; discarding this session's duration "
+                f"instead of corrupting computed_total_active_seconds."
+            )
+            duration = 0.0
+        relay_state.computed_total_active_seconds += duration
+        relay_state.active_since = None
+    elif not is_on and relay_state.active_since is not None:
+        # Turning off with a stale/unexpected active_since (e.g. missed the matching ON) - just clear it.
+        relay_state.active_since = None
+
+
+def _reconcile_with_reported(relay_state: RelayState, report: RelayStateReport) -> float | None:
+    """
+    Snap computed on-time to S.M.I.B.H.I.D.'s reported counter when the two have diverged.
+
+    Only meaningful while the relay is off: with no session in flight both sides describe the
+    same completed window, so any difference is accumulated error rather than an in-progress
+    session the computed side hasn't banked yet.
+
+    Why the reported side wins. S.M.I.B.H.I.D. counts on-time continuously from its own
+    checkpoints and persists them to flash before pushing, so its total survives a dropped
+    push. SMIB only *infers* what happened between the events it receives, and a lost
+    transition makes it guess wrong in both directions: miss an OFF and it credits the whole
+    gap as ON, miss an ON and it credits none of it. The device therefore holds the better
+    number, and it retransmits that number on every heartbeat - this is SMIB taking the
+    correction it was already being offered instead of letting the error accumulate until
+    someone resets the counter.
+
+    Returns the applied correction in seconds, or None if nothing was done.
+    """
+    if report.active or relay_state.active_since is not None:
+        return None
+
+    reported_since_reset = report.total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
+    computed_since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
+    correction = reported_since_reset - computed_since_reset
+
+    if abs(correction) <= config.reconcile_tolerance_seconds:
+        return None
+
+    # A correction larger than a plausible session means the two sides are not describing the
+    # same window at all (mismatched baselines, a reset that only landed on one side, a
+    # replaced device reusing a hostname). Snapping would import that inconsistency into the
+    # authoritative total, so leave it for the drift alert to surface instead.
+    if abs(correction) > config.max_plausible_on_session_seconds:
+        logger.error(
+            f"Refusing to reconcile relay on-time for {relay_state.device}: correction of "
+            f"{correction}s exceeds max_plausible_on_session_seconds="
+            f"{config.max_plausible_on_session_seconds}, which indicates mismatched baselines "
+            f"rather than accumulated drift. Leaving computed_total_active_seconds unchanged."
+        )
+        return None
+
+    new_total = relay_state.computed_total_active_seconds + correction
+    if new_total < 0:
+        logger.error(
+            f"Refusing to reconcile relay on-time for {relay_state.device}: correction of "
+            f"{correction}s would drive computed_total_active_seconds negative "
+            f"({new_total}s). Leaving it unchanged."
+        )
+        return None
+
+    logger.info(
+        f"Reconciling relay on-time for {relay_state.device} against S.M.I.B.H.I.D.'s reported "
+        f"counter: computed_since_reset={computed_since_reset}s -> {reported_since_reset}s "
+        f"(correction={correction:+}s). Divergence of this kind comes from relay state reports "
+        f"that never arrived."
+    )
+    relay_state.computed_total_active_seconds = new_total
+    return correction
+
+
+def _should_resend_alert(alert: AlertState, condition_met: bool, resend_interval: timedelta | None, now: datetime) -> bool:
+    """ Shared debounce rule for both alert types: fire on first trigger, then again after resend_interval if still active. """
+    if not condition_met:
+        return False
+
+    first_alert = not alert.active
+    resend_alert = (
+        alert.active
+        and resend_interval is not None
+        and alert.last_sent_at is not None
+        and (now - alert.last_sent_at) > resend_interval
+    )
+    return first_alert or resend_alert
+
+
+def _update_relay_lifetime_alert_state(relay_state: RelayState, since_reset: float) -> bool:
+    """ Mutates relay_state.lifetime_alert as a side effect; call exactly once per check cycle. """
+    if config.relay_lifetime_warning_threshold is None:
+        return False
+
+    condition_met = since_reset >= config.relay_lifetime_warning_threshold.total_seconds()
+    if not condition_met:
+        return False
+
+    now = datetime.now(UTC)
+    should_alert = _should_resend_alert(relay_state.lifetime_alert, condition_met, config.relay_lifetime_alert_resend_interval, now)
+    relay_state.lifetime_alert.active = True
+
+    if not should_alert:
+        return False
+
+    relay_state.lifetime_alert.last_sent_at = now
+    return True
+
+
+def _live_since_reset(relay_state: RelayState, as_of: datetime) -> float:
+    """
+    computed_total_active_seconds only advances on an OFF transition, so during a long ON
+    session it sits frozen while reported_total_active_seconds keeps climbing on every report.
+    Comparing the frozen value against the live reported value manufactures drift that grows
+    for the length of the ON session and resets at the next OFF - so the computed side must
+    also be live-adjusted for an in-progress ON session before comparing.
+    """
+    live_computed_total_active_seconds = relay_state.computed_total_active_seconds
+    if relay_state.active_since is not None:
+        in_flight = (as_of - relay_state.active_since).total_seconds()
+        # Same guard as the OFF transition in _apply_transition: a stale active_since would
+        # otherwise inflate every periodic drift check for as long as the session stays open.
+        in_flight = min(max(in_flight, 0.0), config.max_plausible_on_session_seconds)
+        live_computed_total_active_seconds += in_flight
+    return live_computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
+
+
+def _update_drift_alert_state(device: str, relay_state: RelayState, since_reset: float, reported_since_reset: float) -> DriftAlertInfo | None:
+    """ Mutates relay_state.drift_alert as a side effect; call exactly once per check cycle. """
+    delta = abs(since_reset - reported_since_reset)
+    condition_met = delta > config.total_active_seconds_drift_warning_threshold_seconds
+
+    if condition_met:
+        logger.warning(
+            f"Relay state total_active_seconds drift for {device} exceeds threshold "
+            f"({config.total_active_seconds_drift_warning_threshold_seconds}s): "
+            f"computed_since_reset={since_reset}s, "
+            f"reported_since_reset={reported_since_reset}s, delta={delta}s"
+        )
+
+    now = datetime.now(UTC)
+    should_alert = _should_resend_alert(relay_state.drift_alert, condition_met, config.drift_warning_alert_resend_interval, now)
+    relay_state.drift_alert.active = condition_met
+
+    if not should_alert:
+        return None
+
+    relay_state.drift_alert.last_sent_at = now
+    return DriftAlertInfo(since_reset=since_reset, reported=reported_since_reset, delta=delta)
+
+
+def build_relay_lifetime_alert_message(since_reset: float, device: str) -> str:
+    return config.relay_lifetime_alert_message_template.format(
+        relay_name=config.relay_name,
+        device=device,
+        duration=get_humanized_timedelta(timedelta(seconds=since_reset)),
+        threshold=get_humanized_timedelta(config.relay_lifetime_warning_threshold),
+    )
+
+
+def build_drift_alert_message(device: str, drift: DriftAlertInfo) -> str:
+    return (
+        f":warning: Relay state total_active_seconds drift for {device} exceeds threshold "
+        f"({get_humanized_timedelta(timedelta(seconds=config.total_active_seconds_drift_warning_threshold_seconds))}): "
+        f"computed_since_reset={get_humanized_timedelta(timedelta(seconds=drift.since_reset))}, "
+        f"reported={get_humanized_timedelta(timedelta(seconds=drift.reported))}, "
+        f"delta={get_humanized_timedelta(timedelta(seconds=drift.delta))}"
+    )
+
+
+async def record_relay_state_report(report: RelayStateReport, device: str) -> RelayReportOutcome:
+    event_timestamp = get_timestamp(report.timestamp)
+
+    async with _get_device_lock(device):
+        relay_state = await get_relay_state_from_db(device)
+        is_first_event = relay_state is None
+
+        if relay_state is None:
+            # Bootstrap with an "off, unset" baseline so the transition logic below
+            # runs uniformly - e.g. a first report of active=True still opens
+            # an active_since window.
+            #
+            # Both reset baselines must be seeded together: computed_* starts at 0 here, so
+            # computed_*_at_last_reset must also be 0, while reported_*_at_last_reset takes the
+            # device's current lifetime counter. Seeding only one side makes since_reset on the
+            # computed branch a lifetime figure and on the reported branch a since-reset figure,
+            # which silently breaks both the drift comparison and the lifetime alert.
+            relay_state = RelayState(
+                device=device,
+                active=False,
+                reported_total_active_seconds=report.total_active_seconds,
+                reported_total_active_seconds_at_last_reset=report.total_active_seconds,
+                computed_total_active_seconds=0.0,
+                computed_total_active_seconds_at_last_reset=0.0,
+            )
+
+        _apply_transition(relay_state, report, event_timestamp)
+
+        relay_state.active = report.active
+
+        # Reconcile before updating the reported baseline so the comparison uses this
+        # report's counter, and before the alert checks so they see the corrected total.
+        # Skipped on the first event, where the computed side has no history to correct.
+        reconciliation = None if is_first_event else _reconcile_with_reported(relay_state, report)
+
+        relay_state.reported_total_active_seconds = report.total_active_seconds
+
+        since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
+        relay_lifetime_alert_since_reset = since_reset if _update_relay_lifetime_alert_state(relay_state, since_reset) else None
+        live_since_reset = _live_since_reset(relay_state, event_timestamp)
+        reported_since_reset = report.total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
+        drift_alert = None if is_first_event else _update_drift_alert_state(device, relay_state, live_since_reset, reported_since_reset)
+
+        logger.debug(
+            f"Recording relay state report from {device}: "
+            f"active={report.active}, "
+            f"total_active_seconds={report.total_active_seconds}, "
+            f"computed_total_active_seconds={relay_state.computed_total_active_seconds}, "
+            f"since_reset={since_reset}, "
+            f"reconciliation={reconciliation}, "
+            f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
+        )
+
+        await relay_state.save()
+
+        await RelayStateHistory(
+            device=device,
+            timestamp=event_timestamp,
+            active=report.active,
+            reported_total_active_seconds=report.total_active_seconds,
+            computed_total_active_seconds=relay_state.computed_total_active_seconds,
+        ).save()
+
+    return RelayReportOutcome(
+        relay_lifetime_alert_since_reset=relay_lifetime_alert_since_reset,
+        drift_alert=drift_alert,
+    )
+
+
+async def record_relay_state_reset(report: RelayResetReport, device: str) -> None:
+    event_timestamp = get_timestamp(report.timestamp)
+
+    async with _get_device_lock(device):
+        relay_state = await get_relay_state_from_db(device) or RelayState(
+            device=device,
+            active=False,
+            reported_total_active_seconds=0,
+            reported_total_active_seconds_at_last_reset=0,
+        )
+
+        if relay_state.active and relay_state.active_since is not None:
+            # The relay stayed on across the reset - fold the pre-reset portion of the current
+            # session into the lifetime total (same as a real OFF transition would) and restart
+            # the session at the reset point, so since_reset doesn't keep counting from whenever
+            # the relay originally turned on.
+            relay_state.computed_total_active_seconds += (event_timestamp - relay_state.active_since).total_seconds()
+            relay_state.active_since = event_timestamp
+
+        relay_state.computed_total_active_seconds_at_last_reset = relay_state.computed_total_active_seconds
+        relay_state.lifetime_alert = AlertState()
+        # The reset also zeroes S.M.I.B.H.I.D.'s own counter, so rebaseline the cross-check value
+        # and drift bookkeeping - otherwise the next drift check compares the new since_reset=0
+        # against the stale pre-reset reported total and falsely fires.
+        relay_state.reported_total_active_seconds = 0
+        relay_state.reported_total_active_seconds_at_last_reset = 0
+        relay_state.drift_alert = AlertState()
+
+        await relay_state.save()
+
+        await RelayResetHistory(
+            device=device,
+            timestamp=event_timestamp,
+            previous_total_active_seconds=report.previous_total_active_seconds,
+            computed_total_active_seconds_at_reset=relay_state.computed_total_active_seconds,
+        ).save()
+
+    logger.info(
+        f"Relay on-time counter reset for {device}: "
+        f"previous_total_active_seconds={report.previous_total_active_seconds}, "
+        f"computed_total_active_seconds_at_reset={relay_state.computed_total_active_seconds}, "
+        f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
+    )
+
+
+async def check_relay_state_for_alerts(relay_state: RelayState) -> RelayReportOutcome:
+    """
+    Periodic (non-event-triggered) re-check of a single device's relay state, used by the
+    scheduled monitor job. Both relay-lifetime and drift use a live-adjusted since_reset
+    (accounting for an in-progress ON session that hasn't gone through an OFF transition yet)
+    so a relay stuck ON still gets caught and doesn't manufacture drift against the
+    continuously-updating reported total. See _live_since_reset.
+    """
+    now = datetime.now(UTC)
+
+    async with _get_device_lock(relay_state.device):
+        live_since_reset = _live_since_reset(relay_state, now)
+        reported_since_reset = relay_state.reported_total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
+
+        relay_lifetime_alert_since_reset = live_since_reset if _update_relay_lifetime_alert_state(relay_state, live_since_reset) else None
+        drift_alert = _update_drift_alert_state(relay_state.device, relay_state, live_since_reset, reported_since_reset)
+
+        await relay_state.save()
+
+    return RelayReportOutcome(
+        relay_lifetime_alert_since_reset=relay_lifetime_alert_since_reset,
+        drift_alert=drift_alert,
+    )

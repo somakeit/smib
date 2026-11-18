@@ -2,12 +2,17 @@
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
 .Python
-[Bb]in
-[Ii]nclude
-[Ll]ib
-[Ll]ib64
-[Ll]ocal
-[Ss]cripts
+# Anchored to the repo root: these name virtualenv layout dirs, so they must not swallow
+# project directories like scripts/ or tests/scripts/.
+/[Bb]in
+/[Ii]nclude
+/[Ll]ib
+/[Ll]ib64
+/[Ll]ocal
+/[Ss]cripts
+# The project's own maintenance scripts live in scripts/, which collides with the venv
+# layout pattern above.
+!/scripts/
 pyvenv.cfg
 .venv
 pip-selfcheck.json
@@ -213,3 +218,5 @@ db/
 src/plugins/sam-dev
 temp/
 compose.override.yaml
+.junie/
+.claude/
