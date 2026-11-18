@@ -51,6 +51,20 @@ def _apply_transition(relay_state: RelayState, report: RelayStateReport, event_t
                 f"clamping ON duration to 0 instead of applying a negative value."
             )
             duration = 0.0
+        elif duration > config.max_plausible_on_session_seconds:
+            # A single ON session longer than this almost always means active_since was never a real
+            # ON transition - e.g. a document written by an older schema, or a restored/migrated
+            # record where active=True survived but active_since did not. Crediting it would dump
+            # weeks of phantom on-time into the authoritative total in one event, which is exactly
+            # how SMIBHID-FAN ended up ~20 days over on its first OFF transition.
+            logger.error(
+                f"Relay state report for {relay_state.device} implies an implausible ON session of "
+                f"{duration}s (active_since={relay_state.active_since}, event_timestamp={event_timestamp}), "
+                f"exceeding max_plausible_on_session_seconds="
+                f"{config.max_plausible_on_session_seconds}; discarding this session's duration "
+                f"instead of corrupting computed_total_active_seconds."
+            )
+            duration = 0.0
         relay_state.computed_total_active_seconds += duration
         relay_state.active_since = None
     elif not is_on and relay_state.active_since is not None:
@@ -103,7 +117,11 @@ def _live_since_reset(relay_state: RelayState, as_of: datetime) -> float:
     """
     live_computed_total_active_seconds = relay_state.computed_total_active_seconds
     if relay_state.active_since is not None:
-        live_computed_total_active_seconds += (as_of - relay_state.active_since).total_seconds()
+        in_flight = (as_of - relay_state.active_since).total_seconds()
+        # Same guard as the OFF transition in _apply_transition: a stale active_since would
+        # otherwise inflate every periodic drift check for as long as the session stays open.
+        in_flight = min(max(in_flight, 0.0), config.max_plausible_on_session_seconds)
+        live_computed_total_active_seconds += in_flight
     return live_computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
 
 
@@ -161,11 +179,19 @@ async def record_relay_state_report(report: RelayStateReport, device: str) -> Re
             # Bootstrap with an "off, unset" baseline so the transition logic below
             # runs uniformly - e.g. a first report of active=True still opens
             # an active_since window.
+            #
+            # Both reset baselines must be seeded together: computed_* starts at 0 here, so
+            # computed_*_at_last_reset must also be 0, while reported_*_at_last_reset takes the
+            # device's current lifetime counter. Seeding only one side makes since_reset on the
+            # computed branch a lifetime figure and on the reported branch a since-reset figure,
+            # which silently breaks both the drift comparison and the lifetime alert.
             relay_state = RelayState(
                 device=device,
                 active=False,
                 reported_total_active_seconds=report.total_active_seconds,
                 reported_total_active_seconds_at_last_reset=report.total_active_seconds,
+                computed_total_active_seconds=0.0,
+                computed_total_active_seconds_at_last_reset=0.0,
             )
 
         _apply_transition(relay_state, report, event_timestamp)

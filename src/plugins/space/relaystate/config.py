@@ -20,6 +20,11 @@ class RelayStatePluginConfig(EnvBaseSettings):
         description="Log a warning when SMIB's computed cumulative relay on-time and S.M.I.B.H.I.D.'s reported total_active_seconds differ by more than this many seconds",
     )
 
+    max_plausible_on_session_seconds: float = Field(
+        default=timedelta(days=7).total_seconds(),
+        description="Upper bound on a single relay ON session. An OFF transition implying a longer session is treated as a corrupt/missing active_since (e.g. a record written by an older schema) and its duration is discarded rather than added to SMIB's authoritative cumulative on-time.",
+    )
+
     monitor_interval: IntervalField | None = Field(
         default=timedelta(minutes=5),
         description="Interval between periodic sweeps of all known relay states, re-checking drift and relay-lifetime thresholds independent of new incoming reports (catches e.g. a relay stuck ON with no new events landing). Accepts seconds (int), 'HH:MM:SS', or ISO8601 durations like 'PT5M'. If None, only event-triggered checks run.",
