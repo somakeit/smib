@@ -19,7 +19,7 @@ class RelayStateReport(BaseModel):
         float,
         Field(
             ge=0,
-            description="Cumulative relay on-time in seconds since device reset, as reported by S.M.I.B.H.I.D. Cross-check value only, not authoritative.",
+            description="Cumulative relay on-time in seconds since device reset, as reported by S.M.I.B.H.I.D. Counted continuously on-device and persisted before each push, so it survives reports that fail to reach SMIB - used to cross-check and correct SMIB's computed total.",
             examples=[42.5],
         )
     ]
@@ -55,8 +55,8 @@ class AlertState(BaseModel):
 
 class RelayState(Document):
     """
-    Stores the latest reported relay state for a device, plus SMIB's own
-    authoritative cumulative on-time computed from received transitions.
+    Stores the latest reported relay state for a device, plus SMIB's cumulative on-time
+    computed from received transitions and reconciled against the device's own counter.
     """
     device: Annotated[str, Field(description="Device hostname"), Indexed(unique=True, name="device_unique")]
     active: Annotated[bool, Field(description="Whether the relay is currently on", examples=[True])]
@@ -64,7 +64,7 @@ class RelayState(Document):
         float,
         Field(
             ge=0,
-            description="Last cumulative on-time reported by S.M.I.B.H.I.D. Cross-check value only, not authoritative.",
+            description="Last cumulative on-time reported by S.M.I.B.H.I.D. Counted continuously on-device, so it is the more reliable figure when it disagrees with the computed total; reconciliation snaps the computed total to it while the relay is off.",
             examples=[42.5],
         )
     ]
@@ -73,7 +73,7 @@ class RelayState(Document):
         Field(
             ge=0,
             default=0.0,
-            description="SMIB's own authoritative cumulative on-time, computed from ON/OFF durations across received transitions",
+            description="SMIB's cumulative on-time, computed from ON/OFF durations across received transitions and periodically reconciled against the device's reported counter. SMIB can only infer state between the reports it receives, so a lost transition skews this figure; the reconciliation corrects that drift while the relay is off.",
             examples=[42.5],
         )
     ]

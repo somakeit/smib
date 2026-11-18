@@ -72,6 +72,67 @@ def _apply_transition(relay_state: RelayState, report: RelayStateReport, event_t
         relay_state.active_since = None
 
 
+def _reconcile_with_reported(relay_state: RelayState, report: RelayStateReport) -> float | None:
+    """
+    Snap computed on-time to S.M.I.B.H.I.D.'s reported counter when the two have diverged.
+
+    Only meaningful while the relay is off: with no session in flight both sides describe the
+    same completed window, so any difference is accumulated error rather than an in-progress
+    session the computed side hasn't banked yet.
+
+    Why the reported side wins. S.M.I.B.H.I.D. counts on-time continuously from its own
+    checkpoints and persists them to flash before pushing, so its total survives a dropped
+    push. SMIB only *infers* what happened between the events it receives, and a lost
+    transition makes it guess wrong in both directions: miss an OFF and it credits the whole
+    gap as ON, miss an ON and it credits none of it. The device therefore holds the better
+    number, and it retransmits that number on every heartbeat - this is SMIB taking the
+    correction it was already being offered instead of letting the error accumulate until
+    someone resets the counter.
+
+    Returns the applied correction in seconds, or None if nothing was done.
+    """
+    if report.active or relay_state.active_since is not None:
+        return None
+
+    reported_since_reset = report.total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset
+    computed_since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
+    correction = reported_since_reset - computed_since_reset
+
+    if abs(correction) <= config.reconcile_tolerance_seconds:
+        return None
+
+    # A correction larger than a plausible session means the two sides are not describing the
+    # same window at all (mismatched baselines, a reset that only landed on one side, a
+    # replaced device reusing a hostname). Snapping would import that inconsistency into the
+    # authoritative total, so leave it for the drift alert to surface instead.
+    if abs(correction) > config.max_plausible_on_session_seconds:
+        logger.error(
+            f"Refusing to reconcile relay on-time for {relay_state.device}: correction of "
+            f"{correction}s exceeds max_plausible_on_session_seconds="
+            f"{config.max_plausible_on_session_seconds}, which indicates mismatched baselines "
+            f"rather than accumulated drift. Leaving computed_total_active_seconds unchanged."
+        )
+        return None
+
+    new_total = relay_state.computed_total_active_seconds + correction
+    if new_total < 0:
+        logger.error(
+            f"Refusing to reconcile relay on-time for {relay_state.device}: correction of "
+            f"{correction}s would drive computed_total_active_seconds negative "
+            f"({new_total}s). Leaving it unchanged."
+        )
+        return None
+
+    logger.info(
+        f"Reconciling relay on-time for {relay_state.device} against S.M.I.B.H.I.D.'s reported "
+        f"counter: computed_since_reset={computed_since_reset}s -> {reported_since_reset}s "
+        f"(correction={correction:+}s). Divergence of this kind comes from relay state reports "
+        f"that never arrived."
+    )
+    relay_state.computed_total_active_seconds = new_total
+    return correction
+
+
 def _should_resend_alert(alert: AlertState, condition_met: bool, resend_interval: timedelta | None, now: datetime) -> bool:
     """ Shared debounce rule for both alert types: fire on first trigger, then again after resend_interval if still active. """
     if not condition_met:
@@ -197,6 +258,12 @@ async def record_relay_state_report(report: RelayStateReport, device: str) -> Re
         _apply_transition(relay_state, report, event_timestamp)
 
         relay_state.active = report.active
+
+        # Reconcile before updating the reported baseline so the comparison uses this
+        # report's counter, and before the alert checks so they see the corrected total.
+        # Skipped on the first event, where the computed side has no history to correct.
+        reconciliation = None if is_first_event else _reconcile_with_reported(relay_state, report)
+
         relay_state.reported_total_active_seconds = report.total_active_seconds
 
         since_reset = relay_state.computed_total_active_seconds - relay_state.computed_total_active_seconds_at_last_reset
@@ -211,6 +278,7 @@ async def record_relay_state_report(report: RelayStateReport, device: str) -> Re
             f"total_active_seconds={report.total_active_seconds}, "
             f"computed_total_active_seconds={relay_state.computed_total_active_seconds}, "
             f"since_reset={since_reset}, "
+            f"reconciliation={reconciliation}, "
             f"timestamp={get_humanized_time(event_timestamp)} ({event_timestamp})"
         )
 
