@@ -63,11 +63,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from beanie import init_beanie  # noqa: E402
 from pymongo import AsyncMongoClient  # noqa: E402
 
+from plugins.space.relaystate.common import (  # noqa: E402
+    _apply_transition,
+    _reconcile_with_reported,
+)
 from plugins.space.relaystate.config import config  # noqa: E402
 from plugins.space.relaystate.models import (  # noqa: E402
+    AlertState,
     RelayResetHistory,
     RelayState,
     RelayStateHistory,
+    RelayStateReport,
 )
 from smib.config import database  # noqa: E402
 
@@ -85,74 +91,104 @@ class ReplayResult:
         self.sessions_credited = 0
         self.sessions_rejected = 0
         self.rejected_seconds = 0.0
+        self.reconciliations = 0
+        self.reconciled_seconds = 0.0
 
 
 def replay(events: list[RelayStateHistory], resets: list[RelayResetHistory]) -> ReplayResult:
     """
     Recompute cumulative on-time from the event stream.
 
-    Mirrors the production rules in plugins.space.relaystate.common._apply_transition:
-    time is only credited on an ON->OFF transition, out-of-order timestamps contribute 0,
-    and a session longer than max_plausible_on_session_seconds is rejected rather than
-    banked (this is what quarantines the original corruption instead of replaying it).
+    Drives the production helpers (_apply_transition, _reconcile_with_reported) against a
+    scratch RelayState rather than reimplementing them, so the replay cannot answer
+    differently from live processing. An earlier version did hand-roll the transition rules
+    and immediately fell out of step when reconciliation was added to the plugin.
+
+    The reported-side baseline is seeded the way the bootstrap seeds it - from the first
+    observed reading - so reconciliation compares like with like from the very first event.
     """
     result = ReplayResult()
+    if not events:
+        return result
+
+    ordered_events = sorted(events, key=lambda e: e.timestamp)
     pending_resets = sorted(resets, key=lambda r: r.timestamp)
     reset_index = 0
 
-    for event in sorted(events, key=lambda e: e.timestamp):
-        # Apply any reset that happened before this event. A reset folds the in-progress
-        # portion of an open session into the total and rebaselines, matching
-        # record_relay_state_reset.
+    # Scratch document the production helpers mutate. Seeded as record_relay_state_report's
+    # bootstrap would seed it for this device's first event.
+    state = RelayState.model_construct(
+        device=ordered_events[0].device,
+        active=False,
+        active_since=None,
+        computed_total_active_seconds=0.0,
+        computed_total_active_seconds_at_last_reset=0.0,
+        reported_total_active_seconds=ordered_events[0].reported_total_active_seconds,
+        reported_total_active_seconds_at_last_reset=ordered_events[0].reported_total_active_seconds,
+        lifetime_alert=AlertState(),
+        drift_alert=AlertState(),
+    )
+
+    for index, event in enumerate(ordered_events):
+        # Apply any reset that happened before this event, mirroring
+        # record_relay_state_reset: fold the in-progress portion of an open session into the
+        # total, restart the session at the reset point, then rebaseline both sides.
         while reset_index < len(pending_resets) and pending_resets[reset_index].timestamp <= event.timestamp:
             reset_at = pending_resets[reset_index].timestamp
-            if result.active and result.active_since is not None:
-                partial = (reset_at - result.active_since).total_seconds()
+            if state.active and state.active_since is not None:
+                partial = (reset_at - state.active_since).total_seconds()
                 if 0 <= partial <= config.max_plausible_on_session_seconds:
-                    result.computed_total_active_seconds += partial
-                result.active_since = reset_at
-            result.computed_total_active_seconds_at_last_reset = result.computed_total_active_seconds
+                    state.computed_total_active_seconds += partial
+                state.active_since = reset_at
+            state.computed_total_active_seconds_at_last_reset = state.computed_total_active_seconds
+            state.reported_total_active_seconds = 0.0
+            state.reported_total_active_seconds_at_last_reset = 0.0
             result.resets_applied += 1
             reset_index += 1
 
-        was_on = result.active
-        is_on = event.active
+        report = RelayStateReport.model_construct(
+            active=event.active,
+            total_active_seconds=event.reported_total_active_seconds,
+            timestamp=event.timestamp.timestamp(),
+        )
 
-        if is_on and not was_on:
-            result.active_since = event.timestamp
-        elif not is_on and was_on and result.active_since is not None:
-            duration = (event.timestamp - result.active_since).total_seconds()
-            if duration < 0:
-                logger.warning(
-                    f"Out-of-order event at {event.timestamp.isoformat()} "
-                    f"(active_since={result.active_since.isoformat()}); crediting 0s."
-                )
-                duration = 0.0
-            elif duration > config.max_plausible_on_session_seconds:
-                logger.warning(
-                    f"Rejecting implausible session of {duration:.0f}s ending "
-                    f"{event.timestamp.isoformat()} (active_since="
-                    f"{result.active_since.isoformat()}) - this is the corruption being repaired."
-                )
-                result.sessions_rejected += 1
-                result.rejected_seconds += duration
-                duration = 0.0
-            else:
+        before = state.computed_total_active_seconds
+        session_start = state.active_since
+
+        _apply_transition(state, report, event.timestamp)
+        state.active = event.active
+
+        # Attribute the transition's outcome for the summary. A credited session advances the
+        # total; a rejected one leaves it flat despite closing an open session.
+        if session_start is not None and state.active_since is None and not event.active:
+            if state.computed_total_active_seconds > before:
                 result.sessions_credited += 1
-            result.computed_total_active_seconds += duration
-            result.active_since = None
-        elif not is_on and result.active_since is not None:
-            result.active_since = None
+            else:
+                implied = (event.timestamp - session_start).total_seconds()
+                result.sessions_rejected += 1
+                result.rejected_seconds += max(implied, 0.0)
 
-        result.active = is_on
+        # Reconcile exactly where record_relay_state_report does: after the transition, before
+        # the reported baseline advances, and never on the first event (no history to correct).
+        if index > 0:
+            correction = _reconcile_with_reported(state, report)
+            if correction is not None:
+                result.reconciliations += 1
+                result.reconciled_seconds += abs(correction)
+
+        state.reported_total_active_seconds = event.reported_total_active_seconds
         result.events_replayed += 1
 
     # Any reset recorded after the final event.
     while reset_index < len(pending_resets):
-        result.computed_total_active_seconds_at_last_reset = result.computed_total_active_seconds
+        state.computed_total_active_seconds_at_last_reset = state.computed_total_active_seconds
         result.resets_applied += 1
         reset_index += 1
 
+    result.computed_total_active_seconds = state.computed_total_active_seconds
+    result.computed_total_active_seconds_at_last_reset = state.computed_total_active_seconds_at_last_reset
+    result.active_since = state.active_since
+    result.active = state.active
     return result
 
 
@@ -188,6 +224,15 @@ def summarise(relay_state: RelayState, result: ReplayResult, reported_at_last_re
     )
     reported_since_reset = relay_state.reported_total_active_seconds - reported_at_last_reset
 
+    # A relay that is still on leaves a legitimate gap: the device credits the in-flight
+    # session continuously while the computed side only banks it at the next OFF. That is not
+    # drift, and comparing it against the drift threshold would misreport a healthy repair.
+    residual = abs(new_computed_since_reset - reported_since_reset)
+    if result.active and result.active_since is not None:
+        residual_note = " (the in-progress ON session, not yet banked - expected)"
+    else:
+        residual_note = f" (drift threshold {config.total_active_seconds_drift_warning_threshold_seconds:.0f}s)"
+
     lines = [
         f"Device:                  {relay_state.device}",
         f"Events replayed:         {result.events_replayed}",
@@ -195,6 +240,8 @@ def summarise(relay_state: RelayState, result: ReplayResult, reported_at_last_re
         f"Sessions credited:       {result.sessions_credited}",
         f"Sessions rejected:       {result.sessions_rejected} "
         f"({days(result.rejected_seconds)} not credited)",
+        f"Reconciliations:         {result.reconciliations} "
+        f"({days(result.reconciled_seconds)} of drift corrected against the device counter)",
         "",
         "computed_total_active_seconds:",
         f"  before:                {days(relay_state.computed_total_active_seconds)}",
@@ -213,8 +260,7 @@ def summarise(relay_state: RelayState, result: ReplayResult, reported_at_last_re
         f"reported={days(relay_state.reported_total_active_seconds - relay_state.reported_total_active_seconds_at_last_reset)}",
         f"  after:                 computed={days(new_computed_since_reset)} "
         f"reported={days(reported_since_reset)}",
-        f"  residual drift after:  {abs(new_computed_since_reset - reported_since_reset):.0f}s "
-        f"(threshold {config.total_active_seconds_drift_warning_threshold_seconds:.0f}s)",
+        f"  residual after:        {residual:.0f}s{residual_note}",
         "",
         f"active:                  {relay_state.active} -> {result.active}",
         f"active_since:            {relay_state.active_since} -> {result.active_since}",

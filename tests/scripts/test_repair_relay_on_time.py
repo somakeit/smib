@@ -32,6 +32,37 @@ def event(active: bool, offset_seconds: float, reported: float = 0.0) -> RelaySt
     )
 
 
+def healthy_stream(*transitions: tuple[bool, float]) -> list[RelayStateHistory]:
+    """
+    Build an event stream whose reported counter tracks real on-time, as a device with no
+    lost pushes would report it.
+
+    The replay now runs the production reconciliation, which treats the reported counter as
+    the better figure - so a stream where that counter is flat while the relay cycles is a
+    *device that lost pushes*, not a neutral fixture. Tests of the transition arithmetic need
+    a self-consistent stream, or reconciliation correctly snaps the total to the stub value.
+    """
+    events: list[RelayStateHistory] = []
+    reported = 0.0
+    active = False
+    since: float | None = None
+
+    for is_on, offset in transitions:
+        if is_on and not active:
+            since = offset
+        elif not is_on and active and since is not None:
+            reported += offset - since
+            since = None
+        elif is_on and active and since is not None:
+            # Heartbeat mid-session: the device credits elapsed time continuously.
+            reported += offset - since
+            since = offset
+        active = is_on
+        events.append(event(is_on, offset, reported=reported))
+
+    return events
+
+
 def reset(offset_seconds: float, previous_total: float = 0.0) -> RelayResetHistory:
     return RelayResetHistory.model_construct(
         device="SMIBHID-TEST",
@@ -50,7 +81,7 @@ class TestReplayBasics:
         assert result.events_replayed == 0
 
     def test_single_session_is_credited_once(self):
-        events = [event(True, 0), event(False, 3159)]
+        events = healthy_stream((True, 0), (False, 3159))
 
         result = replay(events, [])
 
@@ -60,11 +91,11 @@ class TestReplayBasics:
         assert result.active_since is None
 
     def test_multiple_sessions_accumulate(self):
-        events = [
-            event(True, 0), event(False, 100),
-            event(True, 200), event(False, 350),
-            event(True, 400), event(False, 410),
-        ]
+        events = healthy_stream(
+            (True, 0), (False, 100),
+            (True, 200), (False, 350),
+            (True, 400), (False, 410),
+        )
 
         result = replay(events, [])
 
@@ -73,7 +104,7 @@ class TestReplayBasics:
 
     def test_heartbeats_while_on_do_not_double_credit(self):
         """SMIBHID reports hourly while ON; only the closing OFF may credit the session."""
-        events = [event(True, 0), event(True, 3600), event(True, 7200), event(False, 10800)]
+        events = healthy_stream((True, 0), (True, 3600), (True, 7200), (False, 10800))
 
         result = replay(events, [])
 
@@ -81,14 +112,14 @@ class TestReplayBasics:
         assert result.sessions_credited == 1
 
     def test_events_are_replayed_in_timestamp_order(self):
-        ordered = [event(True, 0), event(False, 600)]
+        ordered = healthy_stream((True, 0), (False, 600))
         shuffled = [ordered[1], ordered[0]]
 
         assert replay(shuffled, []).computed_total_active_seconds == pytest.approx(600.0)
 
     def test_open_session_is_left_open(self):
         """A device currently ON must keep active_since so live adjustment still works."""
-        events = [event(True, 0), event(False, 600), event(True, 1200)]
+        events = healthy_stream((True, 0), (False, 600), (True, 1200))
 
         result = replay(events, [])
 
@@ -109,7 +140,14 @@ class TestReplayQuarantinesCorruption:
         on-time. The replay must discard it, otherwise it just reproduces the bad total.
         """
         phantom = timedelta(days=20, hours=4).total_seconds()
-        events = [event(True, 0), event(False, phantom), event(True, phantom + 60), event(False, phantom + 3660)]
+        # The device only ever counted the legitimate 1h session - the phantom span comes from
+        # SMIB's side (a stale active_since), which is why the reported counter never saw it.
+        events = [
+            event(True, 0, reported=0.0),
+            event(False, phantom, reported=0.0),
+            event(True, phantom + 60, reported=0.0),
+            event(False, phantom + 3660, reported=3600.0),
+        ]
 
         result = replay(events, [])
 
@@ -129,7 +167,7 @@ class TestReplayQuarantinesCorruption:
 
     def test_session_just_under_cap_is_still_credited(self):
         duration = config.max_plausible_on_session_seconds - 60
-        events = [event(True, 0), event(False, duration)]
+        events = healthy_stream((True, 0), (False, duration))
 
         result = replay(events, [])
 
@@ -139,7 +177,13 @@ class TestReplayQuarantinesCorruption:
 
 class TestReplayHandlesResets:
     def test_reset_rebaselines_without_losing_lifetime_total(self):
-        events = [event(True, 0), event(False, 600), event(True, 2000), event(False, 2600)]
+        # The device zeroes its counter at the reset, so post-reset readings restart from 0.
+        events = [
+            event(True, 0, reported=0.0),
+            event(False, 600, reported=600.0),
+            event(True, 2000, reported=0.0),
+            event(False, 2600, reported=600.0),
+        ]
 
         result = replay(events, [reset(1000)])
 
@@ -148,7 +192,7 @@ class TestReplayHandlesResets:
 
     def test_reset_during_open_session_splits_it(self):
         """A reset mid-session banks the pre-reset portion and restarts the session there."""
-        events = [event(True, 0), event(False, 1000)]
+        events = [event(True, 0, reported=0.0), event(False, 1000, reported=600.0)]
 
         result = replay(events, [reset(400)])
 
@@ -156,7 +200,12 @@ class TestReplayHandlesResets:
         assert result.computed_total_active_seconds_at_last_reset == pytest.approx(400.0)
 
     def test_since_reset_is_measured_from_the_reset_point(self):
-        events = [event(True, 0), event(False, 600), event(True, 1000), event(False, 1600)]
+        events = [
+            event(True, 0, reported=0.0),
+            event(False, 600, reported=600.0),
+            event(True, 1000, reported=0.0),
+            event(False, 1600, reported=600.0),
+        ]
 
         result = replay(events, [reset(800)])
         since_reset = (
@@ -167,7 +216,7 @@ class TestReplayHandlesResets:
         assert since_reset == pytest.approx(600.0)
 
     def test_reset_after_final_event_rebaselines_to_full_total(self):
-        events = [event(True, 0), event(False, 600)]
+        events = healthy_stream((True, 0), (False, 600))
 
         result = replay(events, [reset(5000)])
 
@@ -197,9 +246,9 @@ class TestReplayHandlesResets:
 
     def test_multiple_resets_use_the_latest_as_baseline(self):
         events = [
-            event(True, 0), event(False, 600),
-            event(True, 1000), event(False, 1600),
-            event(True, 2000), event(False, 2600),
+            event(True, 0, reported=0.0), event(False, 600, reported=600.0),
+            event(True, 1000, reported=0.0), event(False, 1600, reported=600.0),
+            event(True, 2000, reported=0.0), event(False, 2600, reported=600.0),
         ]
 
         result = replay(events, [reset(800), reset(1800)])
@@ -207,3 +256,83 @@ class TestReplayHandlesResets:
         assert result.resets_applied == 2
         assert result.computed_total_active_seconds == pytest.approx(1800.0)
         assert result.computed_total_active_seconds_at_last_reset == pytest.approx(1200.0)
+
+
+class TestReplayReconciles:
+    """
+    The replay must reach the same answer as live processing, so it runs the plugin's own
+    reconciliation rather than only the transition rules. An earlier version hand-rolled the
+    arithmetic and silently diverged by 6676s on the real SMIBHID-FAN history once
+    reconciliation landed in the plugin.
+    """
+
+    def test_lost_off_transition_is_corrected_down(self):
+        """
+        SMIB sees ON then OFF an hour later and credits the whole gap, but the device's
+        counter never moved - so the device says the relay was off for that hour.
+        """
+        events = [
+            event(True, 0, reported=0.0),
+            event(False, 3600, reported=0.0),
+        ]
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 1
+        assert result.reconciled_seconds == pytest.approx(3600.0)
+        assert result.computed_total_active_seconds == pytest.approx(0.0)
+
+    def test_lost_on_transition_is_corrected_up(self):
+        """SMIB had the relay recorded off, but the device counted the full hour as on."""
+        events = [
+            event(False, 0, reported=0.0),
+            event(False, 3600, reported=3600.0),
+        ]
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 1
+        assert result.computed_total_active_seconds == pytest.approx(3600.0)
+
+    def test_healthy_stream_needs_no_reconciliation(self):
+        """A device with no lost pushes must not be corrected at all."""
+        events = healthy_stream(
+            (True, 0), (False, 600),
+            (True, 1200), (False, 2400),
+            (True, 3000), (False, 3600),
+        )
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 0
+        assert result.computed_total_active_seconds == pytest.approx(600 + 1200 + 600)
+
+    def test_no_reconciliation_on_the_first_event(self):
+        """There is no history to correct yet, matching record_relay_state_report."""
+        events = [event(False, 0, reported=99999.0)]
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 0
+        assert result.computed_total_active_seconds == pytest.approx(0.0)
+
+    def test_no_reconciliation_while_a_session_is_open(self):
+        """An unbanked in-flight session is not drift."""
+        events = [
+            event(True, 0, reported=0.0),
+            event(True, 3600, reported=3600.0),
+        ]
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 0
+        assert result.active is True
+
+    def test_jitter_within_tolerance_is_not_corrected(self):
+        events = healthy_stream((True, 0), (False, 600))
+        events[-1].reported_total_active_seconds = 600.0 + config.reconcile_tolerance_seconds / 2
+
+        result = replay(events, [])
+
+        assert result.reconciliations == 0
+        assert result.computed_total_active_seconds == pytest.approx(600.0)
