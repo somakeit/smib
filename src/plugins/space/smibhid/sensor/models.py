@@ -36,6 +36,9 @@ SENSOR_DATA_EXAMPLE = {
         "pm25_env": 6,
         "pm100_standard": 6,
         "particles_50um": 0
+    },
+    "InternalMetrics": {
+        "relay_on_time": 1741003,
     }
 }
 
@@ -66,6 +69,9 @@ SENSOR_UNITS_EXAMPLE = {
         "pm25_env": "ug/m3",
         "pm100_standard": "ug/m3",
         "pm10_env": "ug/m3"
+    },
+    "InternalMetrics": {
+        "relay_on_time": "s"
     }
 }
 

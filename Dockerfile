@@ -1,5 +1,5 @@
 ## ------------------------------- Builder Stage ------------------------------ ##
-FROM python:3.14.6-bookworm AS builder
+FROM python:3.14.7-bookworm AS builder
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
         build-essential && \
@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Download the latest installer, install it and then remove it
 ADD https://astral.sh/uv/install.sh /install.sh
-ENV UV_VERSION=0.12.5
+ENV UV_VERSION=0.13.5
 RUN chmod -R 755 /install.sh && /install.sh && rm /install.sh
 
 # Set up the UV environment path correctly
@@ -30,7 +30,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=
 RUN uv pip install -e .
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.14.6-slim-bookworm AS runtime
+FROM python:3.14.7-slim-bookworm AS runtime
 
 RUN useradd smibuser
 USER smibuser

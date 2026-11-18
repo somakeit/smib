@@ -3,7 +3,8 @@ __description__ = "How fresh is the space?"
 __author__ = "Sam Cork"
 
 import logging
-from typing import TYPE_CHECKING, TypedDict
+from datetime import timedelta
+from typing import Callable, TYPE_CHECKING, TypedDict
 
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.context.ack.async_ack import AsyncAck
@@ -13,7 +14,7 @@ from slack_sdk.web.async_slack_response import AsyncSlackResponse
 
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
-from smib.utilities import get_humanized_time
+from smib.utilities import get_humanized_time, get_humanized_timedelta
 from .config import HOW_FRESH_PROFILE
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ logger = logging.getLogger(__display_name__)
 
 SUMMARY_MEASUREMENTS = ["temperature", "humidity", "light", "co2"]
 
-SENSOR_ORDER = ["BH1750", "BME280", "SCD30", "PMSA003I"]
+SENSOR_ORDER = ["BH1750", "BME280", "SCD30", "PMSA003I", "InternalMetrics"]
 
 SUMMARY_MEASUREMENT_ALIASES = {
     "relative_humidity": "humidity",
@@ -48,6 +49,7 @@ MEASUREMENT_ORDER = [
     "particles_25um",
     "particles_50um",
     "particles_100um",
+    "relay_on_time",
 ]
 
 SENSOR_SORT_ORDER = {name: index for index, name in enumerate(SENSOR_ORDER)}
@@ -74,6 +76,8 @@ MEASUREMENT_NAME_FORMATS = {
     "particles_25um": "Particles ≥2.5 μm",
     "particles_50um": "Particles ≥5.0 μm",
     "particles_100um": "Particles ≥10.0 μm",
+
+    "relay_on_time": "Relay On Time",
 }
 
 MEASUREMENT_SYMBOLS = {
@@ -97,6 +101,8 @@ MEASUREMENT_SYMBOLS = {
     "particles_25um": "🫧",
     "particles_50um": "🫧",
     "particles_100um": "🫧",
+
+    "relay_on_time": "🔌",
 }
 
 MEASUREMENT_UNIT_FORMATS = {
@@ -117,7 +123,24 @@ SENSOR_NAME_FORMATS = {
     "BME280": "Climate (BME280)",
     "SCD30": "Air Quality (SCD30)",
     "PMSA003I": "Particles (PMSA003I)",
+    "InternalMetrics": "Internal Metrics",
 }
+
+# --- Measurement value formatting ---
+#
+# Some measurements need bespoke formatting beyond a plain numeric value
+# plus unit (e.g. a duration in seconds should read as human time rather
+# than a raw number). Register those here, keyed by the normalized
+# measurement name; anything not listed falls back to
+# `format_measurement_with_unit`.
+
+MEASUREMENT_VALUE_FORMATTERS: dict[str, Callable[[int | float, str | None], str]] = {
+    "relay_on_time": lambda value, unit: format_seconds_as_human_time(value),
+}
+
+
+def format_seconds_as_human_time(value: int | float) -> str:
+    return get_humanized_timedelta(timedelta(seconds=value))
 
 class SummaryReading(TypedDict):
     values: list[int | float]
@@ -316,6 +339,16 @@ def format_measurement_with_unit(value: int | float, unit: str | None) -> str:
     return f"{formatted_value} {formatted_unit}"
 
 
+def format_measurement_reading(measurement_name: str, value: int | float, unit: str | None) -> str:
+    normalized_name = normalize_measurement_key(measurement_name)
+    formatter = MEASUREMENT_VALUE_FORMATTERS.get(normalized_name)
+
+    if formatter:
+        return formatter(value, unit)
+
+    return format_measurement_with_unit(value, unit)
+
+
 def format_measurement_line(
         measurement_name: str,
         value: int | float,
@@ -325,7 +358,7 @@ def format_measurement_line(
 ) -> str:
     symbol = get_measurement_symbol(measurement_name)
     display_name = normalize_measurement_name(measurement_name)
-    formatted_measurement = format_measurement_with_unit(value, unit)
+    formatted_measurement = format_measurement_reading(measurement_name, value, unit)
 
     suffix_text = f" ({suffix})" if suffix else ""
 
