@@ -46,6 +46,8 @@ from slack_sdk.models.blocks import (  # noqa: E402
 
 from smib.utilities import get_humanized_time  # noqa: E402
 
+from plugins.space.howfresh.config import config as plugin_config  # noqa: E402
+
 from plugins.space.howfresh import (  # noqa: E402
     SUMMARY_MEASUREMENTS,
     format_measurement_line,
@@ -129,10 +131,56 @@ DEVICE_REPORTED_AT: dict[str, datetime] = {
 STALE_AFTER = timedelta(minutes=30)
 EXCLUDE_AFTER = timedelta(days=2)
 
+# Per-device overrides, mirroring the resolver pattern proposed for the relay state config in
+# issue #510: the globals above are the defaults, and a device only appears here to override
+# one of them. Empty would mean "every device uses the defaults", which is the correct state
+# for devices that all push on the same cadence.
+#
+# The overrides exist because freshness is relative to how often a device is *expected* to
+# report, and that is a SMIBHID-side setting SMIB cannot see. A mains-powered unit pushing
+# every minute and a battery unit pushing hourly are not equally late at 40 minutes: one
+# global threshold would either permanently flag the slow device or be loosened until it
+# stops catching real outages on the fast one.
+#
+# Keyed here by friendly name for brevity; in config these are hostname keys, normalized for
+# case and for the hyphen/underscore difference between a hostname like SMIBHID-CLEANROOM and
+# the env var form DEVICE__SMIBHID_CLEANROOM__STALE_AFTER.
+DEVICE_THRESHOLD_OVERRIDES: dict[str, dict[str, timedelta]] = {
+    # Reports hourly on purpose, so the global 30-minute flag would fire constantly.
+    "Spare": {"stale_after": timedelta(hours=3), "exclude_after": timedelta(days=7)},
+}
+
 STALE_MARKER = "⚠️"
 
 
 TableCell = RawTextObject | RichTextBlock
+
+
+def stale_after(device: str) -> timedelta:
+    return DEVICE_THRESHOLD_OVERRIDES.get(device, {}).get("stale_after", STALE_AFTER)
+
+
+def exclude_after(device: str) -> timedelta:
+    return DEVICE_THRESHOLD_OVERRIDES.get(device, {}).get("exclude_after", EXCLUDE_AFTER)
+
+
+def describe_configured_thresholds() -> str:
+    """
+    Report what the plugin config would actually resolve, alongside the demo's own values.
+
+    The demo deliberately keeps its own thresholds so the payloads always exercise all three
+    freshness bands regardless of local .env - but if the two diverge, that is worth seeing.
+    """
+    lines = [
+        f"plugin config defaults: stale_after={plugin_config.stale_after} "
+        f"exclude_after={plugin_config.exclude_after}",
+        f"demo thresholds:        stale_after={STALE_AFTER} exclude_after={EXCLUDE_AFTER}",
+    ]
+
+    if plugin_config.device:
+        lines.append(f"configured device overrides: {', '.join(sorted(plugin_config.device))}")
+
+    return "\n".join(lines)
 
 
 def reading_age(device: str) -> timedelta:
@@ -140,11 +188,11 @@ def reading_age(device: str) -> timedelta:
 
 
 def is_stale(device: str) -> bool:
-    return STALE_AFTER < reading_age(device) <= EXCLUDE_AFTER
+    return stale_after(device) < reading_age(device) <= exclude_after(device)
 
 
 def is_excluded(device: str) -> bool:
-    return reading_age(device) > EXCLUDE_AFTER
+    return reading_age(device) > exclude_after(device)
 
 
 def included_devices(devices: list[str]) -> list[str]:
@@ -405,12 +453,14 @@ def stale_footnote(devices: list[str]) -> ContextBlock | None:
     if not stale_devices:
         return None
 
-    names = ", ".join(stale_devices)
+    # Each device's own age, not the threshold: with per-device thresholds a single shared
+    # "over N minutes" figure would be wrong for any device that overrides it, and the age
+    # is the more useful number to a reader anyway.
+    ages = ", ".join(f"{device} {reported_at_text(device)}" for device in stale_devices)
     return ContextBlock(
         elements=[
             MarkdownTextObject(
-                text=f"{STALE_MARKER} _{names} last reported over "
-                     f"{int(STALE_AFTER.total_seconds() // 60)} minutes ago - readings may be stale._"
+                text=f"{STALE_MARKER} _Last reported: {ages} - these readings may be stale._"
             )
         ]
     )
@@ -534,10 +584,17 @@ def main() -> None:
     dropped = [device for device in devices if device not in rendered]
 
     print()
-    print(f"devices: {', '.join(devices)}")
-    print(f"  rendered: {', '.join(rendered)}")
-    print(f"  stale (shown, marked): {', '.join(d for d in rendered if is_stale(d)) or '-'}")
-    print(f"  dropped (over {EXCLUDE_AFTER.days}d): {', '.join(dropped) or '-'}")
+    print(describe_configured_thresholds())
+    print()
+    print(f"{'device':12} {'age':>16}  {'stale after':>12} {'exclude after':>14}   verdict")
+    for device in devices:
+        overridden = " (override)" if device in DEVICE_THRESHOLD_OVERRIDES else ""
+        verdict = "dropped" if is_excluded(device) else ("stale" if is_stale(device) else "fresh")
+        print(
+            f"{device:12} {get_humanized_time(DEVICE_REPORTED_AT[device]):>16}  "
+            f"{str(stale_after(device)):>12} {str(exclude_after(device)):>14}   {verdict}{overridden}"
+        )
+    print(f"\nrendered: {', '.join(rendered)}   dropped: {', '.join(dropped) or '-'}")
     print()
     print(render_ascii_preview(build_summary_rows(rendered), "SUMMARY"))
     print()

@@ -73,6 +73,34 @@ This document provides a comprehensive overview of all configurable settings in 
 |---------------------|-------------|---------|---------|
 | SMIB_PLUGIN_STATIC_FILES_STATIC_FILES_DIRECTORY | Directory path where static files are stored and served from | `public/assets` | `static` |
 
+### How Fresh? Plugin
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_PLUGIN_SPACE_HOW_FRESH_STALE_AFTER | Readings older than this are still shown, but marked as possibly stale. Accepts seconds (int), `HH:MM:SS`, or ISO8601 durations. Defaults to the same hour as the sensor log monitor's alert threshold. | `PT1H` or `1:00:00` or `3600` | `1:00:00` |
+| SMIB_PLUGIN_SPACE_HOW_FRESH_EXCLUDE_AFTER | Readings older than this are left out of the readout entirely. A device is only dropped while another is still reporting — if every device is this stale they are all shown and marked. Set to `None` to never drop a device. | `P2D` or `2 days, 0:00:00` or `172800` | `2 days, 0:00:00` |
+
+Per-device overrides are keyed on the device hostname. A device needs an entry only to override
+something; devices with no entry use the defaults above. Hostname keys are matched case
+insensitively, and hyphens and underscores are interchangeable, so `SMIBHID-CLEANROOM` is
+configured as `SMIBHID_CLEANROOM`.
+
+| Environment Variable | Description | Example | Default |
+|---------------------|-------------|---------|---------|
+| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__NAME | Friendly name shown instead of the device hostname | `Cleanroom` | The device hostname |
+| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__STALE_AFTER | Overrides `STALE_AFTER` for this device. Useful when a device reports on a slower cadence than the rest. | `PT3H` or `3:00:00` | Plugin-wide `STALE_AFTER` |
+| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__EXCLUDE_AFTER | Overrides `EXCLUDE_AFTER` for this device | `P7D` | Plugin-wide `EXCLUDE_AFTER` |
+
+For example, naming two devices and loosening the thresholds on one that reports hourly:
+
+```dotenv
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_CLEANROOM__NAME=Cleanroom
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_WORKSHOP__NAME=Workshop
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__NAME=Spare
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__STALE_AFTER=PT3H
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__EXCLUDE_AFTER=P7D
+```
+
 ### S.M.I.B.H.I.D. Plugin
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|

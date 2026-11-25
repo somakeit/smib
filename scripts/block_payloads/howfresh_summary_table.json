@@ -137,7 +137,7 @@
     {
       "elements": [
         {
-          "text": "⚠️ _Workshop last reported over 30 minutes ago - readings may be stale._",
+          "text": "⚠️ _Last reported: Workshop 47 minutes ago - these readings may be stale._",
           "type": "mrkdwn"
         }
       ],
