@@ -23,10 +23,12 @@ baselines together, but neither fix is retroactive - the bad total is already pe
 script recomputes it from `space_relay_state_history`, which holds every event received and is
 therefore a sound basis for a replay.
 
-Note that the corruption is not itself visible as a rejectable event: the bogus `active_since`
-was never written to history, so the replay simply never reproduces that credit. The
-implausible-duration guard here is a safety net for other devices/records, not the mechanism
-that fixes SMIBHID-FAN.
+S.M.I.B.H.I.D.'s reported counter is authoritative and is never touched by this script. The
+replay only rebuilds SMIB's own independent observation and realigns the reset baselines, so
+the drift alert compares like with like. The large gap between the two counters on SMIBHID-FAN
+is not an error to be corrected: the device's counter was deliberately seeded after a filter
+change to recover a period when tracking had failed, so the two sides simply have different
+origins.
 
 What it does
 ------------
@@ -63,10 +65,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from beanie import init_beanie  # noqa: E402
 from pymongo import AsyncMongoClient  # noqa: E402
 
-from plugins.space.relaystate.common import (  # noqa: E402
-    _apply_transition,
-    _reconcile_with_reported,
-)
+from plugins.space.relaystate.common import _apply_transition  # noqa: E402
 from plugins.space.relaystate.config import config  # noqa: E402
 from plugins.space.relaystate.models import (  # noqa: E402
     AlertState,
@@ -91,21 +90,20 @@ class ReplayResult:
         self.sessions_credited = 0
         self.sessions_rejected = 0
         self.rejected_seconds = 0.0
-        self.reconciliations = 0
-        self.reconciled_seconds = 0.0
 
 
 def replay(events: list[RelayStateHistory], resets: list[RelayResetHistory]) -> ReplayResult:
     """
     Recompute cumulative on-time from the event stream.
 
-    Drives the production helpers (_apply_transition, _reconcile_with_reported) against a
-    scratch RelayState rather than reimplementing them, so the replay cannot answer
-    differently from live processing. An earlier version did hand-roll the transition rules
-    and immediately fell out of step when reconciliation was added to the plugin.
+    Drives the production helper (_apply_transition) against a scratch RelayState rather than
+    reimplementing it, so the replay cannot answer differently from live processing. An earlier
+    version hand-rolled the transition rules and immediately fell out of step with the plugin.
 
-    The reported-side baseline is seeded the way the bootstrap seeds it - from the first
-    observed reading - so reconciliation compares like with like from the very first event.
+    This rebuilds SMIB's *observation* of on-time only. S.M.I.B.H.I.D.'s reported counter is
+    authoritative and is never recomputed or overwritten - the point of the replay is to make
+    SMIB's independent figure trustworthy again, and to put both reset baselines back on the
+    same footing, so the drift alert compares like with like.
     """
     result = ReplayResult()
     if not events:
@@ -129,7 +127,7 @@ def replay(events: list[RelayStateHistory], resets: list[RelayResetHistory]) -> 
         drift_alert=AlertState(),
     )
 
-    for index, event in enumerate(ordered_events):
+    for event in ordered_events:
         # Apply any reset that happened before this event, mirroring
         # record_relay_state_reset: fold the in-progress portion of an open session into the
         # total, restart the session at the reset point, then rebaseline both sides.
@@ -137,7 +135,7 @@ def replay(events: list[RelayStateHistory], resets: list[RelayResetHistory]) -> 
             reset_at = pending_resets[reset_index].timestamp
             if state.active and state.active_since is not None:
                 partial = (reset_at - state.active_since).total_seconds()
-                if 0 <= partial <= config.max_plausible_on_session_seconds:
+                if partial >= 0:
                     state.computed_total_active_seconds += partial
                 state.active_since = reset_at
             state.computed_total_active_seconds_at_last_reset = state.computed_total_active_seconds
@@ -167,14 +165,6 @@ def replay(events: list[RelayStateHistory], resets: list[RelayResetHistory]) -> 
                 implied = (event.timestamp - session_start).total_seconds()
                 result.sessions_rejected += 1
                 result.rejected_seconds += max(implied, 0.0)
-
-        # Reconcile exactly where record_relay_state_report does: after the transition, before
-        # the reported baseline advances, and never on the first event (no history to correct).
-        if index > 0:
-            correction = _reconcile_with_reported(state, report)
-            if correction is not None:
-                result.reconciliations += 1
-                result.reconciled_seconds += abs(correction)
 
         state.reported_total_active_seconds = event.reported_total_active_seconds
         result.events_replayed += 1
@@ -240,8 +230,6 @@ def summarise(relay_state: RelayState, result: ReplayResult, reported_at_last_re
         f"Sessions credited:       {result.sessions_credited}",
         f"Sessions rejected:       {result.sessions_rejected} "
         f"({days(result.rejected_seconds)} not credited)",
-        f"Reconciliations:         {result.reconciliations} "
-        f"({days(result.reconciled_seconds)} of drift corrected against the device counter)",
         "",
         "computed_total_active_seconds:",
         f"  before:                {days(relay_state.computed_total_active_seconds)}",

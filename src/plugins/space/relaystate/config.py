@@ -20,15 +20,7 @@ class RelayStatePluginConfig(EnvBaseSettings):
         description="Log a warning when SMIB's computed cumulative relay on-time and S.M.I.B.H.I.D.'s reported total_active_seconds differ by more than this many seconds",
     )
 
-    reconcile_tolerance_seconds: float = Field(
-        default=60,
-        description="When the relay is off, snap SMIB's computed cumulative on-time to S.M.I.B.H.I.D.'s reported counter if they differ by more than this many seconds. S.M.I.B.H.I.D. counts continuously and survives a dropped push, whereas SMIB has to infer what happened between the reports it received, so the device holds the better figure. Set high enough to ignore normal sub-report jitter. A correction larger than max_plausible_on_session_seconds is refused as a baseline mismatch rather than drift.",
-    )
 
-    max_plausible_on_session_seconds: float = Field(
-        default=timedelta(days=7).total_seconds(),
-        description="Upper bound on a single relay ON session. An OFF transition implying a longer session is treated as a corrupt/missing active_since (e.g. a record written by an older schema) and its duration is discarded rather than added to SMIB's authoritative cumulative on-time.",
-    )
 
     monitor_interval: IntervalField | None = Field(
         default=timedelta(minutes=5),

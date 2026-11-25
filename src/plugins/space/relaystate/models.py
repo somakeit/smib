@@ -19,7 +19,7 @@ class RelayStateReport(BaseModel):
         float,
         Field(
             ge=0,
-            description="Cumulative relay on-time in seconds since device reset, as reported by S.M.I.B.H.I.D. Counted continuously on-device and persisted before each push, so it survives reports that fail to reach SMIB - used to cross-check and correct SMIB's computed total.",
+            description="Cumulative relay on-time in seconds since device reset, as reported by S.M.I.B.H.I.D. Authoritative: counted continuously on-device and persisted before each push, so it survives reports that fail to reach SMIB.",
             examples=[42.5],
         )
     ]
@@ -56,7 +56,8 @@ class AlertState(BaseModel):
 class RelayState(Document):
     """
     Stores the latest reported relay state for a device, plus SMIB's cumulative on-time
-    computed from received transitions and reconciled against the device's own counter.
+    independently computed from received transitions, kept only to cross-check the device's
+    authoritative counter.
     """
     device: Annotated[str, Field(description="Device hostname"), Indexed(unique=True, name="device_unique")]
     active: Annotated[bool, Field(description="Whether the relay is currently on", examples=[True])]
@@ -64,7 +65,7 @@ class RelayState(Document):
         float,
         Field(
             ge=0,
-            description="Last cumulative on-time reported by S.M.I.B.H.I.D. Counted continuously on-device, so it is the more reliable figure when it disagrees with the computed total; reconciliation snaps the computed total to it while the relay is off.",
+            description="Last cumulative on-time reported by S.M.I.B.H.I.D. This is the authoritative on-time figure and drives relay-lifetime alerting; SMIB never recomputes or overwrites it.",
             examples=[42.5],
         )
     ]
@@ -73,13 +74,21 @@ class RelayState(Document):
         Field(
             ge=0,
             default=0.0,
-            description="SMIB's cumulative on-time, computed from ON/OFF durations across received transitions and periodically reconciled against the device's reported counter. SMIB can only infer state between the reports it receives, so a lost transition skews this figure; the reconciliation corrects that drift while the relay is off.",
+            description="SMIB's independently computed on-time, from ON/OFF durations across received transitions. Not authoritative - SMIB can only infer state between the reports it receives, so a lost transition skews it. Kept as a second opinion so a disagreement with the device's counter can be surfaced and investigated, never silently corrected.",
             examples=[42.5],
         )
     ]
     active_since: Annotated[
         datetime | None,
         Field(default=None, description="Timestamp of the most recent ON transition; None when the relay is off or unknown", examples=[datetime.now(UTC)])
+    ]
+    last_report_at: Annotated[
+        datetime | None,
+        Field(
+            default=None,
+            description="Event timestamp of the most recent report from the device. reported_total_active_seconds is accurate as of this moment, so the periodic monitor extrapolates from here (not from active_since, which the reported counter already covers) when the relay is on.",
+            examples=[datetime.now(UTC)],
+        )
     ]
     computed_total_active_seconds_at_last_reset: Annotated[
         float,

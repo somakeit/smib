@@ -2,15 +2,18 @@
 Unit tests for the relay on-time accounting in plugins.space.relaystate.common.
 
 These cover the pure calculation helpers (_apply_transition, _live_since_reset,
-_reconcile_with_reported) and the bootstrap baseline seeding. They deliberately avoid the DB:
+observed_divergence) and the bootstrap baseline seeding. They deliberately avoid the DB:
 record_relay_state_report and friends are find-then-save coroutines, whereas every bug these
 tests pin down was an arithmetic/baseline bug reachable without Mongo.
 
-Background - the live SMIBHID-FAN record on smib-pi accumulated ~20 days of phantom on-time
-in a single OFF transition because an older schema's document was loaded with active=True
-but no usable active_since, and the resulting absurd session duration was added straight to
-the authoritative total. The reset baselines were also left skewed (computed side 0,
-reported side a device lifetime counter), making since_reset mean two different things.
+Background - S.M.I.B.H.I.D. is authoritative for on-time: it counts continuously from its own
+checkpoints, persists them before pushing, and can be seeded directly when on-time needs
+backfilling after a filter change. SMIB keeps an independent computed figure purely to
+cross-check that counter, and never overwrites either side.
+
+The live SMIBHID-FAN record had its two reset baselines left skewed (computed side 0, reported
+side a device lifetime counter) by a delete-and-reseed while the relay was on, which made
+"since reset" mean a since-reset figure on one branch and a lifetime figure on the other.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -20,7 +23,7 @@ import pytest
 from plugins.space.relaystate.common import (
     _apply_transition,
     _live_since_reset,
-    _reconcile_with_reported,
+    observed_divergence,
 )
 from plugins.space.relaystate.config import config
 from plugins.space.relaystate.models import RelayState, RelayStateReport
@@ -118,22 +121,14 @@ class TestApplyTransitionRejectsBadDurations:
         assert relay_state.computed_total_active_seconds == 0.0
         assert relay_state.active_since is None
 
-    def test_implausibly_long_session_is_discarded_not_credited(self):
+    def test_very_long_session_is_credited_in_full(self):
         """
-        Regression: the live SMIBHID-FAN record gained 1744042s (~20.2 days) in one OFF
-        transition from a stale active_since. Such a session must be dropped, not banked.
+        No upper bound on a session. An earlier version discarded sessions over a week as
+        implausible, which would also have discarded a legitimately long run - and the
+        divergence it was built to prevent turned out to be a deliberate device-side seed,
+        not corruption.
         """
-        stale_active_since = T0 - timedelta(days=20, hours=4)
-        relay_state = make_relay_state(active=True, active_since=stale_active_since)
-
-        _apply_transition(relay_state, make_report(active=False), T0)
-
-        assert relay_state.computed_total_active_seconds == 0.0
-        assert relay_state.active_since is None
-
-    def test_session_just_under_the_cap_is_still_credited(self):
-        """The guard must not silently eat legitimate long sessions."""
-        duration = config.max_plausible_on_session_seconds - 60
+        duration = timedelta(days=20, hours=4).total_seconds()
         relay_state = make_relay_state(active=True, active_since=T0)
         off_at = T0 + timedelta(seconds=duration)
 
@@ -182,17 +177,19 @@ class TestLiveSinceReset:
 
         assert result == pytest.approx(3000.0 + 3600.0)
 
-    def test_stale_active_since_is_capped(self):
-        """A stale active_since must not inflate every periodic drift check without bound."""
+    def test_long_open_session_is_not_capped(self):
+        """
+        A long session must be reported at full length - capping it would mask exactly the
+        disagreement the drift alert exists to surface.
+        """
+        age = timedelta(days=400).total_seconds()
         relay_state = make_relay_state(
             computed_total_active_seconds=0.0,
             computed_total_active_seconds_at_last_reset=0.0,
-            active_since=T0 - timedelta(days=400),
+            active_since=T0 - timedelta(seconds=age),
         )
 
-        result = _live_since_reset(relay_state, T0)
-
-        assert result == pytest.approx(config.max_plausible_on_session_seconds)
+        assert _live_since_reset(relay_state, T0) == pytest.approx(age)
 
     def test_future_active_since_does_not_subtract_time(self):
         relay_state = make_relay_state(
@@ -265,167 +262,101 @@ class TestBootstrapBaselines:
         drift = abs(computed_since_reset - reported_since_reset)
         assert drift <= config.total_active_seconds_drift_warning_threshold_seconds
 
-    def test_legacy_shaped_record_does_not_bank_phantom_on_time(self):
+    def test_device_side_seed_leaves_smib_computing_from_zero(self):
         """
-        Regression for the live failure: a record carrying active=True from an older schema,
-        with computed_total_active_seconds=0 and a long-stale active_since, must not turn its
-        first OFF transition into weeks of authoritative on-time.
+        A device first seen mid-life (e.g. its counter seeded after a filter change) must leave
+        SMIB computing its own figure from zero, with both reset baselines agreeing, so the
+        two sides are comparable from the first event rather than being silently conflated.
         """
+        seeded_lifetime = 1740883.0
+        session_seconds = 3159.0
+
         relay_state = make_relay_state(
-            active=True,
-            active_since=T0 - timedelta(days=20, hours=4),
-            computed_total_active_seconds=0.0,
-            reported_total_active_seconds=1740883.0,
-            reported_total_active_seconds_at_last_reset=0.0,
+            reported_total_active_seconds=seeded_lifetime,
+            reported_total_active_seconds_at_last_reset=seeded_lifetime,
         )
 
-        _apply_transition(relay_state, make_report(active=False), T0)
+        _apply_transition(relay_state, make_report(active=True), T0)
+        relay_state.active = True
 
-        assert relay_state.computed_total_active_seconds < timedelta(days=1).total_seconds()
+        off_at = T0 + timedelta(seconds=session_seconds)
+        _apply_transition(relay_state, make_report(active=False, timestamp=off_at), off_at)
+        relay_state.active = False
+        relay_state.reported_total_active_seconds = seeded_lifetime + session_seconds
+
+        # SMIB only ever saw the one session, and the device agrees on that increment.
+        assert relay_state.computed_total_active_seconds == pytest.approx(session_seconds)
+        assert observed_divergence(relay_state, off_at) == pytest.approx(0.0)
 
 
-class TestReconcileWithReported:
+class TestLifetimeAlertUsesAuthoritativeCounter:
     """
-    SMIBHID counts on-time continuously and persists each checkpoint before pushing, so its
-    counter survives a dropped report. SMIB only infers state between the reports it gets, so
-    a lost transition skews the computed total in one direction or the other - miss an OFF and
-    SMIB credits the whole gap as ON, miss an ON and it credits none of it. The live
-    SMIBHID-FAN record wandered by +/-1-3 hours this way, in near-exact 3600s steps matching
-    the hourly heartbeat. Reconciliation takes the correction the device already sends.
+    The relay-lifetime decision ("has the filter done its hours?") must be made on
+    S.M.I.B.H.I.D.'s reported counter, not SMIB's inferred one. SMIB's figure can be skewed by
+    a single lost transition, and on a device whose counter was seeded after a filter change
+    the two differ by the whole backfill - alerting on the wrong one would be badly misleading.
     """
 
-    def test_snaps_computed_up_to_reported_when_smib_under_counted(self):
-        """Lost ON transition: SMIBHID counted the hour, SMIB credited none of it."""
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=10000.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-
-        correction = _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=13600.0))
-
-        assert correction == pytest.approx(3600.0)
-        assert relay_state.computed_total_active_seconds == pytest.approx(13600.0)
-
-    def test_snaps_computed_down_to_reported_when_smib_over_counted(self):
-        """Lost OFF transition: SMIB credited the whole gap as ON, SMIBHID did not."""
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=13600.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-
-        correction = _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=10000.0))
-
-        assert correction == pytest.approx(-3600.0)
-        assert relay_state.computed_total_active_seconds == pytest.approx(10000.0)
-
-    def test_respects_the_reset_baselines(self):
-        """Both sides must be compared since their own reset point, not as lifetime totals."""
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=5000.0,
-            computed_total_active_seconds_at_last_reset=2000.0,
-            reported_total_active_seconds_at_last_reset=1740883.0,
-        )
-
-        # reported_since_reset = 1746483 - 1740883 = 5600; computed_since_reset = 3000
-        correction = _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=1746483.0))
-
-        assert correction == pytest.approx(2600.0)
-        assert relay_state.computed_total_active_seconds == pytest.approx(7600.0)
-
-    def test_noop_while_relay_is_on(self):
-        """An in-flight session legitimately isn't banked yet - that is not drift."""
-        relay_state = make_relay_state(
-            active=True,
-            active_since=T0,
-            computed_total_active_seconds=10000.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-
-        correction = _reconcile_with_reported(relay_state, make_report(active=True, total_active_seconds=13600.0))
-
-        assert correction is None
-        assert relay_state.computed_total_active_seconds == pytest.approx(10000.0)
-
-    def test_noop_when_off_report_still_has_an_open_session(self):
-        relay_state = make_relay_state(
-            active=False,
-            active_since=T0,
-            computed_total_active_seconds=10000.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-
-        assert _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=13600.0)) is None
-
-    def test_noop_within_tolerance(self):
-        """Sub-report jitter must not churn the authoritative total on every heartbeat."""
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=10000.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-        within = config.reconcile_tolerance_seconds / 2
-
-        correction = _reconcile_with_reported(
-            relay_state, make_report(active=False, total_active_seconds=10000.0 + within)
-        )
-
-        assert correction is None
-        assert relay_state.computed_total_active_seconds == pytest.approx(10000.0)
-
-    def test_refuses_correction_beyond_a_plausible_session(self):
+    def test_authoritative_and_computed_can_disagree_on_threshold(self):
         """
-        A huge gap means the two sides aren't describing the same window (mismatched
-        baselines, a one-sided reset, a reused hostname) - importing it would corrupt the
-        total, so leave it for the drift alert.
+        A device seeded with backfill: the device says the threshold is passed, SMIB's own
+        figure says nowhere near. Only the device's view should decide.
         """
+        threshold = timedelta(days=30).total_seconds()
+        seeded = timedelta(days=29).total_seconds()
+
         relay_state = make_relay_state(
             active=False,
             active_since=None,
-            computed_total_active_seconds=10000.0,
-            reported_total_active_seconds_at_last_reset=0.0,
-        )
-        absurd = 10000.0 + config.max_plausible_on_session_seconds * 2
-
-        correction = _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=absurd))
-
-        assert correction is None
-        assert relay_state.computed_total_active_seconds == pytest.approx(10000.0)
-
-    def test_never_drives_computed_total_negative(self):
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=100.0,
+            computed_total_active_seconds=timedelta(days=2).total_seconds(),
             computed_total_active_seconds_at_last_reset=0.0,
-            reported_total_active_seconds_at_last_reset=5000.0,
-        )
-
-        # reported_since_reset = 0 - 5000 = -5000, which would take computed below zero.
-        correction = _reconcile_with_reported(relay_state, make_report(active=False, total_active_seconds=0.0))
-
-        assert correction is None
-        assert relay_state.computed_total_active_seconds >= 0.0
-
-    def test_repeated_reports_converge_and_then_settle(self):
-        """After one correction the next identical report must be a no-op, not oscillate."""
-        relay_state = make_relay_state(
-            active=False,
-            active_since=None,
-            computed_total_active_seconds=10000.0,
+            reported_total_active_seconds=seeded + timedelta(days=2).total_seconds(),
             reported_total_active_seconds_at_last_reset=0.0,
         )
-        report = make_report(active=False, total_active_seconds=13600.0)
 
-        first = _reconcile_with_reported(relay_state, report)
-        second = _reconcile_with_reported(relay_state, report)
+        reported_since_reset = (
+            relay_state.reported_total_active_seconds
+            - relay_state.reported_total_active_seconds_at_last_reset
+        )
+        computed_since_reset = (
+            relay_state.computed_total_active_seconds
+            - relay_state.computed_total_active_seconds_at_last_reset
+        )
 
-        assert first == pytest.approx(3600.0)
-        assert second is None
-        assert relay_state.computed_total_active_seconds == pytest.approx(13600.0)
+        assert reported_since_reset >= threshold
+        assert computed_since_reset < threshold
+        # The divergence is reported rather than hidden, so the disagreement is investigable.
+        assert observed_divergence(relay_state, T0) == pytest.approx(-seeded)
+
+
+class TestLastReportAtExtrapolation:
+    """
+    The reported counter only advances when a report lands, and the value it carries already
+    includes on-time up to *that report*. So between reports it is stale by the time since the
+    last report - not by the length of the session, which would double-count.
+    """
+
+    def test_reported_counter_is_current_as_of_the_last_report(self):
+        """
+        Mirrors the live record: a session opened at 16:49:35 and a report at 20:07:35 whose
+        counter already covers the intervening 3h18m. Extrapolating from active_since would
+        add that span a second time.
+        """
+        session_start = datetime(2026, 11, 25, 16, 49, 35, tzinfo=UTC)
+        last_report = datetime(2026, 11, 25, 20, 7, 35, tzinfo=UTC)
+        now = last_report + timedelta(minutes=10)
+
+        relay_state = make_relay_state(
+            active=True,
+            active_since=session_start,
+            last_report_at=last_report,
+            reported_total_active_seconds=5128175.0,
+            reported_total_active_seconds_at_last_reset=0.0,
+        )
+
+        from_last_report = (now - relay_state.last_report_at).total_seconds()
+        from_active_since = (now - relay_state.active_since).total_seconds()
+
+        assert from_last_report == pytest.approx(600.0)
+        # Extrapolating from active_since would add ~3.3h of already-counted time.
+        assert from_active_since - from_last_report == pytest.approx(11880.0)
