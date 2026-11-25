@@ -40,6 +40,14 @@ class HowFreshDeviceConfig(BaseModel):
         description="Friendly name shown instead of the device hostname, e.g. 'Clean Room'",
     )
 
+    order: int | None = Field(
+        default=None,
+        description=(
+            "Column position in the multi-device readout, lowest first. Devices without an "
+            "order follow those that have one, sorted by name."
+        ),
+    )
+
     stale_after: IntervalField | None = Field(
         default=None,
         description="Overrides the plugin-wide stale_after for this device",
@@ -95,6 +103,23 @@ class HowFreshPluginConfig(EnvBaseSettings):
     def display_name(self, device: str) -> str:
         """The configured friendly name, falling back to the raw hostname."""
         return self.for_device(device).name or device
+
+    def sort_key_for(self, device: str) -> tuple[int, int, str]:
+        """
+        Stable column ordering for the multi-device readout.
+
+        Without this, columns fall out in whatever order the query returned - which is by
+        reading time, so they would reshuffle between invocations as devices report. Devices
+        with a configured order come first, lowest first; the rest follow, sorted by display
+        name so the result is at least deterministic.
+        """
+        order = self.for_device(device).order
+        name = self.display_name(device).casefold()
+
+        if order is None:
+            return (1, 0, name)
+
+        return (0, order, name)
 
     def stale_after_for(self, device: str) -> timedelta:
         return self.for_device(device).stale_after or self.stale_after

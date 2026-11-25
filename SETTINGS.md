@@ -88,6 +88,7 @@ configured as `SMIBHID_FAN`.
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|
 | SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__NAME | Friendly name shown instead of the device hostname | `Clean Room` | The device hostname |
+| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__ORDER | Column position in the multi-device readout, lowest first. Devices without an order follow those that have one, sorted by name. | `1` | None |
 | SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__STALE_AFTER | Overrides `STALE_AFTER` for this device. Useful when a device reports on a slower cadence than the rest. | `PT3H` or `3:00:00` | Plugin-wide `STALE_AFTER` |
 | SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__EXCLUDE_AFTER | Overrides `EXCLUDE_AFTER` for this device | `P7D` | Plugin-wide `EXCLUDE_AFTER` |
 
@@ -95,8 +96,13 @@ For example, giving the two devices in the space friendly names:
 
 ```dotenv
 SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_FAN__NAME=Clean Room
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_FAN__ORDER=1
 SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_WORKSHOP__NAME=Workshop
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_WORKSHOP__ORDER=2
 ```
+
+Without an `ORDER`, columns are ordered by display name. Devices are never ordered by how
+recently they reported, which would make the columns swap around between invocations.
 
 `SMIBHID-FAN` is in the clean room — the hostname describes the relay it drives rather than
 where it sits, which is the main reason to configure a name at all.

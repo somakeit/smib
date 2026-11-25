@@ -53,6 +53,7 @@ from plugins.space.howfresh import (
     reading_age,
     remove_trailing_divider,
     select_devices_to_render,
+    sort_devices,
 )
 from plugins.space.howfresh.config import HowFreshDeviceConfig, config
 from plugins.space.smibhid.sensor.models import (
@@ -892,3 +893,110 @@ class TestNaiveTimestampsFromMongo:
         assert blocks
         for block in blocks:
             block.validate_json()
+
+
+class TestDeviceColumnOrdering:
+    """
+    Column order has to be stable. The per-device query returns devices by reading time, so
+    unordered columns would swap places between invocations depending on which device
+    happened to report last.
+    """
+
+    def make_logs(self, *devices: str) -> list["SensorLog"]:
+        return [
+            make_sensor_log(
+                {"BH1750": {"light": 100.0 + index}},
+                device=device,
+                timestamp=datetime.now(UTC) - timedelta(minutes=index + 1),
+            )
+            for index, device in enumerate(devices)
+        ]
+
+    def test_configured_order_wins_over_reporting_order(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+
+        # Deliberately passed workshop-first, as a fresher workshop reading would.
+        ordered = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
+
+        assert [log.device for log in ordered] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]
+
+    def test_order_is_independent_of_input_order(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+
+        forwards = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
+        backwards = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
+
+        assert [log.device for log in forwards] == [log.device for log in backwards]
+
+    def test_unordered_devices_follow_ordered_ones(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=5))
+
+        ordered = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
+
+        assert [log.device for log in ordered] == ["SMIBHID-WORKSHOP", "SMIBHID-FAN"]
+
+    def test_unordered_devices_sort_by_name(self):
+        ordered = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
+
+        assert [log.device for log in ordered] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]
+
+    def test_unordered_devices_sort_by_friendly_name_when_configured(self, monkeypatch):
+        """Ordering follows what the reader sees, not the hostname behind it."""
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(name="Annexe"))
+
+        ordered = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
+
+        assert [log.device for log in ordered] == ["SMIBHID-WORKSHOP", "SMIBHID-FAN"]
+
+    def test_negative_order_sorts_first(self):
+        assert config.sort_key_for("SMIBHID-X") > (0, -1, "")
+
+    def test_rendered_columns_follow_the_configured_order(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(name="Clean Room", order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(name="Workshop", order=2))
+
+        logs = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
+        units = {log.device: make_sensor_units({"BH1750": {"light": "lx"}}, device=log.device) for log in logs}
+
+        blocks = build_sensor_message_blocks(logs, units, detailed=False)
+        table = next(block for block in blocks if isinstance(block, TableBlock))
+        header = [
+            "".join(
+                part.text
+                for element in getattr(cell, "elements", [])
+                for part in getattr(element, "elements", [])
+                if getattr(part, "text", None)
+            )
+            or getattr(cell, "text", "")
+            for cell in table.rows[0]
+        ]
+
+        assert header[1].startswith("Clean Room")
+        assert header[2].startswith("Workshop")
+
+    def test_selection_returns_devices_already_sorted(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+
+        selected = select_devices_to_render(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
+
+        assert [log.device for log in selected] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]
+
+    def test_all_stale_fallback_is_also_sorted(self, monkeypatch):
+        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+
+        logs = [
+            make_sensor_log(
+                {"BH1750": {"light": 100.0}},
+                device=device,
+                timestamp=datetime.now(UTC) - timedelta(days=30),
+            )
+            for device in ("SMIBHID-WORKSHOP", "SMIBHID-FAN")
+        ]
+
+        selected = select_devices_to_render(logs)
+
+        assert [log.device for log in selected] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]

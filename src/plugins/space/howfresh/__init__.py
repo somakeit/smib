@@ -306,13 +306,23 @@ def select_devices_to_render(latest_logs: list["SensorLog"]) -> list["SensorLog"
 
     if not included:
         logger.info("Every device is past its exclusion threshold - rendering them all, marked stale")
-        return latest_logs
+        return sort_devices(latest_logs)
 
     dropped = [log.device for log in latest_logs if log not in included]
     if dropped:
         logger.info(f"Excluding devices with readings past their exclusion threshold: {dropped}")
 
-    return included
+    return sort_devices(included)
+
+
+def sort_devices(sensor_logs: list["SensorLog"]) -> list["SensorLog"]:
+    """
+    Put the columns in a configured, stable order.
+
+    The query returns devices by reading time, so without this the columns would swap around
+    between invocations depending on which device reported most recently.
+    """
+    return sorted(sensor_logs, key=lambda sensor_log: config.sort_key_for(sensor_log.device))
 
 
 def device_label(sensor_log: "SensorLog") -> str:
