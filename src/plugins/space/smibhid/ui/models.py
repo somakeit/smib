@@ -3,9 +3,9 @@ from enum import StrEnum
 from typing import Annotated
 
 from beanie import Document, Indexed
-from pydantic import BaseModel, Field, AfterValidator
+from pydantic import BaseModel, Field
 
-from ..common import validate_timestamp
+from ..common import SMIBHIDTimestamp
 
 
 class UILogEventType(StrEnum):
@@ -20,10 +20,7 @@ class ButtonPressEvent(BaseModel):
 class UILogCreate(BaseModel):
     event: Annotated[ButtonPressEvent, Field(description="Button press event")]
     type: Annotated[UILogEventType, Field(description="Type of the UI log event")]
-    timestamp: Annotated[int | float,
-                        Field(description="Unix epoch timestamp", examples=[int(datetime.now(UTC).timestamp())]),
-                        AfterValidator(validate_timestamp)
-    ]
+    timestamp: SMIBHIDTimestamp
 
 
 class UILog(Document, UILogCreate):
