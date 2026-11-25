@@ -23,81 +23,98 @@
       "rows": [
         [
           {
-            "type": "raw_text",
-            "text": "",
-            "style": {
-              "bold": true
-            }
+            "text": " ",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "Cleanroom",
-            "style": {
-              "bold": true
-            }
+            "elements": [
+              {
+                "elements": [
+                  {
+                    "style": {
+                      "bold": true
+                    },
+                    "text": "Cleanroom",
+                    "type": "text"
+                  }
+                ],
+                "type": "rich_text_section"
+              }
+            ],
+            "type": "rich_text"
           },
           {
-            "type": "raw_text",
-            "text": "Workshop",
-            "style": {
-              "bold": true
-            }
+            "elements": [
+              {
+                "elements": [
+                  {
+                    "style": {
+                      "bold": true
+                    },
+                    "text": "Workshop",
+                    "type": "text"
+                  }
+                ],
+                "type": "rich_text_section"
+              }
+            ],
+            "type": "rich_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌡️ Temperature"
+            "text": "🌡️ Temperature",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "21.65 °C (avg)"
+            "text": "21.65 °C (avg)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "💧 Humidity"
+            "text": "💧 Humidity",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "41.55 % (avg)"
+            "text": "41.55 % (avg)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "💡 Light"
+            "text": "💡 Light",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "310 lx"
+            "text": "310 lx",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "180 lx"
+            "text": "180 lx",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌫️ CO₂"
+            "text": "🌫️ CO₂",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "480.20 ppm"
+            "text": "480.20 ppm",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ]
       ],

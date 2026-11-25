@@ -23,207 +23,224 @@
       "rows": [
         [
           {
-            "type": "raw_text",
-            "text": "",
-            "style": {
-              "bold": true
-            }
+            "text": " ",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "Cleanroom",
-            "style": {
-              "bold": true
-            }
+            "elements": [
+              {
+                "elements": [
+                  {
+                    "style": {
+                      "bold": true
+                    },
+                    "text": "Cleanroom",
+                    "type": "text"
+                  }
+                ],
+                "type": "rich_text_section"
+              }
+            ],
+            "type": "rich_text"
           },
           {
-            "type": "raw_text",
-            "text": "Workshop",
-            "style": {
-              "bold": true
-            }
+            "elements": [
+              {
+                "elements": [
+                  {
+                    "style": {
+                      "bold": true
+                    },
+                    "text": "Workshop",
+                    "type": "text"
+                  }
+                ],
+                "type": "rich_text_section"
+              }
+            ],
+            "type": "rich_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "💡 Light (BH1750)"
+            "text": "💡 Light (BH1750)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "310 lx"
+            "text": "310 lx",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "180 lx"
+            "text": "180 lx",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌡️ Temperature (BME280)"
+            "text": "🌡️ Temperature (BME280)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "21.40 °C"
+            "text": "21.40 °C",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "💧 Humidity (BME280)"
+            "text": "💧 Humidity (BME280)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "42 %"
+            "text": "42 %",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🧭 Pressure (BME280)"
+            "text": "🧭 Pressure (BME280)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "1013.20 hPa"
+            "text": "1013.20 hPa",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌡️ Temperature (SCD30)"
+            "text": "🌡️ Temperature (SCD30)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "21.90 °C"
+            "text": "21.90 °C",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "💧 Humidity (SCD30)"
+            "text": "💧 Humidity (SCD30)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "41.10 %"
+            "text": "41.10 %",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌫️ CO₂ (SCD30)"
+            "text": "🌫️ CO₂ (SCD30)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "480.20 ppm"
+            "text": "480.20 ppm",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌫️ PM1.0 (Standard) (PMSA003I)"
+            "text": "🌫️ PM1.0 (Standard) (PMSA003I)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "5 μg/m³"
+            "text": "5 μg/m³",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌫️ PM2.5 (Standard) (PMSA003I)"
+            "text": "🌫️ PM2.5 (Standard) (PMSA003I)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "6 μg/m³"
+            "text": "6 μg/m³",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🌫️ PM10 (Standard) (PMSA003I)"
+            "text": "🌫️ PM10 (Standard) (PMSA003I)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "6 μg/m³"
+            "text": "6 μg/m³",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🫧 Particles ≥0.3 μm (PMSA003I)"
+            "text": "🫧 Particles ≥0.3 μm (PMSA003I)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "744 count/0.1L"
+            "text": "744 count/0.1L",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🫧 Particles ≥0.5 μm (PMSA003I)"
+            "text": "🫧 Particles ≥0.5 μm (PMSA003I)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "232 count/0.1L"
+            "text": "232 count/0.1L",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ],
         [
           {
-            "type": "raw_text",
-            "text": "🔌 Relay On Time (InternalMetrics)"
+            "text": "🔌 Relay On Time (InternalMetrics)",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "20 days, 3 hours, 36 minutes and 43 seconds"
+            "text": "20 days, 3 hours, 36 minutes and 43 seconds",
+            "type": "raw_text"
           },
           {
-            "type": "raw_text",
-            "text": "—"
+            "text": "—",
+            "type": "raw_text"
           }
         ]
       ],

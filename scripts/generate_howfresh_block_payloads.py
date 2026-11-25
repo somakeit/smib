@@ -3,8 +3,8 @@ Generate Block Kit payloads for the proposed tabular /howfresh output.
 
 Paste the generated JSON into https://app.slack.com/block-kit-builder to check how the
 layout actually renders. The SDK's validate_json() only enforces its own schema rules - it
-does not tell you whether a workspace renders a table block, how wide the label column gets
-on mobile, or whether bold styling on a raw_text cell is honoured. Those need eyes on Slack.
+does not tell you whether a workspace renders a table block at all, or how wide the label
+column gets on a phone. Those need eyes on Slack.
 
 The payloads deliberately reuse the real formatting helpers from plugins.space.howfresh
 (symbols, display names, unit prettification, sort order, the relay_on_time formatter), so
@@ -33,6 +33,10 @@ from slack_sdk.models.blocks import (  # noqa: E402
     Block,
     ContextBlock,
     MarkdownTextObject,
+    RawTextObject,
+    RichTextBlock,
+    RichTextElementParts,
+    RichTextSectionElement,
     SectionBlock,
     TableBlock,
     TableBlockColumnSettings,
@@ -93,19 +97,36 @@ SENSOR_UNITS: dict[str, dict[str, str]] = {
 LAST_UPDATED = "2 minutes ago"
 
 
-def raw_cell(text: Any) -> dict[str, Any]:
-    return {"type": "raw_text", "text": str(text)}
+TableCell = RawTextObject | RichTextBlock
 
 
-def header_cell(text: Any) -> dict[str, Any]:
+def raw_cell(text: Any) -> RawTextObject:
+    return RawTextObject(text=str(text))
+
+
+def header_cell(text: Any) -> TableCell:
     """
     Bold header cell.
 
-    `style` is passed straight through - slack_sdk does not validate the contents of a
-    raw_text cell, so whether bold is honoured is one of the things to confirm in Block Kit
-    Builder. If it is rejected, drop the style key and headers render plain.
+    A raw_text cell carries no styling - RawTextObject.attributes is {"text", "type"} - so a
+    bold header has to be a rich_text cell instead. Table cells accept either, and an empty
+    header falls back to raw_text because a rich text section needs at least one element.
     """
-    return {"type": "raw_text", "text": str(text), "style": {"bold": True}}
+    if not str(text):
+        return RawTextObject(text=" ")
+
+    return RichTextBlock(
+        elements=[
+            RichTextSectionElement(
+                elements=[
+                    RichTextElementParts.Text(
+                        text=str(text),
+                        style=RichTextElementParts.TextStyle(bold=True),
+                    )
+                ]
+            )
+        ]
+    )
 
 
 def column_settings(device_count: int) -> list[TableBlockColumnSettings]:
@@ -155,7 +176,7 @@ def collect_device_summary(device: str) -> dict[str, dict[str, Any]]:
     return collected
 
 
-def build_summary_rows(devices: list[str]) -> list[list[dict[str, Any]]]:
+def build_summary_rows(devices: list[str]) -> list[list[TableCell]]:
     # The first header cell is left empty - the rows are self-evidently measurements, and the
     # label column is the one that runs out of width first on mobile.
     rows = [[header_cell("")] + [header_cell(device) for device in devices]]
@@ -188,7 +209,7 @@ def build_summary_rows(devices: list[str]) -> list[list[dict[str, Any]]]:
     return rows
 
 
-def build_detailed_rows(devices: list[str]) -> list[list[dict[str, Any]]]:
+def build_detailed_rows(devices: list[str]) -> list[list[TableCell]]:
     # Row identity is (sensor, measurement) - the pair is what the suffixed label encodes.
     pairs: list[tuple[str, str]] = []
     for device_data in DEVICE_READINGS.values():
@@ -242,19 +263,33 @@ def build_detailed_blocks(devices: list[str]) -> list[Block]:
     ]
 
 
-def render_ascii_preview(rows: list[list[dict[str, Any]]], title: str) -> str:
+def cell_text(cell: TableCell) -> str:
+    """Pull the display text back out of a cell, for the terminal preview only."""
+    if isinstance(cell, RawTextObject):
+        return cell.text
+
+    return "".join(
+        part.text
+        for element in cell.elements
+        for part in getattr(element, "elements", [])
+        if getattr(part, "text", None)
+    )
+
+
+def render_ascii_preview(rows: list[list[TableCell]], title: str) -> str:
     """
     Rough terminal preview. Emoji are double-width in most terminals, so the pipes look
     ragged - that is a preview artifact, not the Slack layout. Useful for row/column counts
     and label lengths, not for judging alignment.
     """
-    widths = [max(len(row[index]["text"]) for row in rows) for index in range(len(rows[0]))]
+    text_rows = [[cell_text(cell) for cell in row] for row in rows]
+    widths = [max(len(row[index]) for row in text_rows) for index in range(len(text_rows[0]))]
 
     lines = [f"--- {title} ---"]
-    for row_index, row in enumerate(rows):
+    for row_index, row in enumerate(text_rows):
         cells = [
-            cell["text"].ljust(widths[index]) if index == 0 else cell["text"].rjust(widths[index])
-            for index, cell in enumerate(row)
+            text.ljust(widths[index]) if index == 0 else text.rjust(widths[index])
+            for index, text in enumerate(row)
         ]
         lines.append(" | ".join(cells))
         if row_index == 0:
