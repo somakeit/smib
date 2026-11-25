@@ -19,10 +19,19 @@ cross-device averaging will have to reuse or deliberately replace.
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from slack_sdk.models.blocks import DividerBlock, SectionBlock
+from slack_sdk.models.blocks import (
+    ContextBlock,
+    DividerBlock,
+    RawTextObject,
+    SectionBlock,
+    TableBlock,
+)
 
 from plugins.space.howfresh import (
+    EMPTY_CELL,
     MEASUREMENT_SORT_ORDER,
+    READING_TIME_LABEL,
+    STALE_MARKER,
     SUMMARY_MEASUREMENTS,
     build_sensor_message_blocks,
     collect_summary_readings,
@@ -36,11 +45,16 @@ from plugins.space.howfresh import (
     get_measurement_symbol,
     get_sensor_label,
     get_sensor_sort_key,
+    is_excluded,
+    is_stale,
     normalize_measurement_key,
     normalize_measurement_name,
     normalize_measurement_unit,
+    reading_age,
     remove_trailing_divider,
+    select_devices_to_render,
 )
+from plugins.space.howfresh.config import HowFreshDeviceConfig, config
 from plugins.space.smibhid.sensor.models import (
     SensorDataMap,
     SensorLog,
@@ -353,7 +367,7 @@ class TestSummaryMessageBlocks:
         log = make_sensor_log({"BME280": {"temperature": 21.0}}, device="SMIBHID-MAIN")
         units = make_sensor_units({"BME280": {"temperature": "C"}})
 
-        blocks = build_sensor_message_blocks(log, units, detailed=False)
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=False)
 
         assert "SMIBHID-MAIN" in section_texts(blocks)[0]
 
@@ -373,7 +387,7 @@ class TestSummaryMessageBlocks:
             }
         )
 
-        blocks = build_sensor_message_blocks(log, units, detailed=False)
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=False)
         body = section_texts(blocks)[1]
         positions = [body.index(name) for name in ("Temperature", "Humidity", "Light", "CO₂")]
 
@@ -386,7 +400,7 @@ class TestSummaryMessageBlocks:
         )
         units = make_sensor_units({"BME280": {"temperature": "C", "pressure": "hPa"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=False))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=False))
 
         assert "Temperature" in rendered
         assert "Pressure" not in rendered
@@ -396,7 +410,7 @@ class TestSummaryMessageBlocks:
         log = make_sensor_log({"BME280": {"temperature": 21.0}})
         units = make_sensor_units({"BME280": {"temperature": "C"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=False))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=False))
 
         assert "/howfresh detailed" in rendered
 
@@ -405,7 +419,7 @@ class TestSummaryMessageBlocks:
         log = make_sensor_log({"PMSA003I": {"pm25_standard": 6}})
         units = make_sensor_units({"PMSA003I": {"pm25_standard": "ug/m3"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=False))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=False))
 
         assert "No summary sensor readings found." in rendered
 
@@ -415,7 +429,7 @@ class TestDetailedMessageBlocks:
         log = make_sensor_log({"BH1750": {"light": 200.0}, "BME280": {"temperature": 21.0}})
         units = make_sensor_units({"BH1750": {"light": "lx"}, "BME280": {"temperature": "C"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
 
         assert "*Light (BH1750)*" in rendered
         assert "*Climate (BME280)*" in rendered
@@ -430,7 +444,7 @@ class TestDetailedMessageBlocks:
         )
         units = make_sensor_units({})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
         positions = [rendered.index(label) for label in ("BH1750", "BME280", "Internal Metrics")]
 
         assert positions == sorted(positions)
@@ -451,7 +465,7 @@ class TestDetailedMessageBlocks:
         )
         units = make_sensor_units({"BME280": {"humidity": "%"}, "SCD30": {"relative_humidity": "%"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
 
         assert "*Humidity*: 39.55 %" in rendered
         assert "*Humidity*: 39.20 %" in rendered
@@ -462,7 +476,7 @@ class TestDetailedMessageBlocks:
         log = make_sensor_log({"BME280": {"temperature": 29.0}, "SCD30": {"temperature": 30.4}})
         units = make_sensor_units({"BME280": {"temperature": "C"}, "SCD30": {"temperature": "C"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
 
         assert "(avg)" not in rendered
         assert "29 °C" in rendered
@@ -473,7 +487,7 @@ class TestDetailedMessageBlocks:
         log = make_sensor_log({"SGP30": {"tvoc": 120}})
         units = make_sensor_units({"SGP30": {"tvoc": "ppb"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
 
         assert "*SGP30*" in rendered
         assert "*Tvoc*: 120 ppb" in rendered
@@ -482,7 +496,7 @@ class TestDetailedMessageBlocks:
         log = make_sensor_log({"BH1750": {"light": 200.0}})
         units = make_sensor_units({"BH1750": {"light": "lx"}})
 
-        blocks = build_sensor_message_blocks(log, units, detailed=True)
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=True)
 
         assert not isinstance(blocks[-1], DividerBlock)
 
@@ -490,7 +504,7 @@ class TestDetailedMessageBlocks:
         log = make_sensor_log({"InternalMetrics": {"relay_on_time": 1741003}})
         units = make_sensor_units({"InternalMetrics": {"relay_on_time": "s"}})
 
-        rendered = rendered_text(build_sensor_message_blocks(log, units, detailed=True))
+        rendered = rendered_text(build_sensor_message_blocks([log], {log.device: units}, detailed=True))
 
         assert "1741003" not in rendered
         assert "20 days" in rendered
@@ -523,7 +537,7 @@ class TestBlocksAreValidSlackPayloads:
             }
         )
 
-        blocks = build_sensor_message_blocks(log, units, detailed=detailed)
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=detailed)
 
         assert blocks
         for block in blocks:
@@ -547,7 +561,334 @@ class TestBlocksAreValidSlackPayloads:
         )
         units = make_sensor_units({})
 
-        blocks = build_sensor_message_blocks(log, units, detailed=True)
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=True)
 
         for text in section_texts(blocks):
             assert len(text) <= 3000
+
+
+class TestDeviceSelection:
+    """
+    Which devices make it into the readout at all. Thresholds come from config, so these
+    drive the real resolver rather than patching the comparison out.
+    """
+
+    def test_fresh_devices_are_all_kept(self):
+        logs = [
+            make_sensor_log({"BME280": {"temperature": 21.0}}, device="SMIBHID-FAN"),
+            make_sensor_log({"BH1750": {"light": 180.0}}, device="SMIBHID-WORKSHOP"),
+        ]
+
+        assert select_devices_to_render(logs) == logs
+
+    def test_device_past_exclusion_is_dropped_while_another_reports(self):
+        fresh = make_sensor_log({"BH1750": {"light": 180.0}}, device="SMIBHID-WORKSHOP")
+        ancient = make_sensor_log(
+            {"BME280": {"temperature": 16.0}},
+            device="SMIBHID-SPARE",
+            timestamp=datetime.now(UTC) - timedelta(days=30),
+        )
+
+        assert select_devices_to_render([fresh, ancient]) == [fresh]
+
+    def test_all_devices_past_exclusion_are_all_kept(self):
+        """
+        Dropping every device would turn a stale-but-real readout into "no sensor readings
+        found". A device is only ever dropped while another is still reporting.
+        """
+        logs = [
+            make_sensor_log(
+                {"BME280": {"temperature": 16.0}},
+                device=device,
+                timestamp=datetime.now(UTC) - timedelta(days=30),
+            )
+            for device in ("SMIBHID-FAN", "SMIBHID-SPARE")
+        ]
+
+        assert select_devices_to_render(logs) == logs
+
+    def test_stale_device_is_kept_but_marked(self):
+        stale_log = make_sensor_log(
+            {"BH1750": {"light": 180.0}},
+            device="SMIBHID-WORKSHOP",
+            timestamp=datetime.now(UTC) - timedelta(hours=6),
+        )
+
+        assert select_devices_to_render([stale_log]) == [stale_log]
+        assert is_stale(stale_log)
+        assert not is_excluded(stale_log)
+
+
+class TestSingleDeviceStillUsesSections:
+    """
+    One device keeps the mrkdwn section layout. A table exists to compare devices and has
+    nothing to compare, while costing the width the suffixed labels need.
+    """
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_single_device_renders_no_table(self, detailed):
+        log = make_sensor_log({"BME280": {"temperature": 21.0}}, device="SMIBHID-FAN")
+        units = make_sensor_units({"BME280": {"temperature": "C"}})
+
+        blocks = build_sensor_message_blocks([log], {log.device: units}, detailed=detailed)
+
+        assert not any(isinstance(block, TableBlock) for block in blocks)
+
+    def test_missing_units_document_still_renders(self):
+        """A device can report readings before its units document exists."""
+        log = make_sensor_log({"BME280": {"temperature": 21.0}}, device="SMIBHID-FAN")
+
+        rendered = rendered_text(build_sensor_message_blocks([log], {}, detailed=True))
+
+        assert "*Temperature*: 21" in rendered
+
+
+class TestMultiDeviceTableBlocks:
+    def make_two_devices(self):
+        fan = make_sensor_log(
+            {
+                "BH1750": {"light": 310.0},
+                "BME280": {"temperature": 21.4, "humidity": 42.0},
+                "SCD30": {"co2": 480.2, "temperature": 21.9, "relative_humidity": 41.1},
+            },
+            device="SMIBHID-FAN",
+            timestamp=datetime.now(UTC) - timedelta(minutes=2),
+        )
+        workshop = make_sensor_log(
+            {"BH1750": {"light": 180.0}},
+            device="SMIBHID-WORKSHOP",
+            timestamp=datetime.now(UTC) - timedelta(minutes=3),
+        )
+
+        units = {
+            "SMIBHID-FAN": make_sensor_units(
+                {
+                    "BH1750": {"light": "lx"},
+                    "BME280": {"temperature": "C", "humidity": "%"},
+                    "SCD30": {"co2": "ppm", "temperature": "C", "relative_humidity": "%"},
+                },
+                device="SMIBHID-FAN",
+            ),
+            "SMIBHID-WORKSHOP": make_sensor_units({"BH1750": {"light": "lx"}}, device="SMIBHID-WORKSHOP"),
+        }
+
+        return [fan, workshop], units
+
+    def get_table(self, blocks) -> TableBlock:
+        tables = [block for block in blocks if isinstance(block, TableBlock)]
+        assert len(tables) == 1
+        return tables[0]
+
+    def cell_texts(self, table: TableBlock) -> list[list[str]]:
+        rows = []
+        for row in table.rows:
+            cells = []
+            for cell in row:
+                if isinstance(cell, RawTextObject):
+                    cells.append(cell.text)
+                else:
+                    cells.append(
+                        "".join(
+                            part.text
+                            for element in cell.elements
+                            for part in getattr(element, "elements", [])
+                            if getattr(part, "text", None)
+                        )
+                    )
+            rows.append(cells)
+        return rows
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_two_devices_render_a_table(self, detailed):
+        logs, units = self.make_two_devices()
+
+        blocks = build_sensor_message_blocks(logs, units, detailed=detailed)
+
+        assert self.get_table(blocks) is not None
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_every_device_gets_a_column(self, detailed):
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=detailed)))
+
+        # Label column plus one per device.
+        assert all(len(row) == 3 for row in rows)
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_reading_time_is_a_row_not_a_header_line(self, detailed):
+        """
+        Devices push on independent schedules, so a single header "last updated" would
+        misrepresent whichever column it did not describe.
+        """
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=detailed)))
+
+        assert rows[1][0] == READING_TIME_LABEL
+        assert all(cell for cell in rows[1][1:])
+
+    def test_device_without_a_measurement_gets_an_empty_cell(self):
+        """The workshop unit is light-only, so its temperature cell must read as absent."""
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+        temperature_row = next(row for row in rows if "Temperature" in row[0])
+
+        assert temperature_row[1] != EMPTY_CELL
+        assert temperature_row[2] == EMPTY_CELL
+
+    def test_light_is_reported_by_both_devices(self):
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+        light_row = next(row for row in rows if "Light" in row[0])
+
+        assert light_row[1] == "310 lx"
+        assert light_row[2] == "180 lx"
+
+    def test_averaging_is_marked_per_cell_not_per_row(self):
+        """
+        The fan unit averages BME280 and SCD30 temperature; the workshop unit reports none.
+        "(avg)" therefore describes a cell, not the measurement.
+        """
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+        temperature_row = next(row for row in rows if "Temperature" in row[0])
+
+        assert "(avg)" not in temperature_row[0]
+        assert "(avg)" in temperature_row[1]
+
+    def test_detailed_labels_carry_the_sensor_to_stay_unique(self):
+        """
+        Both humidity readings display as "Humidity" and both sensors report `temperature`,
+        so without the sensor suffix the flat table would have colliding row labels.
+        """
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=True)))
+        labels = [row[0] for row in rows[2:]]
+
+        assert len(labels) == len(set(labels))
+        assert any("(BME280)" in label for label in labels)
+        assert any("(SCD30)" in label for label in labels)
+
+    def test_summary_table_excludes_detailed_only_measurements(self):
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+        labels = " ".join(row[0] for row in rows)
+
+        assert "Temperature" in labels
+        assert "Pressure" not in labels
+
+    def test_stale_device_column_is_marked_and_footnoted(self):
+        logs, units = self.make_two_devices()
+        logs[1].timestamp = datetime.now(UTC) - timedelta(hours=6)
+
+        blocks = build_sensor_message_blocks(logs, units, detailed=False)
+        rows = self.cell_texts(self.get_table(blocks))
+        rendered = " ".join(
+            block.elements[0].text for block in blocks if isinstance(block, ContextBlock)
+        )
+
+        assert STALE_MARKER in rows[0][2]
+        assert STALE_MARKER not in rows[0][1]
+        assert "may be stale" in rendered
+
+    def test_no_stale_footnote_when_every_device_is_fresh(self):
+        logs, units = self.make_two_devices()
+
+        blocks = build_sensor_message_blocks(logs, units, detailed=False)
+        rendered = " ".join(
+            block.elements[0].text for block in blocks if isinstance(block, ContextBlock)
+        )
+
+        assert "may be stale" not in rendered
+
+    def test_friendly_device_name_is_used_when_configured(self, monkeypatch):
+        logs, units = self.make_two_devices()
+        monkeypatch.setitem(
+            config.device, "smibhid_fan", HowFreshDeviceConfig(name="Clean Room")
+        )
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+
+        assert "Clean Room" in rows[0][1]
+
+    def test_hostname_is_used_when_no_name_is_configured(self):
+        logs, units = self.make_two_devices()
+
+        rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
+
+        assert "SMIBHID-WORKSHOP" in rows[0][2]
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_table_blocks_validate(self, detailed):
+        logs, units = self.make_two_devices()
+
+        for block in build_sensor_message_blocks(logs, units, detailed=detailed):
+            block.validate_json()
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_table_stays_within_slack_block_limits(self, detailed):
+        """Slack allows 100 rows and 20 cells per row."""
+        logs, units = self.make_two_devices()
+
+        table = self.get_table(build_sensor_message_blocks(logs, units, detailed=detailed))
+
+        assert len(table.rows) <= 100
+        assert all(len(row) <= 20 for row in table.rows)
+
+
+class TestNaiveTimestampsFromMongo:
+    """
+    MongoDB stores dates without a zone, so a document read back from the DB carries a naive
+    timestamp even though it was written as UTC. The in-memory fixtures elsewhere in this file
+    build tz-aware datetimes in Python and so never exercised that path - the first real
+    /howfresh against seeded data crashed with "can't subtract offset-naive and offset-aware
+    datetimes", taking the whole command down.
+    """
+
+    def test_reading_age_handles_a_naive_timestamp(self):
+        naive = (datetime.now(UTC) - timedelta(minutes=30)).replace(tzinfo=None)
+        log = make_sensor_log({"BME280": {"temperature": 21.0}})
+        log.timestamp = naive
+
+        assert reading_age(log) >= timedelta(minutes=29)
+
+    def test_naive_timestamp_is_read_as_utc_not_local_time(self):
+        """
+        Treating a naive UTC timestamp as local time would shift the age by the host's offset,
+        which in a non-UTC timezone turns a fresh reading stale or vice versa.
+        """
+        aware = datetime.now(UTC) - timedelta(minutes=5)
+
+        aware_log = make_sensor_log({"BME280": {"temperature": 21.0}}, timestamp=aware)
+        naive_log = make_sensor_log({"BME280": {"temperature": 21.0}})
+        naive_log.timestamp = aware.replace(tzinfo=None)
+
+        assert abs(reading_age(aware_log) - reading_age(naive_log)) < timedelta(seconds=1)
+
+    def test_staleness_is_evaluated_on_a_naive_timestamp(self):
+        log = make_sensor_log({"BME280": {"temperature": 21.0}})
+        log.timestamp = (datetime.now(UTC) - timedelta(minutes=2)).replace(tzinfo=None)
+
+        assert not is_stale(log)
+
+    @pytest.mark.parametrize("detailed", [False, True])
+    def test_multi_device_render_survives_naive_timestamps(self, detailed):
+        logs = []
+        for index, device in enumerate(("SMIBHID-FAN", "SMIBHID-WORKSHOP")):
+            log = make_sensor_log({"BH1750": {"light": 200.0 + index}}, device=device)
+            log.timestamp = (datetime.now(UTC) - timedelta(minutes=2 + index)).replace(tzinfo=None)
+            logs.append(log)
+
+        units = {log.device: make_sensor_units({"BH1750": {"light": "lx"}}, device=log.device) for log in logs}
+
+        blocks = build_sensor_message_blocks(logs, units, detailed=detailed)
+
+        assert blocks
+        for block in blocks:
+            block.validate_json()
