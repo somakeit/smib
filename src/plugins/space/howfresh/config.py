@@ -7,3 +7,7 @@ HOW_FRESH_PROFILE = {
     "username": HOW_FRESH_USERNAME,
     "icon_url": HOW_FRESH_PICTURE,
 }
+
+# Note: the per-device settings this plugin needs - friendly names, ordering and the
+# staleness thresholds - are shared with the App Home light state and live in
+# plugins.space.smibhid.config, not here.

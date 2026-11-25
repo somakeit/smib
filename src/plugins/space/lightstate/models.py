@@ -47,6 +47,20 @@ class SpaceLightState(Document, SpaceLightStateBase):
     async def get_latest_state(cls) -> SpaceLightState | None:
         return await cls.find_one(sort=[(cls.updated_at, pymongo.DESCENDING)])
 
+    @classmethod
+    async def get_states_per_device(cls) -> list[SpaceLightState]:
+        """
+        The stored light state for every device that has ever reported one.
+
+        `get_latest_state()` returns whichever device saved most recently, which with more
+        than one S.M.I.B.H.I.D. means the App Home speaks for the space on the word of one
+        arbitrary device. Worse, `updated_at` is refreshed on every save, so a replayed or
+        backfilled report from a long-dead device outranks a live one.
+
+        Sorted by device so the App Home does not reorder itself between renders.
+        """
+        return await cls.find().sort(+cls.device).to_list()
+
     class Settings:
         name = "space_light_state"
 

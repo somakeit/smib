@@ -3,6 +3,7 @@ from typing import Annotated, Optional
 
 import pymongo
 from beanie import Document, Indexed
+from beanie.odm.operators.find.comparison import In
 from beanie.odm.operators.update.general import Set
 from pydantic import BaseModel, Field, AfterValidator, RootModel
 
@@ -155,6 +156,28 @@ class SensorLog(Document, SensorLogBase):
     async def get_latest_log_received(cls) -> Optional["SensorLog"]:
         return await cls.find_one(sort=[(cls.received_timestamp, pymongo.DESCENDING)])
 
+    @classmethod
+    async def get_latest_log_per_device(cls) -> list["SensorLog"]:
+        """
+        The most recent log from every device that has ever reported, newest device first.
+
+        `get_latest_log()` with no device sorts across all devices and returns a single
+        document, so with more than one S.M.I.B.H.I.D. reporting it answers "whichever device
+        happened to push last" - and when two devices share a timestamp, which one wins is
+        arbitrary. Callers rendering the state of the space want one reading per device.
+
+        Grouping in the aggregation rather than fetching per device keeps this to a single
+        round trip and avoids needing to know the device list up front.
+        """
+        pipeline = [
+            {"$sort": {"timestamp": pymongo.DESCENDING}},
+            {"$group": {"_id": "$device", "doc": {"$first": "$$ROOT"}}},
+            {"$replaceRoot": {"newRoot": "$doc"}},
+            {"$sort": {"timestamp": pymongo.DESCENDING}},
+        ]
+
+        return await cls.aggregate(pipeline, projection_model=cls).to_list()
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -191,6 +214,13 @@ class SensorUnit(Document):
     @classmethod
     async def get_for_device(cls, /, device: str | None = None) -> Optional["SensorUnit"]:
         return await cls.find_one(cls.device == device)
+
+    @classmethod
+    async def get_for_devices(cls, devices: list[str]) -> dict[str, "SensorUnit"]:
+        """Units for several devices at once, keyed on device, so a multi-device readout
+        does not issue one query per device."""
+        units = await cls.find(In(cls.device, devices)).to_list()
+        return {unit.device: unit for unit in units}
 
     class Config:
         json_schema_extra = {
