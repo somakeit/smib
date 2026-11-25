@@ -82,21 +82,30 @@ This document provides a comprehensive overview of all configurable settings in 
 
 Per-device overrides are keyed on the device hostname. A device needs an entry only to override
 something; devices with no entry use the defaults above. Hostname keys are matched case
-insensitively, and hyphens and underscores are interchangeable, so `SMIBHID-CLEANROOM` is
-configured as `SMIBHID_CLEANROOM`.
+insensitively, and hyphens and underscores are interchangeable, so `SMIBHID-FAN` is
+configured as `SMIBHID_FAN`.
 
 | Environment Variable | Description | Example | Default |
 |---------------------|-------------|---------|---------|
-| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__NAME | Friendly name shown instead of the device hostname | `Cleanroom` | The device hostname |
+| SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__NAME | Friendly name shown instead of the device hostname | `Clean Room` | The device hostname |
 | SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__STALE_AFTER | Overrides `STALE_AFTER` for this device. Useful when a device reports on a slower cadence than the rest. | `PT3H` or `3:00:00` | Plugin-wide `STALE_AFTER` |
 | SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__&lt;HOSTNAME&gt;__EXCLUDE_AFTER | Overrides `EXCLUDE_AFTER` for this device | `P7D` | Plugin-wide `EXCLUDE_AFTER` |
 
-For example, naming two devices and loosening the thresholds on one that reports hourly:
+For example, giving the two devices in the space friendly names:
 
 ```dotenv
-SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_CLEANROOM__NAME=Cleanroom
+SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_FAN__NAME=Clean Room
 SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_WORKSHOP__NAME=Workshop
-SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__NAME=Spare
+```
+
+`SMIBHID-FAN` is in the clean room — the hostname describes the relay it drives rather than
+where it sits, which is the main reason to configure a name at all.
+
+Only add `STALE_AFTER` or `EXCLUDE_AFTER` for a device that reports on a different cadence to
+the rest — for example a battery-powered unit that only pushes hourly, where the default
+one-hour threshold would flag it constantly:
+
+```dotenv
 SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__STALE_AFTER=PT3H
 SMIB_PLUGIN_SPACE_HOW_FRESH_DEVICE__SMIBHID_SPARE__EXCLUDE_AFTER=P7D
 ```

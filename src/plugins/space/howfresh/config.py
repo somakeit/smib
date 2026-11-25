@@ -21,11 +21,10 @@ def normalize_device_key(device: str) -> str:
     """
     Normalize a device hostname into the key form used by the per-device override map.
 
-    Needed on both sides of the lookup. pydantic-settings lowercases the keys it parses out
-    of env vars, and a hostname like `SMIBHID-CLEANROOM` cannot be spelled with a hyphen in
-    the `DEVICE__<KEY>__<FIELD>` form reliably, so hyphens and underscores are folded
-    together. This means `SMIBHID-CLEANROOM`, `smibhid_cleanroom` and `SMIBHID_CLEANROOM`
-    all resolve to the same entry.
+    Needed on both sides of the lookup. pydantic-settings lowercases the keys it parses out of
+    env vars, and a hostname like `SMIBHID-FAN` cannot carry its hyphen reliably through the
+    `DEVICE__<KEY>__<FIELD>` form, so case and hyphen/underscore are folded together. This
+    means `SMIBHID-FAN`, `smibhid_fan` and `SMIBHID_FAN` all resolve to the same entry.
     """
     return device.strip().lower().replace("-", "_")
 
@@ -38,7 +37,7 @@ class HowFreshDeviceConfig(BaseModel):
 
     name: str | None = Field(
         default=None,
-        description="Friendly name shown instead of the device hostname, e.g. 'Cleanroom'",
+        description="Friendly name shown instead of the device hostname, e.g. 'Clean Room'",
     )
 
     stale_after: IntervalField | None = Field(
@@ -79,7 +78,7 @@ class HowFreshPluginConfig(EnvBaseSettings):
         default_factory=dict,
         description=(
             "Per-device overrides keyed on device hostname, e.g. "
-            "DEVICE__SMIBHID_CLEANROOM__NAME=Cleanroom. Devices with no entry use the defaults "
+            "DEVICE__SMIBHID_FAN__NAME=Clean Room. Devices with no entry use the defaults "
             "above, so this can be left empty."
         ),
     )

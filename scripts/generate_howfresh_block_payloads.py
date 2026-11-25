@@ -66,12 +66,16 @@ from plugins.space.howfresh import (  # noqa: E402
 # missing value. An em dash is the current proposal; a blank cell or "n/a" may read better.
 EMPTY_CELL = "—"
 
-# Two devices as the space is about to be configured: the existing full sensor suite, plus a
-# newly installed unit that initially reports light only (temperature and particulate to
-# follow). The friendly names are what the device map in config supplies; without an entry a
-# device falls back to its raw hostname.
+# Keyed on real device hostnames. SMIBHID-FAN sits in the clean room and has the full sensor
+# suite plus the relay this branch's sibling work tracks - its hostname describes the relay,
+# not the location. SMIBHID-WORKSHOP is the newly installed unit, initially light-only with
+# temperature and particulate to follow.
+#
+# SMIBHID-SPARE is invented, to exercise the exclusion path and the per-device overrides.
+# Column headers use whatever the config's device map resolves - DEMO_DEVICE_NAMES below
+# stands in for that map so the preview is readable without a populated .env.
 DEVICE_READINGS: dict[str, dict[str, dict[str, int | float]]] = {
-    "Cleanroom": {
+    "SMIBHID-FAN": {
         "BH1750": {"light": 310.0},
         "BME280": {"temperature": 21.4, "humidity": 42.0, "pressure": 1013.2},
         "SCD30": {"co2": 480.2, "temperature": 21.9, "relative_humidity": 41.1},
@@ -84,13 +88,13 @@ DEVICE_READINGS: dict[str, dict[str, dict[str, int | float]]] = {
         },
         "InternalMetrics": {"relay_on_time": 1741003},
     },
-    "Workshop": {
+    "SMIBHID-WORKSHOP": {
         "BH1750": {"light": 180.0},
     },
     # Long-abandoned unit: still has a stored reading, but has not reported in over a week.
     # Exercises the exclusion path - the values are real but far too old to answer "how
     # fresh is the space right now?", and a column of them is only noise.
-    "Spare": {
+    "SMIBHID-SPARE": {
         "BME280": {"temperature": 16.2, "humidity": 55.0},
     },
 }
@@ -113,9 +117,9 @@ SENSOR_UNITS: dict[str, dict[str, str]] = {
 # taken at the same moment as the next column's. Deliberately staggered here to exercise all
 # three freshness bands: fresh, stale-but-shown, and dropped entirely.
 DEVICE_REPORTED_AT: dict[str, datetime] = {
-    "Cleanroom": datetime.now(UTC) - timedelta(minutes=2),
-    "Workshop": datetime.now(UTC) - timedelta(minutes=47),
-    "Spare": datetime.now(UTC) - timedelta(days=9),
+    "SMIBHID-FAN": datetime.now(UTC) - timedelta(minutes=2),
+    "SMIBHID-WORKSHOP": datetime.now(UTC) - timedelta(minutes=47),
+    "SMIBHID-SPARE": datetime.now(UTC) - timedelta(days=9),
 }
 
 # Two thresholds, because "old enough to flag" and "old enough to be useless" are different
@@ -143,12 +147,33 @@ EXCLUDE_AFTER = timedelta(days=2)
 # stops catching real outages on the fast one.
 #
 # Keyed here by friendly name for brevity; in config these are hostname keys, normalized for
-# case and for the hyphen/underscore difference between a hostname like SMIBHID-CLEANROOM and
-# the env var form DEVICE__SMIBHID_CLEANROOM__STALE_AFTER.
+# case and for the hyphen/underscore difference between a hostname like SMIBHID-FAN and
+# the env var form DEVICE__SMIBHID_FAN__STALE_AFTER.
 DEVICE_THRESHOLD_OVERRIDES: dict[str, dict[str, timedelta]] = {
-    # Reports hourly on purpose, so the global 30-minute flag would fire constantly.
-    "Spare": {"stale_after": timedelta(hours=3), "exclude_after": timedelta(days=7)},
+    # Hypothetical third device that reports hourly on purpose, so the global flag would
+    # fire constantly. The two real devices need no overrides.
+    "SMIBHID-SPARE": {"stale_after": timedelta(hours=3), "exclude_after": timedelta(days=7)},
 }
+
+# Stands in for the config device map, so the generated payloads show friendly names without
+# requiring a populated .env. The real render calls plugin_config.display_name(hostname),
+# which falls back to the raw hostname when a device has no configured name.
+DEMO_DEVICE_NAMES: dict[str, str] = {
+    # SMIBHID-FAN is in the clean room - the hostname names the relay it drives, not where
+    # it sits, which is exactly why the friendly-name map earns its place.
+    "SMIBHID-FAN": "Clean Room",
+    "SMIBHID-WORKSHOP": "Workshop",
+}
+
+
+def display_name(device: str) -> str:
+    configured = plugin_config.display_name(device)
+
+    if configured != device:
+        return configured
+
+    return DEMO_DEVICE_NAMES.get(device, device)
+
 
 STALE_MARKER = "⚠️"
 
@@ -209,7 +234,8 @@ def included_devices(devices: list[str]) -> list[str]:
 
 
 def device_header(device: str) -> str:
-    return f"{device} {STALE_MARKER}" if is_stale(device) else device
+    name = display_name(device)
+    return f"{name} {STALE_MARKER}" if is_stale(device) else name
 
 
 def reported_at_text(device: str) -> str:
@@ -383,7 +409,7 @@ def build_single_device_blocks(device: str, *, detailed: bool) -> list[Block]:
     blocks: list[Block] = [
         SectionBlock(
             text=MarkdownTextObject(
-                text=f"{header}\n_{device} · reading taken {reported_at_text(device)}_"
+                text=f"{header}\n_{display_name(device)} · reading taken {reported_at_text(device)}_"
             )
         ),
         DividerBlock(),
@@ -456,7 +482,7 @@ def stale_footnote(devices: list[str]) -> ContextBlock | None:
     # Each device's own age, not the threshold: with per-device thresholds a single shared
     # "over N minutes" figure would be wrong for any device that overrides it, and the age
     # is the more useful number to a reader anyway.
-    ages = ", ".join(f"{device} {reported_at_text(device)}" for device in stale_devices)
+    ages = ", ".join(f"{display_name(device)} {reported_at_text(device)}" for device in stale_devices)
     return ContextBlock(
         elements=[
             MarkdownTextObject(
@@ -555,13 +581,13 @@ def main() -> None:
 
     devices = list(DEVICE_READINGS)
 
-    # "Spare" is past EXCLUDE_AFTER, so the multi-device payloads drop it; the single-device
-    # payloads pass one device explicitly to show the layout /howfresh falls back to.
+    # SMIBHID-SPARE is past EXCLUDE_AFTER, so the multi-device payloads drop it; the
+    # single-device payloads pass one device explicitly to show the fallback layout.
     payloads = {
         "howfresh_summary_table": build_summary_blocks(devices),
         "howfresh_detailed_table": build_detailed_blocks(devices),
-        "howfresh_summary_single_device": build_summary_blocks(["Cleanroom"]),
-        "howfresh_detailed_single_device": build_detailed_blocks(["Cleanroom"]),
+        "howfresh_summary_single_device": build_summary_blocks(["SMIBHID-FAN"]),
+        "howfresh_detailed_single_device": build_detailed_blocks(["SMIBHID-FAN"]),
     }
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -586,12 +612,12 @@ def main() -> None:
     print()
     print(describe_configured_thresholds())
     print()
-    print(f"{'device':12} {'age':>16}  {'stale after':>12} {'exclude after':>14}   verdict")
+    print(f"{'device':18} {'shown as':10} {'age':>16}  {'stale after':>12} {'exclude after':>14}   verdict")
     for device in devices:
         overridden = " (override)" if device in DEVICE_THRESHOLD_OVERRIDES else ""
         verdict = "dropped" if is_excluded(device) else ("stale" if is_stale(device) else "fresh")
         print(
-            f"{device:12} {get_humanized_time(DEVICE_REPORTED_AT[device]):>16}  "
+            f"{device:18} {display_name(device):10} {get_humanized_time(DEVICE_REPORTED_AT[device]):>16}  "
             f"{str(stale_after(device)):>12} {str(exclude_after(device)):>14}   {verdict}{overridden}"
         )
     print(f"\nrendered: {', '.join(rendered)}   dropped: {', '.join(dropped) or '-'}")
@@ -601,7 +627,7 @@ def main() -> None:
     print(render_ascii_preview(build_detailed_rows(rendered), "DETAILED"))
     print()
     print("--- SINGLE DEVICE (non-tabular fallback) ---")
-    for block in build_summary_blocks(["Cleanroom"]):
+    for block in build_summary_blocks(["SMIBHID-FAN"]):
         payload = block.to_dict()
         if payload["type"] == "section":
             print(payload["text"]["text"])
