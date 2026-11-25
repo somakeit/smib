@@ -1,0 +1,308 @@
+"""
+Generate Block Kit payloads for the proposed tabular /howfresh output.
+
+Paste the generated JSON into https://app.slack.com/block-kit-builder to check how the
+layout actually renders. The SDK's validate_json() only enforces its own schema rules - it
+does not tell you whether a workspace renders a table block, how wide the label column gets
+on mobile, or whether bold styling on a raw_text cell is honoured. Those need eyes on Slack.
+
+The payloads deliberately reuse the real formatting helpers from plugins.space.howfresh
+(symbols, display names, unit prettification, sort order, the relay_on_time formatter), so
+what you paste matches what SMIB would post rather than a hand-written approximation of it.
+Only the table assembly is new - that is the part under design.
+
+Usage:
+    python scripts/generate_howfresh_block_payloads.py [--output-dir DIR] [--print]
+
+Context: https://github.com/somakeit/smib/issues/510 - a second SMIBHID device is being
+installed in the space, and /howfresh currently renders a single arbitrary device.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from slack_sdk.models.blocks import (  # noqa: E402
+    Block,
+    ContextBlock,
+    MarkdownTextObject,
+    SectionBlock,
+    TableBlock,
+    TableBlockColumnSettings,
+)
+
+from plugins.space.howfresh import (  # noqa: E402
+    SUMMARY_MEASUREMENTS,
+    format_measurement_reading,
+    format_measurement_with_unit,
+    get_measurement_sort_key,
+    get_measurement_symbol,
+    get_sensor_sort_key,
+    normalize_measurement_key,
+    normalize_measurement_name,
+)
+
+# An empty cell needs to read as "this device does not report that", not as a zero or a
+# missing value. An em dash is the current proposal; a blank cell or "n/a" may read better.
+EMPTY_CELL = "—"
+
+# Two devices as the space is about to be configured: the existing full sensor suite, plus a
+# newly installed unit that initially reports light only (temperature and particulate to
+# follow). The friendly names are what the device map in config supplies; without an entry a
+# device falls back to its raw hostname.
+DEVICE_READINGS: dict[str, dict[str, dict[str, int | float]]] = {
+    "Cleanroom": {
+        "BH1750": {"light": 310.0},
+        "BME280": {"temperature": 21.4, "humidity": 42.0, "pressure": 1013.2},
+        "SCD30": {"co2": 480.2, "temperature": 21.9, "relative_humidity": 41.1},
+        "PMSA003I": {
+            "pm10_standard": 5,
+            "pm25_standard": 6,
+            "pm100_standard": 6,
+            "particles_03um": 744,
+            "particles_05um": 232,
+        },
+        "InternalMetrics": {"relay_on_time": 1741003},
+    },
+    "Workshop": {
+        "BH1750": {"light": 180.0},
+    },
+}
+
+SENSOR_UNITS: dict[str, dict[str, str]] = {
+    "BH1750": {"light": "lx"},
+    "BME280": {"temperature": "C", "humidity": "%", "pressure": "hPa"},
+    "SCD30": {"co2": "ppm", "temperature": "C", "relative_humidity": "%"},
+    "PMSA003I": {
+        "pm10_standard": "ug/m3",
+        "pm25_standard": "ug/m3",
+        "pm100_standard": "ug/m3",
+        "particles_03um": "count/0.1L",
+        "particles_05um": "count/0.1L",
+    },
+    "InternalMetrics": {"relay_on_time": "s"},
+}
+
+LAST_UPDATED = "2 minutes ago"
+
+
+def raw_cell(text: Any) -> dict[str, Any]:
+    return {"type": "raw_text", "text": str(text)}
+
+
+def header_cell(text: Any) -> dict[str, Any]:
+    """
+    Bold header cell.
+
+    `style` is passed straight through - slack_sdk does not validate the contents of a
+    raw_text cell, so whether bold is honoured is one of the things to confirm in Block Kit
+    Builder. If it is rejected, drop the style key and headers render plain.
+    """
+    return {"type": "raw_text", "text": str(text), "style": {"bold": True}}
+
+
+def column_settings(device_count: int) -> list[TableBlockColumnSettings]:
+    """Left-aligned labels, right-aligned values so units line up down each column."""
+    return [TableBlockColumnSettings(align="left", is_wrapped=False)] + [
+        TableBlockColumnSettings(align="right") for _ in range(device_count)
+    ]
+
+
+def measurement_label(measurement: str, sensor: str | None = None) -> str:
+    symbol = get_measurement_symbol(measurement)
+    name = normalize_measurement_name(measurement)
+
+    if sensor is None:
+        return f"{symbol} {name}"
+
+    # The sensor suffix is what keeps row labels unique. BME280 reports `humidity` while
+    # SCD30 reports `relative_humidity`, and both normalize to the label "Humidity";
+    # `temperature` collides outright. Grouped sections disambiguate those today via the
+    # sensor heading, but a flat table has no heading to inherit, so the sensor moves into
+    # the label itself. Always shown rather than only on collision, so a given measurement
+    # always reads the same regardless of which sensors happen to be reporting.
+    return f"{symbol} {name} ({sensor})"
+
+
+def collect_device_summary(device: str) -> dict[str, dict[str, Any]]:
+    """
+    Average each summary measurement within a single device, across its sensors.
+
+    Mirrors collect_summary_readings in the plugin: readings are merged on the normalized
+    measurement key, so `humidity` and `relative_humidity` land together.
+    """
+    collected: dict[str, dict[str, Any]] = {}
+
+    for sensor, readings in DEVICE_READINGS[device].items():
+        for measurement, value in readings.items():
+            key = normalize_measurement_key(measurement)
+            if key not in {normalize_measurement_key(m) for m in SUMMARY_MEASUREMENTS}:
+                continue
+
+            entry = collected.setdefault(key, {"values": [], "unit": None})
+            entry["values"].append(value)
+
+            if entry["unit"] is None:
+                entry["unit"] = SENSOR_UNITS.get(sensor, {}).get(measurement)
+
+    return collected
+
+
+def build_summary_rows(devices: list[str]) -> list[list[dict[str, Any]]]:
+    # The first header cell is left empty - the rows are self-evidently measurements, and the
+    # label column is the one that runs out of width first on mobile.
+    rows = [[header_cell("")] + [header_cell(device) for device in devices]]
+
+    per_device = {device: collect_device_summary(device) for device in devices}
+
+    for measurement in SUMMARY_MEASUREMENTS:
+        key = normalize_measurement_key(measurement)
+        cells = [raw_cell(measurement_label(key))]
+        reported_anywhere = False
+
+        for device in devices:
+            entry = per_device[device].get(key)
+
+            if not entry or not entry["values"]:
+                cells.append(raw_cell(EMPTY_CELL))
+                continue
+
+            reported_anywhere = True
+            values = entry["values"]
+            rendered = format_measurement_with_unit(sum(values) / len(values), entry["unit"])
+
+            # "(avg)" belongs on the cell, not the row: one device may average two sensors
+            # while another reports a single reading for the same measurement.
+            cells.append(raw_cell(f"{rendered} (avg)" if len(values) > 1 else rendered))
+
+        if reported_anywhere:
+            rows.append(cells)
+
+    return rows
+
+
+def build_detailed_rows(devices: list[str]) -> list[list[dict[str, Any]]]:
+    # Row identity is (sensor, measurement) - the pair is what the suffixed label encodes.
+    pairs: list[tuple[str, str]] = []
+    for device_data in DEVICE_READINGS.values():
+        for sensor, readings in device_data.items():
+            for measurement in readings:
+                if (sensor, measurement) not in pairs:
+                    pairs.append((sensor, measurement))
+
+    pairs.sort(key=lambda pair: (get_sensor_sort_key(pair[0]), get_measurement_sort_key(pair[1])))
+
+    rows = [[header_cell("")] + [header_cell(device) for device in devices]]
+
+    for sensor, measurement in pairs:
+        cells = [raw_cell(measurement_label(measurement, sensor))]
+
+        for device in devices:
+            readings = DEVICE_READINGS[device].get(sensor, {})
+
+            if measurement not in readings:
+                cells.append(raw_cell(EMPTY_CELL))
+                continue
+
+            unit = SENSOR_UNITS.get(sensor, {}).get(measurement)
+            cells.append(raw_cell(format_measurement_reading(measurement, readings[measurement], unit)))
+
+        rows.append(cells)
+
+    return rows
+
+
+def build_summary_blocks(devices: list[str]) -> list[Block]:
+    return [
+        SectionBlock(
+            text=MarkdownTextObject(text=f"*How fresh is the space?*\n_Last updated {LAST_UPDATED}_")
+        ),
+        TableBlock(rows=build_summary_rows(devices), column_settings=column_settings(len(devices))),
+        ContextBlock(
+            elements=[MarkdownTextObject(text="_For all sensor readings, use `/howfresh detailed`._")]
+        ),
+    ]
+
+
+def build_detailed_blocks(devices: list[str]) -> list[Block]:
+    return [
+        SectionBlock(
+            text=MarkdownTextObject(
+                text=f"*How fresh is the space?* — _detailed_\n_Last updated {LAST_UPDATED}_"
+            )
+        ),
+        TableBlock(rows=build_detailed_rows(devices), column_settings=column_settings(len(devices))),
+    ]
+
+
+def render_ascii_preview(rows: list[list[dict[str, Any]]], title: str) -> str:
+    """
+    Rough terminal preview. Emoji are double-width in most terminals, so the pipes look
+    ragged - that is a preview artifact, not the Slack layout. Useful for row/column counts
+    and label lengths, not for judging alignment.
+    """
+    widths = [max(len(row[index]["text"]) for row in rows) for index in range(len(rows[0]))]
+
+    lines = [f"--- {title} ---"]
+    for row_index, row in enumerate(rows):
+        cells = [
+            cell["text"].ljust(widths[index]) if index == 0 else cell["text"].rjust(widths[index])
+            for index, cell in enumerate(row)
+        ]
+        lines.append(" | ".join(cells))
+        if row_index == 0:
+            lines.append("-+-".join("-" * width for width in widths))
+
+    lines.append(f"({len(rows) - 1} rows x {len(rows[0])} columns, widest label {widths[0]} chars)")
+    return "\n".join(lines)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=REPO_ROOT / "scripts" / "block_payloads",
+        help="Directory to write the payload JSON into (default: scripts/block_payloads)",
+    )
+    parser.add_argument("--print", action="store_true", help="Print the payload JSON to stdout as well")
+    args = parser.parse_args()
+
+    devices = list(DEVICE_READINGS)
+
+    payloads = {
+        "howfresh_summary_table": build_summary_blocks(devices),
+        "howfresh_detailed_table": build_detailed_blocks(devices),
+    }
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    for name, blocks in payloads.items():
+        for block in blocks:
+            # Catches a malformed payload here rather than as a Slack API error.
+            block.validate_json()
+
+        payload = {"blocks": [block.to_dict() for block in blocks]}
+        output_path = args.output_dir / f"{name}.json"
+        output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+        print(f"wrote {output_path.relative_to(REPO_ROOT)}")
+
+        if args.print:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+    print()
+    print(render_ascii_preview(build_summary_rows(devices), "SUMMARY"))
+    print()
+    print(render_ascii_preview(build_detailed_rows(devices), "DETAILED"))
+
+
+if __name__ == "__main__":
+    main()

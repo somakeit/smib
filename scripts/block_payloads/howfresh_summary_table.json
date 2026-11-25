@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*How fresh is the space?*\n_Last updated 2 minutes ago_",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "column_settings": [
+        {
+          "align": "left",
+          "is_wrapped": false
+        },
+        {
+          "align": "right"
+        },
+        {
+          "align": "right"
+        }
+      ],
+      "rows": [
+        [
+          {
+            "type": "raw_text",
+            "text": "",
+            "style": {
+              "bold": true
+            }
+          },
+          {
+            "type": "raw_text",
+            "text": "Cleanroom",
+            "style": {
+              "bold": true
+            }
+          },
+          {
+            "type": "raw_text",
+            "text": "Workshop",
+            "style": {
+              "bold": true
+            }
+          }
+        ],
+        [
+          {
+            "type": "raw_text",
+            "text": "🌡️ Temperature"
+          },
+          {
+            "type": "raw_text",
+            "text": "21.65 °C (avg)"
+          },
+          {
+            "type": "raw_text",
+            "text": "—"
+          }
+        ],
+        [
+          {
+            "type": "raw_text",
+            "text": "💧 Humidity"
+          },
+          {
+            "type": "raw_text",
+            "text": "41.55 % (avg)"
+          },
+          {
+            "type": "raw_text",
+            "text": "—"
+          }
+        ],
+        [
+          {
+            "type": "raw_text",
+            "text": "💡 Light"
+          },
+          {
+            "type": "raw_text",
+            "text": "310 lx"
+          },
+          {
+            "type": "raw_text",
+            "text": "180 lx"
+          }
+        ],
+        [
+          {
+            "type": "raw_text",
+            "text": "🌫️ CO₂"
+          },
+          {
+            "type": "raw_text",
+            "text": "480.20 ppm"
+          },
+          {
+            "type": "raw_text",
+            "text": "—"
+          }
+        ]
+      ],
+      "type": "table"
+    },
+    {
+      "elements": [
+        {
+          "text": "_For all sensor readings, use `/howfresh detailed`._",
+          "type": "mrkdwn"
+        }
+      ],
+      "type": "context"
+    }
+  ]
+}
