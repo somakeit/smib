@@ -33,6 +33,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from slack_sdk.models.blocks import (  # noqa: E402
     Block,
     ContextBlock,
+    DividerBlock,
     MarkdownTextObject,
     RawTextObject,
     RichTextBlock,
@@ -47,13 +48,16 @@ from smib.utilities import get_humanized_time  # noqa: E402
 
 from plugins.space.howfresh import (  # noqa: E402
     SUMMARY_MEASUREMENTS,
+    format_measurement_line,
     format_measurement_reading,
     format_measurement_with_unit,
     get_measurement_sort_key,
     get_measurement_symbol,
+    get_sensor_label,
     get_sensor_sort_key,
     normalize_measurement_key,
     normalize_measurement_name,
+    remove_trailing_divider,
 )
 
 # An empty cell needs to read as "this device does not report that", not as a zero or a
@@ -81,6 +85,12 @@ DEVICE_READINGS: dict[str, dict[str, dict[str, int | float]]] = {
     "Workshop": {
         "BH1750": {"light": 180.0},
     },
+    # Long-abandoned unit: still has a stored reading, but has not reported in over a week.
+    # Exercises the exclusion path - the values are real but far too old to answer "how
+    # fresh is the space right now?", and a column of them is only noise.
+    "Spare": {
+        "BME280": {"temperature": 16.2, "humidity": 55.0},
+    },
 }
 
 SENSOR_UNITS: dict[str, dict[str, str]] = {
@@ -98,19 +108,26 @@ SENSOR_UNITS: dict[str, dict[str, str]] = {
 }
 
 # Each device pushes on its own schedule, so the readings in one column were not necessarily
-# taken at the same moment as the next column's. Deliberately staggered here: a device that
-# last reported hours ago is showing stale values, and the table has to say so rather than
-# presenting them next to fresh ones as if they were comparable.
+# taken at the same moment as the next column's. Deliberately staggered here to exercise all
+# three freshness bands: fresh, stale-but-shown, and dropped entirely.
 DEVICE_REPORTED_AT: dict[str, datetime] = {
     "Cleanroom": datetime.now(UTC) - timedelta(minutes=2),
     "Workshop": datetime.now(UTC) - timedelta(minutes=47),
+    "Spare": datetime.now(UTC) - timedelta(days=9),
 }
 
-# Readings older than this are marked in the table. The real implementation should default
-# this to the existing SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD (1 hour) rather
-# than introducing a second, separately-configured notion of "too old" that can disagree
-# with the sensor log monitor's.
+# Two thresholds, because "old enough to flag" and "old enough to be useless" are different
+# questions. Between them a device still answers "how fresh is the space?" as long as the
+# answer is labelled; past the second it is only noise in a column, and the device has most
+# likely been unplugged or reflashed rather than being briefly offline.
+#
+# Both are placeholders for the demo. The real implementation should default STALE_AFTER to
+# the existing SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD (1 hour) rather than
+# introducing a second notion of "too old" that can disagree with the one the sensor log
+# monitor already alerts on. EXCLUDE_AFTER has no existing equivalent and needs its own
+# setting - erring long, since dropping a device is the more destructive of the two actions.
 STALE_AFTER = timedelta(minutes=30)
+EXCLUDE_AFTER = timedelta(days=2)
 
 STALE_MARKER = "⚠️"
 
@@ -118,8 +135,29 @@ STALE_MARKER = "⚠️"
 TableCell = RawTextObject | RichTextBlock
 
 
+def reading_age(device: str) -> timedelta:
+    return datetime.now(UTC) - DEVICE_REPORTED_AT[device]
+
+
 def is_stale(device: str) -> bool:
-    return datetime.now(UTC) - DEVICE_REPORTED_AT[device] > STALE_AFTER
+    return STALE_AFTER < reading_age(device) <= EXCLUDE_AFTER
+
+
+def is_excluded(device: str) -> bool:
+    return reading_age(device) > EXCLUDE_AFTER
+
+
+def included_devices(devices: list[str]) -> list[str]:
+    """
+    Devices worth rendering at all.
+
+    If every device is past EXCLUDE_AFTER, none are dropped: a readout of stale data beats
+    "no sensor readings found" when readings do exist, and the stale marker already says not
+    to trust them. Only ever drops a device when some other device is still reporting.
+    """
+    included = [device for device in devices if not is_excluded(device)]
+
+    return included or devices
 
 
 def device_header(device: str) -> str:
@@ -280,6 +318,80 @@ def build_detailed_rows(devices: list[str]) -> list[list[TableCell]]:
     return rows
 
 
+def build_single_device_blocks(device: str, *, detailed: bool) -> list[Block]:
+    """
+    One device: keep the existing mrkdwn section layout rather than a one-column table.
+
+    A table whose only purpose is comparing devices has nothing to compare, and the format
+    costs real width - the sensor suffix exists solely to keep row labels unique across
+    devices, and the label column is the first thing to break on a phone. This is also not
+    an edge case: it is the current state of the space, and the state again whenever the
+    second device drops off, so it has to look deliberate rather than degraded.
+
+    The lines are built by the plugin's own formatters, so a single-device readout is
+    byte-identical to what /howfresh produces today apart from the friendly device name.
+    """
+    header = "*How fresh is the space?*" + (" — _detailed_" if detailed else "")
+    blocks: list[Block] = [
+        SectionBlock(
+            text=MarkdownTextObject(
+                text=f"{header}\n_{device} · reading taken {reported_at_text(device)}_"
+            )
+        ),
+        DividerBlock(),
+    ]
+
+    if detailed:
+        for sensor in sorted(DEVICE_READINGS[device], key=get_sensor_sort_key):
+            readings = DEVICE_READINGS[device][sensor]
+            lines = [f"*{get_sensor_label(sensor)}*"]
+
+            for measurement in sorted(readings, key=get_measurement_sort_key):
+                unit = SENSOR_UNITS.get(sensor, {}).get(measurement)
+                lines.append(format_measurement_line(measurement, readings[measurement], unit))
+
+            blocks.append(SectionBlock(text=MarkdownTextObject(text="\n".join(lines))))
+            blocks.append(DividerBlock())
+
+        remove_trailing_divider(blocks)
+        return blocks
+
+    summary = collect_device_summary(device)
+    lines = []
+    for measurement in SUMMARY_MEASUREMENTS:
+        entry = summary.get(normalize_measurement_key(measurement))
+        if not entry or not entry["values"]:
+            continue
+
+        values = entry["values"]
+        lines.append(
+            format_measurement_line(
+                measurement,
+                sum(values) / len(values),
+                entry["unit"],
+                suffix="avg" if len(values) > 1 else None,
+            )
+        )
+
+    blocks.append(
+        SectionBlock(
+            text=MarkdownTextObject(text="\n".join(lines) if lines else "No summary sensor readings found.")
+        )
+    )
+
+    if (footnote := stale_footnote([device])) is not None:
+        blocks.append(footnote)
+
+    blocks.append(DividerBlock())
+    blocks.append(
+        SectionBlock(
+            text=MarkdownTextObject(text="_For detailed sensor readings, use `/howfresh detailed`._")
+        )
+    )
+
+    return blocks
+
+
 def stale_footnote(devices: list[str]) -> ContextBlock | None:
     """
     Spell out what the marker in a column header means, naming the devices it applies to.
@@ -305,6 +417,11 @@ def stale_footnote(devices: list[str]) -> ContextBlock | None:
 
 
 def build_summary_blocks(devices: list[str]) -> list[Block]:
+    devices = included_devices(devices)
+
+    if len(devices) == 1:
+        return build_single_device_blocks(devices[0], detailed=False)
+
     blocks: list[Block] = [
         SectionBlock(text=MarkdownTextObject(text="*How fresh is the space?*")),
         TableBlock(rows=build_summary_rows(devices), column_settings=column_settings(len(devices))),
@@ -323,6 +440,11 @@ def build_summary_blocks(devices: list[str]) -> list[Block]:
 
 
 def build_detailed_blocks(devices: list[str]) -> list[Block]:
+    devices = included_devices(devices)
+
+    if len(devices) == 1:
+        return build_single_device_blocks(devices[0], detailed=True)
+
     blocks: list[Block] = [
         SectionBlock(text=MarkdownTextObject(text="*How fresh is the space?* — _detailed_")),
         TableBlock(rows=build_detailed_rows(devices), column_settings=column_settings(len(devices))),
@@ -383,9 +505,13 @@ def main() -> None:
 
     devices = list(DEVICE_READINGS)
 
+    # "Spare" is past EXCLUDE_AFTER, so the multi-device payloads drop it; the single-device
+    # payloads pass one device explicitly to show the layout /howfresh falls back to.
     payloads = {
         "howfresh_summary_table": build_summary_blocks(devices),
         "howfresh_detailed_table": build_detailed_blocks(devices),
+        "howfresh_summary_single_device": build_summary_blocks(["Cleanroom"]),
+        "howfresh_detailed_single_device": build_detailed_blocks(["Cleanroom"]),
     }
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -404,10 +530,28 @@ def main() -> None:
         if args.print:
             print(json.dumps(payload, indent=2, ensure_ascii=False))
 
+    rendered = included_devices(devices)
+    dropped = [device for device in devices if device not in rendered]
+
     print()
-    print(render_ascii_preview(build_summary_rows(devices), "SUMMARY"))
+    print(f"devices: {', '.join(devices)}")
+    print(f"  rendered: {', '.join(rendered)}")
+    print(f"  stale (shown, marked): {', '.join(d for d in rendered if is_stale(d)) or '-'}")
+    print(f"  dropped (over {EXCLUDE_AFTER.days}d): {', '.join(dropped) or '-'}")
     print()
-    print(render_ascii_preview(build_detailed_rows(devices), "DETAILED"))
+    print(render_ascii_preview(build_summary_rows(rendered), "SUMMARY"))
+    print()
+    print(render_ascii_preview(build_detailed_rows(rendered), "DETAILED"))
+    print()
+    print("--- SINGLE DEVICE (non-tabular fallback) ---")
+    for block in build_summary_blocks(["Cleanroom"]):
+        payload = block.to_dict()
+        if payload["type"] == "section":
+            print(payload["text"]["text"])
+        elif payload["type"] == "context":
+            print(payload["elements"][0]["text"])
+        else:
+            print(f"[{payload['type']}]")
 
 
 if __name__ == "__main__":

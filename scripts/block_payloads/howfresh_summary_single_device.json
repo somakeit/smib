@@ -1,0 +1,31 @@
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*How fresh is the space?*\n_Cleanroom · reading taken 2 minutes ago_",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "🌡️ *Temperature (avg)*: 21.65 °C\n💧 *Humidity (avg)*: 41.55 %\n💡 *Light*: 310 lx\n🌫️ *CO₂*: 480.20 ppm",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "_For detailed sensor readings, use `/howfresh detailed`._",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    }
+  ]
+}

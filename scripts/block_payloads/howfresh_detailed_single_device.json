@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*How fresh is the space?* — _detailed_\n_Cleanroom · reading taken 2 minutes ago_",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "*Light (BH1750)*\n💡 *Light*: 310 lx",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "*Climate (BME280)*\n🌡️ *Temperature*: 21.40 °C\n💧 *Humidity*: 42 %\n🧭 *Pressure*: 1013.20 hPa",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "*Air Quality (SCD30)*\n🌡️ *Temperature*: 21.90 °C\n💧 *Humidity*: 41.10 %\n🌫️ *CO₂*: 480.20 ppm",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "*Particles (PMSA003I)*\n🌫️ *PM1.0 (Standard)*: 5 μg/m³\n🌫️ *PM2.5 (Standard)*: 6 μg/m³\n🌫️ *PM10 (Standard)*: 6 μg/m³\n🫧 *Particles ≥0.3 μm*: 744 count/0.1L\n🫧 *Particles ≥0.5 μm*: 232 count/0.1L",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "text": {
+        "text": "*Internal Metrics*\n🔌 *Relay On Time*: 20 days, 3 hours, 36 minutes and 43 seconds",
+        "type": "mrkdwn"
+      },
+      "type": "section"
+    }
+  ]
+}
