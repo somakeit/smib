@@ -2,7 +2,7 @@
   "blocks": [
     {
       "text": {
-        "text": "*How fresh is the space?*\n_Last updated 2 minutes ago_",
+        "text": "*How fresh is the space?*",
         "type": "mrkdwn"
       },
       "type": "section"
@@ -51,7 +51,7 @@
                     "style": {
                       "bold": true
                     },
-                    "text": "Workshop",
+                    "text": "Workshop ⚠️",
                     "type": "text"
                   }
                 ],
@@ -59,6 +59,20 @@
               }
             ],
             "type": "rich_text"
+          }
+        ],
+        [
+          {
+            "text": "🕒 Reading taken",
+            "type": "raw_text"
+          },
+          {
+            "text": "2 minutes ago",
+            "type": "raw_text"
+          },
+          {
+            "text": "47 minutes ago",
+            "type": "raw_text"
           }
         ],
         [
@@ -119,6 +133,15 @@
         ]
       ],
       "type": "table"
+    },
+    {
+      "elements": [
+        {
+          "text": "⚠️ _Workshop last reported over 30 minutes ago - readings may be stale._",
+          "type": "mrkdwn"
+        }
+      ],
+      "type": "context"
     },
     {
       "elements": [

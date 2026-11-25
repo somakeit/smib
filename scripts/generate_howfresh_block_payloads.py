@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +42,8 @@ from slack_sdk.models.blocks import (  # noqa: E402
     TableBlock,
     TableBlockColumnSettings,
 )
+
+from smib.utilities import get_humanized_time  # noqa: E402
 
 from plugins.space.howfresh import (  # noqa: E402
     SUMMARY_MEASUREMENTS,
@@ -94,10 +97,37 @@ SENSOR_UNITS: dict[str, dict[str, str]] = {
     "InternalMetrics": {"relay_on_time": "s"},
 }
 
-LAST_UPDATED = "2 minutes ago"
+# Each device pushes on its own schedule, so the readings in one column were not necessarily
+# taken at the same moment as the next column's. Deliberately staggered here: a device that
+# last reported hours ago is showing stale values, and the table has to say so rather than
+# presenting them next to fresh ones as if they were comparable.
+DEVICE_REPORTED_AT: dict[str, datetime] = {
+    "Cleanroom": datetime.now(UTC) - timedelta(minutes=2),
+    "Workshop": datetime.now(UTC) - timedelta(minutes=47),
+}
+
+# Readings older than this are marked in the table. The real implementation should default
+# this to the existing SMIB_PLUGIN_SMIBHID_SENSOR_MONITOR_ALERT_THRESHOLD (1 hour) rather
+# than introducing a second, separately-configured notion of "too old" that can disagree
+# with the sensor log monitor's.
+STALE_AFTER = timedelta(minutes=30)
+
+STALE_MARKER = "⚠️"
 
 
 TableCell = RawTextObject | RichTextBlock
+
+
+def is_stale(device: str) -> bool:
+    return datetime.now(UTC) - DEVICE_REPORTED_AT[device] > STALE_AFTER
+
+
+def device_header(device: str) -> str:
+    return f"{device} {STALE_MARKER}" if is_stale(device) else device
+
+
+def reported_at_text(device: str) -> str:
+    return get_humanized_time(DEVICE_REPORTED_AT[device])
 
 
 def raw_cell(text: Any) -> RawTextObject:
@@ -179,7 +209,12 @@ def collect_device_summary(device: str) -> dict[str, dict[str, Any]]:
 def build_summary_rows(devices: list[str]) -> list[list[TableCell]]:
     # The first header cell is left empty - the rows are self-evidently measurements, and the
     # label column is the one that runs out of width first on mobile.
-    rows = [[header_cell("")] + [header_cell(device) for device in devices]]
+    rows = [[header_cell("")] + [header_cell(device_header(device)) for device in devices]]
+
+    # Reading age goes in its own row, per device, rather than once in the message header.
+    # Devices push on independent schedules, so a single "last updated" in the header would
+    # have to describe the freshest or the oldest column and would misrepresent the other.
+    rows.append([raw_cell("🕒 Reading taken")] + [raw_cell(reported_at_text(d)) for d in devices])
 
     per_device = {device: collect_device_summary(device) for device in devices}
 
@@ -220,7 +255,12 @@ def build_detailed_rows(devices: list[str]) -> list[list[TableCell]]:
 
     pairs.sort(key=lambda pair: (get_sensor_sort_key(pair[0]), get_measurement_sort_key(pair[1])))
 
-    rows = [[header_cell("")] + [header_cell(device) for device in devices]]
+    rows = [[header_cell("")] + [header_cell(device_header(device)) for device in devices]]
+
+    # Reading age goes in its own row, per device, rather than once in the message header.
+    # Devices push on independent schedules, so a single "last updated" in the header would
+    # have to describe the freshest or the oldest column and would misrepresent the other.
+    rows.append([raw_cell("🕒 Reading taken")] + [raw_cell(reported_at_text(d)) for d in devices])
 
     for sensor, measurement in pairs:
         cells = [raw_cell(measurement_label(measurement, sensor))]
@@ -240,27 +280,58 @@ def build_detailed_rows(devices: list[str]) -> list[list[TableCell]]:
     return rows
 
 
+def stale_footnote(devices: list[str]) -> ContextBlock | None:
+    """
+    Spell out what the marker in a column header means, naming the devices it applies to.
+
+    Stale readings are marked and kept rather than hidden: dropping a column entirely would
+    be a regression from today's output, which shows whatever the last report held however
+    old it is. Marked-and-shown beats silently absent.
+    """
+    stale_devices = [device for device in devices if is_stale(device)]
+
+    if not stale_devices:
+        return None
+
+    names = ", ".join(stale_devices)
+    return ContextBlock(
+        elements=[
+            MarkdownTextObject(
+                text=f"{STALE_MARKER} _{names} last reported over "
+                     f"{int(STALE_AFTER.total_seconds() // 60)} minutes ago - readings may be stale._"
+            )
+        ]
+    )
+
+
 def build_summary_blocks(devices: list[str]) -> list[Block]:
-    return [
-        SectionBlock(
-            text=MarkdownTextObject(text=f"*How fresh is the space?*\n_Last updated {LAST_UPDATED}_")
-        ),
+    blocks: list[Block] = [
+        SectionBlock(text=MarkdownTextObject(text="*How fresh is the space?*")),
         TableBlock(rows=build_summary_rows(devices), column_settings=column_settings(len(devices))),
+    ]
+
+    if (footnote := stale_footnote(devices)) is not None:
+        blocks.append(footnote)
+
+    blocks.append(
         ContextBlock(
             elements=[MarkdownTextObject(text="_For all sensor readings, use `/howfresh detailed`._")]
-        ),
-    ]
+        )
+    )
+
+    return blocks
 
 
 def build_detailed_blocks(devices: list[str]) -> list[Block]:
-    return [
-        SectionBlock(
-            text=MarkdownTextObject(
-                text=f"*How fresh is the space?* — _detailed_\n_Last updated {LAST_UPDATED}_"
-            )
-        ),
+    blocks: list[Block] = [
+        SectionBlock(text=MarkdownTextObject(text="*How fresh is the space?* — _detailed_")),
         TableBlock(rows=build_detailed_rows(devices), column_settings=column_settings(len(devices))),
     ]
+
+    if (footnote := stale_footnote(devices)) is not None:
+        blocks.append(footnote)
+
+    return blocks
 
 
 def cell_text(cell: TableCell) -> str:
