@@ -19,7 +19,7 @@ HOW_FRESH_PROFILE = {
 
 def normalize_device_key(device: str) -> str:
     """
-    Normalize a device hostname into the key form used by the per-device override map.
+    Normalise a device hostname into the key form used by the per-device override map.
 
     Needed on both sides of the lookup. pydantic-settings lowercases the keys it parses out of
     env vars, and a hostname like `SMIBHID-FAN` cannot carry its hyphen reliably through the

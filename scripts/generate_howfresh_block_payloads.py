@@ -146,7 +146,7 @@ EXCLUDE_AFTER = timedelta(days=2)
 # global threshold would either permanently flag the slow device or be loosened until it
 # stops catching real outages on the fast one.
 #
-# Keyed here by friendly name for brevity; in config these are hostname keys, normalized for
+# Keyed here by friendly name for brevity; in config these are hostname keys, normalised for
 # case and for the hyphen/underscore difference between a hostname like SMIBHID-FAN and
 # the env var form DEVICE__SMIBHID_FAN__STALE_AFTER.
 DEVICE_THRESHOLD_OVERRIDES: dict[str, dict[str, timedelta]] = {
@@ -286,7 +286,7 @@ def measurement_label(measurement: str, sensor: str | None = None) -> str:
         return f"{symbol} {name}"
 
     # The sensor suffix is what keeps row labels unique. BME280 reports `humidity` while
-    # SCD30 reports `relative_humidity`, and both normalize to the label "Humidity";
+    # SCD30 reports `relative_humidity`, and both normalise to the label "Humidity";
     # `temperature` collides outright. Grouped sections disambiguate those today via the
     # sensor heading, but a flat table has no heading to inherit, so the sensor moves into
     # the label itself. Always shown rather than only on collision, so a given measurement
@@ -298,7 +298,7 @@ def collect_device_summary(device: str) -> dict[str, dict[str, Any]]:
     """
     Average each summary measurement within a single device, across its sensors.
 
-    Mirrors collect_summary_readings in the plugin: readings are merged on the normalized
+    Mirrors collect_summary_readings in the plugin: readings are merged on the normalised
     measurement key, so `humidity` and `relative_humidity` land together.
     """
     collected: dict[str, dict[str, Any]] = {}
@@ -486,7 +486,7 @@ def stale_footnote(devices: list[str]) -> ContextBlock | None:
     return ContextBlock(
         elements=[
             MarkdownTextObject(
-                text=f"{STALE_MARKER} _Last reported: {ages} - these readings may be stale._"
+                text=f"{STALE_MARKER} _Last reported: {ages} – these readings may be stale._"
             )
         ]
     )
@@ -508,7 +508,7 @@ def build_summary_blocks(devices: list[str]) -> list[Block]:
 
     blocks.append(
         ContextBlock(
-            elements=[MarkdownTextObject(text="_For all sensor readings, use `/howfresh detailed`._")]
+            elements=[MarkdownTextObject(text="_For detailed sensor readings, use `/howfresh detailed`._")]
         )
     )
 
