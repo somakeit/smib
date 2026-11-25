@@ -55,7 +55,7 @@ from plugins.space.howfresh import (
     select_devices_to_render,
     sort_devices,
 )
-from plugins.space.howfresh.config import HowFreshDeviceConfig, config
+from plugins.space.smibhid.config import SmibhidDeviceConfig, config
 from plugins.space.smibhid.sensor.models import (
     SensorDataMap,
     SensorLog,
@@ -811,7 +811,7 @@ class TestMultiDeviceTableBlocks:
     def test_friendly_device_name_is_used_when_configured(self, monkeypatch):
         logs, units = self.make_two_devices()
         monkeypatch.setitem(
-            config.device, "smibhid_fan", HowFreshDeviceConfig(name="Clean Room")
+            config.device, "smibhid_fan", SmibhidDeviceConfig(name="Clean Room")
         )
 
         rows = self.cell_texts(self.get_table(build_sensor_message_blocks(logs, units, detailed=False)))
@@ -913,8 +913,8 @@ class TestDeviceColumnOrdering:
         ]
 
     def test_configured_order_wins_over_reporting_order(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+        monkeypatch.setitem(config.device, "smibhid_fan", SmibhidDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(order=2))
 
         # Deliberately passed workshop-first, as a fresher workshop reading would.
         ordered = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
@@ -922,8 +922,8 @@ class TestDeviceColumnOrdering:
         assert [log.device for log in ordered] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]
 
     def test_order_is_independent_of_input_order(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+        monkeypatch.setitem(config.device, "smibhid_fan", SmibhidDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(order=2))
 
         forwards = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
         backwards = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
@@ -931,7 +931,7 @@ class TestDeviceColumnOrdering:
         assert [log.device for log in forwards] == [log.device for log in backwards]
 
     def test_unordered_devices_follow_ordered_ones(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=5))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(order=5))
 
         ordered = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
 
@@ -944,7 +944,7 @@ class TestDeviceColumnOrdering:
 
     def test_unordered_devices_sort_by_friendly_name_when_configured(self, monkeypatch):
         """Ordering follows what the reader sees, not the hostname behind it."""
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(name="Annexe"))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(name="Annexe"))
 
         ordered = sort_devices(self.make_logs("SMIBHID-FAN", "SMIBHID-WORKSHOP"))
 
@@ -954,8 +954,8 @@ class TestDeviceColumnOrdering:
         assert config.sort_key_for("SMIBHID-X") > (0, -1, "")
 
     def test_rendered_columns_follow_the_configured_order(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(name="Clean Room", order=1))
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(name="Workshop", order=2))
+        monkeypatch.setitem(config.device, "smibhid_fan", SmibhidDeviceConfig(name="Clean Room", order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(name="Workshop", order=2))
 
         logs = sort_devices(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
         units = {log.device: make_sensor_units({"BH1750": {"light": "lx"}}, device=log.device) for log in logs}
@@ -977,16 +977,16 @@ class TestDeviceColumnOrdering:
         assert header[2].startswith("Workshop")
 
     def test_selection_returns_devices_already_sorted(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+        monkeypatch.setitem(config.device, "smibhid_fan", SmibhidDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(order=2))
 
         selected = select_devices_to_render(self.make_logs("SMIBHID-WORKSHOP", "SMIBHID-FAN"))
 
         assert [log.device for log in selected] == ["SMIBHID-FAN", "SMIBHID-WORKSHOP"]
 
     def test_all_stale_fallback_is_also_sorted(self, monkeypatch):
-        monkeypatch.setitem(config.device, "smibhid_fan", HowFreshDeviceConfig(order=1))
-        monkeypatch.setitem(config.device, "smibhid_workshop", HowFreshDeviceConfig(order=2))
+        monkeypatch.setitem(config.device, "smibhid_fan", SmibhidDeviceConfig(order=1))
+        monkeypatch.setitem(config.device, "smibhid_workshop", SmibhidDeviceConfig(order=2))
 
         logs = [
             make_sensor_log(

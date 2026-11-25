@@ -27,7 +27,8 @@ from slack_sdk.web.async_slack_response import AsyncSlackResponse
 from smib.db.manager import DatabaseManager
 from smib.events.interfaces.scheduled_event_interface import ScheduledEventInterface
 from smib.utilities import get_humanized_time, get_humanized_timedelta
-from .config import HOW_FRESH_PROFILE, config
+from .config import HOW_FRESH_PROFILE
+from ..smibhid.config import config as device_config
 
 if TYPE_CHECKING:
     from plugins.space.smibhid.sensor.models import SensorLog, SensorUnit
@@ -284,11 +285,11 @@ def reading_age(sensor_log: "SensorLog") -> timedelta:
 
 
 def is_stale(sensor_log: "SensorLog") -> bool:
-    return reading_age(sensor_log) > config.stale_after_for(sensor_log.device)
+    return reading_age(sensor_log) > device_config.stale_after_for(sensor_log.device)
 
 
 def is_excluded(sensor_log: "SensorLog") -> bool:
-    exclude_after = config.exclude_after_for(sensor_log.device)
+    exclude_after = device_config.exclude_after_for(sensor_log.device)
     return exclude_after is not None and reading_age(sensor_log) > exclude_after
 
 
@@ -322,12 +323,12 @@ def sort_devices(sensor_logs: list["SensorLog"]) -> list["SensorLog"]:
     The query returns devices by reading time, so without this the columns would swap around
     between invocations depending on which device reported most recently.
     """
-    return sorted(sensor_logs, key=lambda sensor_log: config.sort_key_for(sensor_log.device))
+    return sorted(sensor_logs, key=lambda sensor_log: device_config.sort_key_for(sensor_log.device))
 
 
 def device_label(sensor_log: "SensorLog") -> str:
     """Friendly name if one is configured, otherwise the raw hostname."""
-    return config.display_name(sensor_log.device)
+    return device_config.display_name(sensor_log.device)
 
 
 def build_sensor_message_blocks(

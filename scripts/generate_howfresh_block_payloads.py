@@ -46,7 +46,7 @@ from slack_sdk.models.blocks import (  # noqa: E402
 
 from smib.utilities import get_humanized_time  # noqa: E402
 
-from plugins.space.howfresh.config import config as plugin_config  # noqa: E402
+from plugins.space.smibhid.config import config as plugin_config  # noqa: E402
 
 from plugins.space.howfresh import (  # noqa: E402
     SUMMARY_MEASUREMENTS,
